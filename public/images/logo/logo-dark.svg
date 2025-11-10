@@ -1,0 +1,10 @@
+<svg width="154" height="32" viewBox="0 0 154 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+	<!-- Dark variant: white wordmark + white icon -->
+	<g transform="translate(0,0)">
+		<rect x="0" y="0" width="32" height="32" rx="6" fill="#ffffff" opacity="0" />
+		<path d="M14 9h4v4h4v4h-4v4h-4v-4h-4v-4h4V9z" fill="#ffffff" />
+	</g>
+	<g transform="translate(44,6)" fill="#ffffff" font-family="Outfit, sans-serif" font-weight="700" font-size="16">
+		<text x="0" y="14">TRIMED</text>
+	</g>
+</svg>
