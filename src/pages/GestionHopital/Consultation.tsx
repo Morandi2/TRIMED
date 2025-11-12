@@ -9,7 +9,7 @@ export default function Medecin() {
         title="TRIMED"
         description="Gestionn hopital"
       />
-      <PageBreadcrumb pageTitle="Medecin" />
+      <PageBreadcrumb pageTitle="Consultation" />
 
 
       <div className="">
