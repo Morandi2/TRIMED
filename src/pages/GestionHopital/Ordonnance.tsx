@@ -1,8 +1,24 @@
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import FenOrdonnance from "./FenGestionHopital/FenOrdonnance";
 
-export default function Ordonnance() {
+export default function Medecin() {
   return (
-    <div className="flex items-center justify-center h-full">
-      <h1 className="text-3xl font-bold text-center">Ordonnance</h1>
+    <div>
+      <PageMeta
+        title="TRIMED"
+        description="Gestionn hopital"
+      />
+      <PageBreadcrumb pageTitle="Ordonnance" />
+
+
+      <div className="">
+        <div>
+          <FenOrdonnance />
+        </div>
+      </div>
+
+
     </div>
   );
 }
