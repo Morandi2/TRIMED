@@ -78,22 +78,22 @@ const navItems: NavItem[] = [
     name: "Paiement",
     path: "/paiement",
   },
-  {
-    icon: <Pill />,
-    name: "Médicaments",
-    path: "#",
-  },
-  {
-    icon: <CreditCard />,
-    name: "Paiement",
-    subItems: [{ name: "MonCash", path: "/", pro: false },
-                {name: "UNIBANK", path: "/", pro: true },
-                {name: "BUH", path: "/", pro: true },
-                {name: "SOGEBANK", path: "/", pro: true },
-                {name: "PayPal", path: "/", pro: true },
-                {name: "Zelle", path: "/", pro: true },
-    ],
-  },
+  // {
+  //   icon: <Pill />,
+  //   name: "Médicaments",
+  //   path: "#",
+  // },
+  // {
+  //   icon: <CreditCard />,
+  //   name: "Paiement",
+  //   subItems: [{ name: "MonCash", path: "/", pro: false },
+  //               {name: "UNIBANK", path: "/", pro: true },
+  //               {name: "BUH", path: "/", pro: true },
+  //               {name: "SOGEBANK", path: "/", pro: true },
+  //               {name: "PayPal", path: "/", pro: true },
+  //               {name: "Zelle", path: "/", pro: true },
+  //   ],
+  // },
   
   // {
   //   icon: <UserCircleIcon />,
