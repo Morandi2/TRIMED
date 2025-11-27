@@ -1,6 +1,6 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import User from "../../components/UserProfile/User";
+import { GestionUtilisateur } from "../GestionHopital/GestionUtilisateur";
 
 export default function Blank() {
   return (
@@ -11,7 +11,8 @@ export default function Blank() {
       />
       <PageBreadcrumb pageTitle="Utilisateurs" />
       
-          <User />
+          {/* <User /> */}
+          <GestionUtilisateur tenantId={0}/>
        
     
     </div>

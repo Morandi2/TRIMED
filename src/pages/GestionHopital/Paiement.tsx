@@ -1,24 +1,18 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import PaymentModule from "./FenGestionHopital/FenPaiement";
+import TenantPaiementModule from "./TenantPaiement/TenantPaiementModule";
 
-export default function Medecin() {
+export default function Paiement() {
   return (
     <div>
       <PageMeta
         title="TRIMED"
-        description="Gestionn hopital"
+        description="Gestion hopital"
       />
       <PageBreadcrumb pageTitle="Paiement" />
-
-
       <div className="">
-        <div>
-          <PaymentModule adminId={1} currentPlan="basic" />
-        </div>
+        <TenantPaiementModule tenantId={0} />
       </div>
-
-
     </div>
   );
 }

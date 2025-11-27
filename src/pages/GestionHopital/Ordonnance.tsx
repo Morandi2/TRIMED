@@ -1,8 +1,21 @@
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import GestionOrdonnances from "./GestionOrdonnances/GestionOrdonnances";
 
 export default function Ordonnance() {
   return (
-    <div className="flex items-center justify-center h-full">
-      <h1 className="text-3xl font-bold text-center">Ordonnance</h1>
+    <div>
+      <PageMeta
+        title="TRIMED"
+        description="Gestion des ordonnances"
+      />
+      <PageBreadcrumb pageTitle="Ordonnances" />
+
+      <div className="">
+        <div>
+          <GestionOrdonnances />
+        </div>
+      </div>
     </div>
   );
 }

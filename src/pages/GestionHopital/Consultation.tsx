@@ -1,24 +1,21 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import FenConsultation from "./FenGestionHopital/FenConsultation";
+import GestionConsultations from "./GestionConsultations/GestionConsultations";
 
-export default function Medecin() {
+export default function Consultation() {
   return (
     <div>
       <PageMeta
         title="TRIMED"
-        description="Gestionn hopital"
+        description="Gestion des consultations"
       />
-      <PageBreadcrumb pageTitle="Consultation" />
-
+      <PageBreadcrumb pageTitle="Consultations" />
 
       <div className="">
         <div>
-          <FenConsultation/>
+          <GestionConsultations />
         </div>
       </div>
-
-
     </div>
   );
 }

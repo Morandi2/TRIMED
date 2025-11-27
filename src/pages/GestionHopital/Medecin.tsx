@@ -1,24 +1,21 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import FenMedecin from "./FenGestionHopital/FenMedecin";
+import GestionMedecins from "./GestionMedecins/GestionMedecins";
 
 export default function Medecin() {
   return (
     <div>
       <PageMeta
         title="TRIMED"
-        description="Gestionn hopital"
+        description="Gestion des médecins"
       />
-      <PageBreadcrumb pageTitle="Medecin" />
-
+      <PageBreadcrumb pageTitle="Médecins" />
 
       <div className="">
         <div>
-          <FenMedecin />
+          <GestionMedecins />
         </div>
       </div>
-
-
     </div>
   );
 }

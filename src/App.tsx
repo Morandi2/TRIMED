@@ -25,10 +25,10 @@ import Medecin from "./pages/GestionHopital/Medecin";
 import Medicament from "./pages/GestionHopital/Medicament";
 import Ordonnance from "./pages/GestionHopital/Ordonnance";
 import Paiement from "./pages/GestionHopital/Paiement";
-import RendezVous from "./pages/GestionHopital/Rendez_vous";
 import Connexion from "./components/auth/Connexion";
 import NotFound from "./pages/OtherPage/NotFound";
 import Index from "./pages/index/Index";
+import RendezVous from "./pages/GestionHopital/Rendezvous";
 
 
 export default function App() {
@@ -73,7 +73,7 @@ export default function App() {
             <Route path="/medicament" element={<Medicament />} />
             <Route path="/ordonnance" element={<Ordonnance />} />
             <Route path="/paiement" element={<Paiement />} />
-            <Route path="/rendez_vous" element={<RendezVous />} />
+            <Route path="/rendezvous" element={<RendezVous />} />
           </Route>
           {/* Auth Layout */}
           {/* <Route path="/signin" element={<SignIn />} />

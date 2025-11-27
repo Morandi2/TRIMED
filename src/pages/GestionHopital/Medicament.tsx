@@ -1,8 +1,21 @@
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import GestionMedicaments from "./GestionMedicaments/GestionMedicaments";
 
 export default function Medicament() {
   return (
-    <div className="flex items-center justify-center h-full">
-      <h1 className="text-3xl font-bold text-center">Medicament</h1>
+    <div>
+      <PageMeta
+        title="TRIMED"
+        description="Gestion des médicaments"
+      />
+      <PageBreadcrumb pageTitle="Médicaments" />
+
+      <div className="">
+        <div>
+          <GestionMedicaments tenantId={1} />
+        </div>
+      </div>
     </div>
   );
 }
