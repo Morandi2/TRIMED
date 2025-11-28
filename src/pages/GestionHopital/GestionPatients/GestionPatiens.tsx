@@ -9,7 +9,6 @@ import { Tooltip } from './components/Tooltip';
 import { SuccessModal } from './components/SuccessModal';
 import { PatientPrintPage } from './components/PatientPrintPage';
 
-
 const hopitalCourant: Hopital = {
   tenant_id: 1,
   nom: "Hôpital Général de Port-au-Prince",
@@ -23,7 +22,6 @@ const GestionPatients: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [successModal, setSuccessModal] = useState<{
     isOpen: boolean;
@@ -60,9 +58,17 @@ const GestionPatients: React.FC = () => {
     setPatients(patientsData);
   };
 
+  const showSuccessMessage = (title: string, message: string, type: 'success' | 'error' = 'success') => {
+    setSuccessModal({
+      isOpen: true,
+      title,
+      message,
+      type
+    });
+  };
+
   const handleCreatePatient = (formData: PatientFormData, isModifying: boolean) => {
     let result;
-    
     if (isModifying && selectedPatient) {
       result = patientService.modifierPatientComplet(selectedPatient.patient_id, formData);
     } else {
@@ -70,30 +76,21 @@ const GestionPatients: React.FC = () => {
     }
     
     if (result.success) {
-      console.log(isModifying ? 'Patient modifié avec succès' : 'Patient créé avec succès');
       loadPatients();
       setModalType(null);
       setSelectedPatient(null);
       setFormErrors([]);
-      
-      // Afficher modal de succès
-      setSuccessModal({
-        isOpen: true,
-        title: 'Opération réussie',
-        message: isModifying ? 'Le patient a été modifié avec succès.' : 'Le patient a été enregistré avec succès.',
-        type: 'success'
-      });
+      showSuccessMessage(
+        'Opération réussie', 
+        isModifying ? 'Le patient a été modifié avec succès.' : 'Le patient a été enregistré avec succès.'
+      );
     } else {
-      console.error('Erreurs lors de l\'opération:', result.errors);
       setFormErrors(result.errors || ["Erreur lors de l'opération"]);
-      
-      // Afficher modal d'erreur
-      setSuccessModal({
-        isOpen: true,
-        title: 'Erreur',
-        message: result.errors?.[0] || "Une erreur s'est produite lors de l'opération.",
-        type: 'error'
-      });
+      showSuccessMessage(
+        'Erreur de validation',
+        result.errors?.join(', ') || "Une erreur s'est produite lors de l'opération.",
+        'error'
+      );
     }
   };
 
@@ -123,19 +120,9 @@ const GestionPatients: React.FC = () => {
       const success = patientService.supprimerPatient(selectedPatient.patient_id);
       if (success) {
         loadPatients();
-        setSuccessModal({
-          isOpen: true,
-          title: 'Suppression réussie',
-          message: 'Le patient a été supprimé avec succès.',
-          type: 'success'
-        });
+        showSuccessMessage('Suppression réussie', 'Le patient a été supprimé avec succès.');
       } else {
-        setSuccessModal({
-          isOpen: true,
-          title: 'Erreur',
-          message: 'Une erreur s\'est produite lors de la suppression.',
-          type: 'error'
-        });
+        showSuccessMessage('Erreur', 'Une erreur s\'est produite lors de la suppression.', 'error');
       }
       setModalType(null);
       setSelectedPatient(null);
@@ -170,15 +157,22 @@ const GestionPatients: React.FC = () => {
   const filteredPatients = patients.filter(patient =>
     `${patient.nom} ${patient.prenom}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.numero_dossier_medical.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.telephone?.toLowerCase().includes(searchTerm.toLowerCase())
+    patient.telephone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.numero_identification_nationale?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const _totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
+  const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
+  const currentPatients = filteredPatients.slice(
+    (currentPage - 1) * patientsPerPage,
+    currentPage * patientsPerPage
+  );
 
   return (
     <div className="relative">
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
         
+        {/* Header ak bouton ajoute */}
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -193,7 +187,7 @@ const GestionPatients: React.FC = () => {
             <Tooltip text="Ajouter un nouveau patient" position="bottom">
               <button 
                 onClick={handleAddPatient}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
               >
                 <svg
                   width="16"
@@ -223,11 +217,10 @@ const GestionPatients: React.FC = () => {
           </div>
         </div>
 
-
-
-        {/* Seksyon Estatistik */}
+        {/* STATISTIQUES ANLÈ */}
         <PatientStats patients={patients} />
 
+        {/* Bar rechèch ak filtres */}
         <div className="flex flex-col gap-4 mb-6 lg:flex-row">
           <div className="flex-1">
             <div className="relative">
@@ -236,7 +229,7 @@ const GestionPatients: React.FC = () => {
                 placeholder="Rechercher par nom, prénom, numéro dossier..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pl-10 text-theme-sm text-gray-800 placeholder:text-gray-600 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-gray-400 dark:focus:border-blue-500"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-600 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-gray-400 dark:focus:border-blue-500"
               />
               <svg
                 className="absolute left-3 top-3 h-4 w-4 text-gray-600 dark:text-gray-400"
@@ -255,8 +248,9 @@ const GestionPatients: React.FC = () => {
           </div>
         </div>
 
+        {/* Tablo patients */}
         <PatientTable
-          patients={filteredPatients}
+          patients={currentPatients}
           currentPage={currentPage}
           patientsPerPage={patientsPerPage}
           onViewPatient={handleViewPatient}
@@ -264,7 +258,8 @@ const GestionPatients: React.FC = () => {
           onDeletePatient={handleDeleteClick}
         />
 
-        {_totalPages > 1 && (
+        {/* Pagination */}
+        {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-800 sm:px-6">
             <div className="flex flex-1 justify-between sm:hidden">
               <button
@@ -275,8 +270,8 @@ const GestionPatients: React.FC = () => {
                 Précédent
               </button>
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, _totalPages))}
-                disabled={currentPage === _totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
                 className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
               >
                 Suivant
@@ -303,7 +298,7 @@ const GestionPatients: React.FC = () => {
                     </svg>
                   </button>
                   
-                  {Array.from({ length: _totalPages }, (_, i) => i + 1).map(page => (
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
@@ -318,8 +313,8 @@ const GestionPatients: React.FC = () => {
                   ))}
                   
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, _totalPages))}
-                    disabled={currentPage === _totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
                     className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-600 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 dark:text-gray-400 dark:ring-gray-600 dark:hover:bg-gray-700"
                   >
                     <span className="sr-only">Suivant</span>
@@ -356,7 +351,7 @@ const GestionPatients: React.FC = () => {
           onPrint={handlePrintPatient}
         />
       ) : null}
-      
+
       {/* Page d'impression */}
       {showPrintPage && printPatient && (
         <PatientPrintPage

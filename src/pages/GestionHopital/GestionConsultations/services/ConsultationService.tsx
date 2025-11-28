@@ -136,43 +136,29 @@ export class ConsultationService {
     this.saveToStorage();
   }
 
-  creerConsultation(formData: ConsultationFormData, _tenantId: number): { success: boolean; data?: Consultation; errors?: string[] } {
-    const errors: string[] = [];
+creerConsultation(formData: ConsultationFormData, tenantId: number): { success: boolean; data?: Consultation; errors?: string[] } {
+  try {
 
-    if (!formData.consultation.patient_id) errors.push("Patient est requis");
-    if (!formData.consultation.medecin_id) errors.push("Médecin est requis");
-    if (!formData.consultation.date_consultation) errors.push("Date de consultation est requise");
-    if (!formData.consultation.motif?.trim()) errors.push("Motif de consultation est requis");
+    const nouvelleConsultation: Consultation = {
+      consultation_id: Math.max(0, ...this.consultations.map(c => c.consultation_id)) + 1,
+      patient_id: formData.consultation.patient_id,
+      medecin_id: formData.consultation.medecin_id,
+      tenant_id: tenantId, // ✅ Sèvi ak tenantId ki pase a
+      date_consultation: formData.consultation.date_consultation,
+      motif: formData.consultation.motif,
+      diagnostic_principal: formData.consultation.diagnostic_principal,
+      notes: formData.consultation.notes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
     
-    // Vérifier que la date n'est pas dans le passé
-    if (formData.consultation.date_consultation) {
-      const consultationDate = new Date(formData.consultation.date_consultation);
-      const currentDate = new Date();
-      if (consultationDate < currentDate) {
-        errors.push("La date de consultation ne peut pas être dans le passé");
-      }
-    }
-
-    if (errors.length > 0) return { success: false, errors };
-
-    try {
-      const nouvelleConsultation: Consultation = {
-        ...formData.consultation,
-        consultation_id: Date.now(),
-        tenant_id: tenantId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      this.consultations.push(nouvelleConsultation);
-      this.saveToStorage();
-      return { success: true, data: nouvelleConsultation };
-    } catch (error) {
-      console.error('Erreur lors de la création de la consultation:', error);
-      return { success: false, errors: ["Erreur lors de la création"] };
-    }
+    this.consultations.push(nouvelleConsultation);
+    return { success: true, data: nouvelleConsultation };
+  } catch (error) {
+    console.error('Erreur création consultation:', error);
+    return { success: false, errors: [error.message] };
   }
-
+}
   obtenirConsultationsParTenant(_tenantId: number): Consultation[] {
     return this.consultations.filter(c => c.tenant_id === _tenantId);
   }
@@ -181,7 +167,9 @@ export class ConsultationService {
     return this.consultations.find(c => c.consultation_id === consultationId) || null;
   }
 
-  modifierConsultation(consultationId: number, formData: ConsultationFormData): { success: boolean; errors?: string[] } {
+  modifierConsultation(consultationId: number, formData: ConsultationFormData): {
+    data: any; success: boolean; errors?: string[] 
+} {
     const errors: string[] = [];
 
     if (!formData.consultation.patient_id) errors.push("Patient est requis");

@@ -2,24 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { PatientFormData, patientService } from '../services/PatientService';
 
 interface PatientProgressFormProps {
-  hopitalId: number;
-  onSave: (formData: PatientFormData, isModifying: boolean) => void;
-  onClose: () => void;
-  patientId?: number;
+    hopitalId: number;
+    onSave: (formData: PatientFormData, isModifying: boolean) => void;
+    onClose: () => void;
+    patientId?: number;
 }
 
 export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
-  hopitalId,
-  onSave,
-  onClose,
-  patientId
+    hopitalId,
+    onSave,
+    onClose,
+    patientId
 }) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<PatientFormData>({
+    const [currentStep, setCurrentStep] = useState(1);
+    const [formData, setFormData] = useState<PatientFormData>({
         patient: {
             nom: '',
             prenom: '',
-           date_naissance: '',
+            date_naissance: '',
             sexe: 'M',
             numero_identification_nationale: '',
             telephone: '',
@@ -41,6 +41,8 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
     });
 
     const [isModifying, setIsModifying] = useState(false);
+    const [errors, setErrors] = useState<{[key: string]: string}>({});
+    const [touched, setTouched] = useState<{[key: string]: boolean}>({});
 
     useEffect(() => {
         if (patientId) {
@@ -93,8 +95,87 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
 
     const totalSteps = 5;
 
+    // ✅ VALIDASYON KOREK POU ETAP 1
+    const validateStep1 = (): {isValid: boolean; newErrors: {[key: string]: string}} => {
+        const { nom, prenom, date_naissance, sexe, email, telephone } = formData.patient;
+        const newErrors: {[key: string]: string} = {};
+
+        // Validasyon chan obligatwa
+        if (!nom || nom.trim().length === 0) {
+            newErrors.nom = 'Nom est obligatoire';
+        }
+
+        if (!prenom || prenom.trim().length === 0) {
+            newErrors.prenom = 'Prénom est obligatoire';
+        }
+
+        if (!date_naissance || date_naissance.length === 0) {
+            newErrors.date_naissance = 'Date de naissance est obligatoire';
+        } else {
+            const birthDate = new Date(date_naissance);
+            const today = new Date();
+            const minDate = new Date('1900-01-01');
+            if (birthDate < minDate || birthDate > today) {
+                newErrors.date_naissance = 'Date de naissance invalide';
+            }
+        }
+
+        if (!sexe || sexe.length === 0) {
+            newErrors.sexe = 'Sexe est obligatoire';
+        }
+
+        // Validasyon email
+        if (email && email.trim().length > 0) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                newErrors.email = 'Format email invalide';
+            }
+        }
+
+        // Validasyon telefòn
+        if (telephone && telephone.trim().length > 0) {
+            const cleanedPhone = telephone.replace(/\D/g, '');
+            if (cleanedPhone.length !== 11) { // +509 + 8 chif = 11 chif
+                newErrors.telephone = 'Le numéro doit avoir 8 chiffres après +509';
+            }
+        }
+
+        return {
+            isValid: Object.keys(newErrors).length === 0,
+            newErrors
+        };
+    };
+
+    const isStep1Valid = (): boolean => {
+        const validation = validateStep1();
+        return validation.isValid;
+    };
+
+    const handleFieldBlur = (fieldName: string) => {
+        setTouched(prev => ({ ...prev, [fieldName]: true }));
+        
+        // Valide chan an imedyatman apre li pèdi fokis
+        if (currentStep === 1) {
+            const validation = validateStep1();
+            setErrors(validation.newErrors);
+        }
+    };
+
     const nextStep = () => {
-        if (currentStep < totalSteps && validateStep(currentStep)) {
+        if (currentStep === 1) {
+            const validation = validateStep1();
+            setErrors(validation.newErrors);
+            setTouched({
+                nom: true, prenom: true, date_naissance: true, 
+                sexe: true, email: true, telephone: true
+            });
+            
+            if (!validation.isValid) {
+                return;
+            }
+        }
+        
+        if (currentStep < totalSteps) {
             setCurrentStep(currentStep + 1);
         }
     };
@@ -110,6 +191,15 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
             ...prev,
             patient: { ...prev.patient, [field]: value }
         }));
+
+        // Efase erè yo lè itilizatè ap tape
+        if (errors[field]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
+        }
     };
 
     const updateAdresseField = (field: string, value: string) => {
@@ -128,7 +218,14 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
         }));
     };
 
-    const addListItem = (listName: 'contacts' | 'assurances' | 'allergies' | 'antecedents', template: any) => {
+    const addListItem = (
+        listName: 'contacts' | 'assurances' | 'allergies' | 'antecedents',
+        template:
+            | { nom: string; telephone: string; relation: string }
+            | { nom_assurance: string; numero_police: string; date_expiration: string }
+            | { nom_allergie: string; description: string }
+            | { type_antecedent: string; description: string; date_debut: string; date_fin: string }
+    ) => {
         setFormData(prev => ({
             ...prev,
             [listName]: [...prev[listName], template]
@@ -142,25 +239,15 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
         }));
     };
 
-    const validateStep = (step: number): boolean => {
-        switch (step) {
-            case 1:
-                return !!(formData.patient.nom && formData.patient.prenom && formData.patient.date_naissance);
-            case 2:
-                return true; // Adresse facultative
-            case 3:
-                return true; // Contacts facultatifs
-            case 4:
-                return true; // Assurances facultatives
-            case 5:
-                return true; // Santé facultatif
-            default:
-                return true;
-        }
-    };
-
     const handleSubmit = () => {
-        if (validateStep(1)) { // Valider au moins les infos de base
+        const validation = validateStep1();
+        setErrors(validation.newErrors);
+        setTouched({
+            nom: true, prenom: true, date_naissance: true, 
+            sexe: true, email: true, telephone: true
+        });
+
+        if (validation.isValid) {
             onSave(formData, isModifying);
         }
     };
@@ -178,28 +265,47 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
 
     const formatTelephone = (value: string): string => {
         const cleaned = value.replace(/\D/g, '');
+        
+        // Si gen +509 deja, asire w li gen 8 chif apre
         if (cleaned.startsWith('509')) {
-            const formatted = cleaned.replace(/(\d{3})(\d{2})(\d{2})(\d{2})(\d{2})/, '+$1 $2 $3 $4 $5');
-            return formatted;
-        } else if (cleaned.length <= 8) {
-            const formatted = cleaned.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-            return formatted;
+            const numbersAfter509 = cleaned.slice(3);
+            if (numbersAfter509.length <= 8) {
+                const formatted = numbersAfter509.replace(/(\d{2})(?=\d)/g, '$1 ');
+                return `+509 ${formatted}`.trim();
+            }
         }
+        
+        // Si se 8 chif sèlman, ajoute +509
+        if (cleaned.length === 8) {
+            const formatted = cleaned.replace(/(\d{2})(?=\d)/g, '$1 ');
+            return `+509 ${formatted}`.trim();
+        }
+        
         return value;
     };
 
     const handleTelephoneChange = (value: string) => {
         let formatted = value;
-        if (!value.startsWith('+509') && value.length > 0) {
+        
+        // Si itilizatè ap efase, pa aji
+        if (value.length < 6) {
+            updatePatientField('telephone', value);
+            return;
+        }
+
+        // Fòma konsekan
+        if (!value.startsWith('+509')) {
             const cleaned = value.replace(/\D/g, '');
             if (cleaned.length <= 8) {
-                formatted = formatTelephone(cleaned);
+                formatted = `+509 ${cleaned.replace(/(\d{2})(?=\d)/g, '$1 ')}`.trim();
             } else {
-                formatted = '+509 ' + formatTelephone(cleaned.slice(-8));
+                // Sipoze gen +509 deja nan done yo
+                formatted = `+509 ${cleaned.slice(-8).replace(/(\d{2})(?=\d)/g, '$1 ')}`.trim();
             }
         } else {
             formatted = formatTelephone(value);
         }
+        
         updatePatientField('telephone', formatted);
     };
 
@@ -208,7 +314,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
         const selectedDate = new Date(date);
         const today = new Date();
         const minDate = new Date('1900-01-01');
-        
+
         if (field === 'date_naissance') {
             return selectedDate >= minDate && selectedDate <= today;
         }
@@ -218,6 +324,27 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
         return selectedDate >= minDate && selectedDate <= today;
     };
 
+    // Fonksyon pou jere chanjman dat ak eksperyans itilizatè pi bon
+    const handleDateChange = (value: string, field: string, callback: (value: string) => void) => {
+        if (validateDate(value, field)) {
+            callback(value);
+            // Efase erè si te genyen
+            if (errors[field]) {
+                setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors[field];
+                    return newErrors;
+                });
+            }
+        } else {
+            // Afiche erè imedyatman
+            setErrors(prev => ({
+                ...prev,
+                [field]: field === 'date_naissance' ? 'Date de naissance invalide' : 'Date expiration invalide'
+            }));
+        }
+    };
+
     const ProgressBar = () => (
         <div className="mb-6">
             <div className="flex justify-between mb-2">
@@ -225,18 +352,16 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                     <button
                         key={step}
                         onClick={() => setCurrentStep(step)}
-                        className={`flex flex-col items-center transition-all duration-200 ${
-                            step <= currentStep 
-                                ? 'text-blue-600 dark:text-blue-400' 
-                                : 'text-gray-400 dark:text-gray-500'
-                        }`}
+                        className={`flex flex-col items-center transition-all duration-200 ${step <= currentStep
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-gray-400 dark:text-gray-500'
+                            }`}
                     >
                         <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${
-                                step <= currentStep 
-                                    ? 'bg-blue-600 border-blue-600 text-white' 
-                                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
-                            }`}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${step <= currentStep
+                                ? 'bg-blue-600 border-blue-600 text-white'
+                                : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
+                                }`}
                         >
                             {step}
                         </div>
@@ -260,12 +385,14 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
     );
 
     const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
+    const errorInputClass = "w-full px-4 py-3 border border-red-500 dark:border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
+    const errorTextClass = "text-red-500 dark:text-red-400 text-sm mt-1";
 
     return (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center animate-fadeIn">
             <div className="absolute inset-0 bg-black/80" onClick={onClose}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl transform transition-all duration-300 scale-100 animate-slideUp z-[100000] mx-4">
-                
+
                 {/* Header - Fixed */}
                 <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                     <div className="flex justify-between items-center mb-4">
@@ -278,8 +405,8 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                             aria-label="Fermer"
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
                     </div>
@@ -293,7 +420,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                             <div className="space-y-6">
                                 <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
                                     <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-6">Informations Personnelles</h3>
-                                
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -303,10 +430,14 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 type="text"
                                                 value={formData.patient.nom}
                                                 onChange={(e) => updatePatientField('nom', e.target.value)}
-                                                className={inputClass}
+                                                onBlur={() => handleFieldBlur('nom')}
+                                                className={errors.nom && touched.nom ? errorInputClass : inputClass}
                                                 placeholder="Entrez le nom"
                                                 required
                                             />
+                                            {errors.nom && touched.nom && (
+                                                <div className={errorTextClass}>{errors.nom}</div>
+                                            )}
                                         </div>
 
                                         <div>
@@ -317,10 +448,14 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 type="text"
                                                 value={formData.patient.prenom}
                                                 onChange={(e) => updatePatientField('prenom', e.target.value)}
-                                                className={inputClass}
+                                                onBlur={() => handleFieldBlur('prenom')}
+                                                className={errors.prenom && touched.prenom ? errorInputClass : inputClass}
                                                 placeholder="Entrez le prénom"
                                                 required
                                             />
+                                            {errors.prenom && touched.prenom && (
+                                                <div className={errorTextClass}>{errors.prenom}</div>
+                                            )}
                                         </div>
 
                                         <div>
@@ -330,16 +465,20 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                             <input
                                                 type="date"
                                                 value={formData.patient.date_naissance}
-                                                onChange={(e) => {
-                                                    if (validateDate(e.target.value, 'date_naissance')) {
-                                                        updatePatientField('date_naissance', e.target.value);
-                                                    }
-                                                }}
-                                                className={inputClass}
+                                                onChange={(e) => handleDateChange(
+                                                    e.target.value, 
+                                                    'date_naissance', 
+                                                    (value) => updatePatientField('date_naissance', value)
+                                                )}
+                                                onBlur={() => handleFieldBlur('date_naissance')}
+                                                className={errors.date_naissance && touched.date_naissance ? errorInputClass : inputClass}
                                                 min="1900-01-01"
                                                 max={new Date().toISOString().split('T')[0]}
                                                 required
                                             />
+                                            {errors.date_naissance && touched.date_naissance && (
+                                                <div className={errorTextClass}>{errors.date_naissance}</div>
+                                            )}
                                         </div>
 
                                         <div>
@@ -349,11 +488,16 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                             <select
                                                 value={formData.patient.sexe}
                                                 onChange={(e) => updatePatientField('sexe', e.target.value)}
-                                                className={inputClass}
+                                                onBlur={() => handleFieldBlur('sexe')}
+                                                className={errors.sexe && touched.sexe ? errorInputClass : inputClass}
+                                                required
                                             >
                                                 <option value="M">Masculin</option>
                                                 <option value="F">Féminin</option>
                                             </select>
+                                            {errors.sexe && touched.sexe && (
+                                                <div className={errorTextClass}>{errors.sexe}</div>
+                                            )}
                                         </div>
 
                                         <div>
@@ -378,10 +522,17 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 type="tel"
                                                 value={formData.patient.telephone}
                                                 onChange={(e) => handleTelephoneChange(e.target.value)}
-                                                className={inputClass}
-                                                placeholder="+509 XX XX XX XX"
+                                                onBlur={() => handleFieldBlur('telephone')}
+                                                className={errors.telephone && touched.telephone ? errorInputClass : inputClass}
+                                                placeholder="+509 00 00 00 00"
                                                 maxLength={17}
                                             />
+                                            {errors.telephone && touched.telephone && (
+                                                <div className={errorTextClass}>{errors.telephone}</div>
+                                            )}
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Format: +509 suivie de 8 chiffres
+                                            </div>
                                         </div>
 
                                         <div>
@@ -392,9 +543,13 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 type="email"
                                                 value={formData.patient.email}
                                                 onChange={(e) => updatePatientField('email', e.target.value)}
-                                                className={inputClass}
+                                                onBlur={() => handleFieldBlur('email')}
+                                                className={errors.email && touched.email ? errorInputClass : inputClass}
                                                 placeholder="exemple@email.com"
                                             />
+                                            {errors.email && touched.email && (
+                                                <div className={errorTextClass}>{errors.email}</div>
+                                            )}
                                         </div>
 
                                         <div>
@@ -422,11 +577,12 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                             </div>
                         )}
 
+                        {/* Lòt etap yo... */}
                         {currentStep === 2 && (
                             <div className="space-y-6">
                                 <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
                                     <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-6">Adresse</h3>
-                                
+                                    
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -437,7 +593,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 value={formData.adresse.pays}
                                                 onChange={(e) => updateAdresseField('pays', e.target.value)}
                                                 className={inputClass}
-                                                placeholder="Haïti"
+                                                placeholder="Pays"
                                             />
                                         </div>
 
@@ -450,7 +606,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 value={formData.adresse.departement}
                                                 onChange={(e) => updateAdresseField('departement', e.target.value)}
                                                 className={inputClass}
-                                                placeholder="Ouest"
+                                                placeholder="Département"
                                             />
                                         </div>
 
@@ -463,7 +619,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 value={formData.adresse.ville}
                                                 onChange={(e) => updateAdresseField('ville', e.target.value)}
                                                 className={inputClass}
-                                                placeholder="Port-au-Prince"
+                                                placeholder="Ville"
                                             />
                                         </div>
 
@@ -476,7 +632,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 value={formData.adresse.code_postal}
                                                 onChange={(e) => updateAdresseField('code_postal', e.target.value)}
                                                 className={inputClass}
-                                                placeholder="HT6110"
+                                                placeholder="Code postal"
                                             />
                                         </div>
 
@@ -489,20 +645,20 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 value={formData.adresse.adresse_ligne1}
                                                 onChange={(e) => updateAdresseField('adresse_ligne1', e.target.value)}
                                                 className={inputClass}
-                                                placeholder="Rue principale"
+                                                placeholder="Adresse ligne 1"
                                             />
                                         </div>
 
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                Adresse ligne 2 (optionnel)
+                                                Adresse ligne 2
                                             </label>
                                             <input
                                                 type="text"
                                                 value={formData.adresse.adresse_ligne2}
                                                 onChange={(e) => updateAdresseField('adresse_ligne2', e.target.value)}
                                                 className={inputClass}
-                                                placeholder="Appartement, suite, etc."
+                                                placeholder="Adresse ligne 2 (optionnel)"
                                             />
                                         </div>
                                     </div>
@@ -513,77 +669,73 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                         {currentStep === 3 && (
                             <div className="space-y-6">
                                 <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300">Personnes à contacter</h3>
-                                        <button
-                                            type="button"
-                                            onClick={() => addListItem('contacts', { nom: '', telephone: '', relation: '' })}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                        >
-                                            Ajouter contact
-                                        </button>
-                                    </div>
-                                
-                                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                                        {formData.contacts.map((contact, index) => (
-                                            <div key={index} className="border border-purple-200 dark:border-purple-800 p-4 rounded-lg">
-                                                <div className="flex justify-between items-center mb-4">
-                                                    <h4 className="font-medium text-gray-800 dark:text-white/90">Contact {index + 1}</h4>
-                                                    {formData.contacts.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeListItem('contacts', index)}
-                                                            className="text-red-600 hover:text-red-700 transition-colors"
-                                                        >
-                                                            Supprimer
-                                                        </button>
-                                                    )}
+                                    <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-6">Contacts d'urgence</h3>
+                                    
+                                    {formData.contacts.map((contact, index) => (
+                                        <div key={index} className="border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-4">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h4 className="font-medium text-purple-700 dark:text-purple-300">Contact {index + 1}</h4>
+                                                {formData.contacts.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeListItem('contacts', index)}
+                                                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
+                                                    >
+                                                        Supprimer
+                                                    </button>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Nom
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={contact.nom}
+                                                        onChange={(e) => updateListField('contacts', index, 'nom', e.target.value)}
+                                                        className={inputClass}
+                                                        placeholder="Nom du contact"
+                                                    />
                                                 </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Nom
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={contact.nom}
-                                                            onChange={(e) => updateListField('contacts', index, 'nom', e.target.value)}
-                                                            className={inputClass}
-                                                            placeholder="Nom du contact"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Téléphone
-                                                        </label>
-                                                        <input
-                                                            type="tel"
-                                                            value={contact.telephone}
-                                                            onChange={(e) => {
-                                                                const formatted = formatTelephone(e.target.value);
-                                                                updateListField('contacts', index, 'telephone', formatted);
-                                                            }}
-                                                            className={inputClass}
-                                                            placeholder="+509 XX XX XX XX"
-                                                            maxLength={17}
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Relation
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={contact.relation}
-                                                            onChange={(e) => updateListField('contacts', index, 'relation', e.target.value)}
-                                                            className={inputClass}
-                                                            placeholder="Père, Mère, Époux..."
-                                                        />
-                                                    </div>
+                                                
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Téléphone
+                                                    </label>
+                                                    <input
+                                                        type="tel"
+                                                        value={contact.telephone}
+                                                        onChange={(e) => updateListField('contacts', index, 'telephone', e.target.value)}
+                                                        className={inputClass}
+                                                        placeholder="+509 00 00 00 00"
+                                                    />
+                                                </div>
+                                                
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Relation
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={contact.relation}
+                                                        onChange={(e) => updateListField('contacts', index, 'relation', e.target.value)}
+                                                        className={inputClass}
+                                                        placeholder="Relation (famille, ami...)"
+                                                    />
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    ))}
+                                    
+                                    <button
+                                        type="button"
+                                        onClick={() => addListItem('contacts', { nom: '', telephone: '', relation: '' })}
+                                        className="w-full py-3 border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                                    >
+                                        + Ajouter un autre contact
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -591,77 +743,77 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                         {currentStep === 4 && (
                             <div className="space-y-6">
                                 <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-lg font-semibold text-orange-800 dark:text-orange-300">Assurances</h3>
-                                        <button
-                                            type="button"
-                                            onClick={() => addListItem('assurances', { nom_assurance: '', numero_police: '', date_expiration: '' })}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                        >
-                                            Ajouter assurance
-                                        </button>
-                                    </div>
-                                
-                                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                                        {formData.assurances.map((assurance, index) => (
-                                            <div key={index} className="border border-orange-200 dark:border-orange-800 p-4 rounded-lg">
-                                                <div className="flex justify-between items-center mb-4">
-                                                    <h4 className="font-medium text-gray-800 dark:text-white/90">Assurance {index + 1}</h4>
-                                                    {formData.assurances.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeListItem('assurances', index)}
-                                                            className="text-red-600 hover:text-red-700 transition-colors"
-                                                        >
-                                                            Supprimer
-                                                        </button>
-                                                    )}
+                                    <h3 className="text-lg font-semibold text-orange-800 dark:text-orange-300 mb-6">Assurances</h3>
+                                    
+                                    {formData.assurances.map((assurance, index) => (
+                                        <div key={index} className="border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-4">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h4 className="font-medium text-orange-700 dark:text-orange-300">Assurance {index + 1}</h4>
+                                                {formData.assurances.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeListItem('assurances', index)}
+                                                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
+                                                    >
+                                                        Supprimer
+                                                    </button>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Nom de l'assurance
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={assurance.nom_assurance}
+                                                        onChange={(e) => updateListField('assurances', index, 'nom_assurance', e.target.value)}
+                                                        className={inputClass}
+                                                        placeholder="Nom de l'assurance"
+                                                    />
                                                 </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Nom de l'assurance
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={assurance.nom_assurance}
-                                                            onChange={(e) => updateListField('assurances', index, 'nom_assurance', e.target.value)}
-                                                            className={inputClass}
-                                                            placeholder="Nom de l'assurance"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Numéro de police
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={assurance.numero_police}
-                                                            onChange={(e) => updateListField('assurances', index, 'numero_police', e.target.value)}
-                                                            className={inputClass}
-                                                            placeholder="Numéro de police"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Date d'expiration
-                                                        </label>
-                                                        <input
-                                                            type="date"
-                                                            value={assurance.date_expiration}
-                                                            onChange={(e) => {
-                                                                if (validateDate(e.target.value, 'date_expiration')) {
-                                                                    updateListField('assurances', index, 'date_expiration', e.target.value);
-                                                                }
-                                                            }}
-                                                            className={inputClass}
-                                                            min={new Date().toISOString().split('T')[0]}
-                                                        />
-                                                    </div>
+                                                
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Numéro de police
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={assurance.numero_police}
+                                                        onChange={(e) => updateListField('assurances', index, 'numero_police', e.target.value)}
+                                                        className={inputClass}
+                                                        placeholder="Numéro de police"
+                                                    />
+                                                </div>
+                                                
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Date d'expiration
+                                                    </label>
+                                                    <input
+                                                        type="date"
+                                                        value={assurance.date_expiration}
+                                                        onChange={(e) => handleDateChange(
+                                                            e.target.value,
+                                                            'date_expiration',
+                                                            (value) => updateListField('assurances', index, 'date_expiration', value)
+                                                        )}
+                                                        className={inputClass}
+                                                        min={new Date().toISOString().split('T')[0]}
+                                                    />
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    ))}
+                                    
+                                    <button
+                                        type="button"
+                                        onClick={() => addListItem('assurances', { nom_assurance: '', numero_police: '', date_expiration: '' })}
+                                        className="w-full py-3 border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-lg text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors"
+                                    >
+                                        + Ajouter une autre assurance
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -670,159 +822,159 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                             <div className="space-y-6">
                                 <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg">
                                     <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-6">Informations de Santé</h3>
-                                
-                                    <div className="space-y-6">
-                                        <div>
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h4 className="font-medium text-gray-800 dark:text-white/90">Allergies</h4>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => addListItem('allergies', { nom_allergie: '', description: '' })}
-                                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                                >
-                                                    Ajouter allergie
-                                                </button>
-                                            </div>
+                                    
+                                    {/* Allergies */}
+                                    <div className="mb-8">
+                                        <h4 className="text-md font-semibold text-red-700 dark:text-red-400 mb-4">Allergies</h4>
                                         
-                                            <div className="space-y-4 max-h-48 overflow-y-auto">
-                                                {formData.allergies.map((allergie, index) => (
-                                                    <div key={index} className="border border-red-200 dark:border-red-800 p-4 rounded-lg">
-                                                        <div className="flex justify-between items-center mb-4">
-                                                            <h5 className="font-medium text-gray-800 dark:text-white/90">Allergie {index + 1}</h5>
-                                                            {formData.allergies.length > 1 && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => removeListItem('allergies', index)}
-                                                                    className="text-red-600 hover:text-red-700 transition-colors"
-                                                                >
-                                                                    Supprimer
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                                    Nom de l'allergie
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={allergie.nom_allergie}
-                                                                    onChange={(e) => updateListField('allergies', index, 'nom_allergie', e.target.value)}
-                                                                    className={inputClass}
-                                                                    placeholder="Pénicilline, Arachides..."
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                                    Description
-                                                                </label>
-                                                                <textarea
-                                                                    value={allergie.description}
-                                                                    onChange={(e) => updateListField('allergies', index, 'description', e.target.value)}
-                                                                    className={inputClass}
-                                                                    placeholder="Description des symptômes..."
-                                                                    rows={3}
-                                                                />
-                                                            </div>
-                                                        </div>
+                                        {formData.allergies.map((allergie, index) => (
+                                            <div key={index} className="border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <h5 className="font-medium text-red-600 dark:text-red-400">Allergie {index + 1}</h5>
+                                                    {formData.allergies.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeListItem('allergies', index)}
+                                                            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
+                                                        >
+                                                            Supprimer
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Nom de l'allergie
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={allergie.nom_allergie}
+                                                            onChange={(e) => updateListField('allergies', index, 'nom_allergie', e.target.value)}
+                                                            className={inputClass}
+                                                            placeholder="Nom de l'allergie"
+                                                        />
                                                     </div>
-                                                ))}
+                                                    
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Description
+                                                        </label>
+                                                        <textarea
+                                                            value={allergie.description}
+                                                            onChange={(e) => updateListField('allergies', index, 'description', e.target.value)}
+                                                            className={inputClass}
+                                                            placeholder="Description des symptômes ou réactions"
+                                                            rows={3}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-
-                                        <div>
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h4 className="font-medium text-gray-800 dark:text-white/90">Antécédents médicaux</h4>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => addListItem('antecedents', { type_antecedent: 'maladie', description: '', date_debut: '', date_fin: '' })}
-                                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                                >
-                                                    Ajouter antécédent
-                                                </button>
-                                            </div>
+                                        ))}
                                         
-                                            <div className="space-y-4 max-h-48 overflow-y-auto">
-                                                {formData.antecedents.map((antecedent, index) => (
-                                                    <div key={index} className="border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg">
-                                                        <div className="flex justify-between items-center mb-4">
-                                                            <h5 className="font-medium text-gray-800 dark:text-white/90">Antécédent {index + 1}</h5>
-                                                            {formData.antecedents.length > 1 && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => removeListItem('antecedents', index)}
-                                                                    className="text-red-600 hover:text-red-700 transition-colors"
-                                                                >
-                                                                    Supprimer
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                                    Type
-                                                                </label>
-                                                                <select
-                                                                    value={antecedent.type_antecedent}
-                                                                    onChange={(e) => updateListField('antecedents', index, 'type_antecedent', e.target.value)}
-                                                                    className={inputClass}
-                                                                >
-                                                                    <option value="maladie">Maladie</option>
-                                                                    <option value="chirurgie">Chirurgie</option>
-                                                                    <option value="autre">Autre</option>
-                                                                </select>
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                                    Description
-                                                                </label>
-                                                                <textarea
-                                                                    value={antecedent.description}
-                                                                    onChange={(e) => updateListField('antecedents', index, 'description', e.target.value)}
-                                                                    className={inputClass}
-                                                                    placeholder="Description de l'antécédent..."
-                                                                    rows={3}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                                    Date de début
-                                                                </label>
-                                                                <input
-                                                                    type="date"
-                                                                    value={antecedent.date_debut}
-                                                                    onChange={(e) => {
-                                                                        if (validateDate(e.target.value, 'date_debut')) {
-                                                                            updateListField('antecedents', index, 'date_debut', e.target.value);
-                                                                        }
-                                                                    }}
-                                                                    className={inputClass}
-                                                                    min="1900-01-01"
-                                                                    max={new Date().toISOString().split('T')[0]}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                                    Date de fin (optionnel)
-                                                                </label>
-                                                                <input
-                                                                    type="date"
-                                                                    value={antecedent.date_fin}
-                                                                    onChange={(e) => {
-                                                                        if (validateDate(e.target.value, 'date_fin')) {
-                                                                            updateListField('antecedents', index, 'date_fin', e.target.value);
-                                                                        }
-                                                                    }}
-                                                                    className={inputClass}
-                                                                    min="1900-01-01"
-                                                                    max={new Date().toISOString().split('T')[0]}
-                                                                />
-                                                            </div>
-                                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => addListItem('allergies', { nom_allergie: '', description: '' })}
+                                            className="w-full py-3 border-2 border-dashed border-red-300 dark:border-red-700 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors mb-6"
+                                        >
+                                            + Ajouter une autre allergie
+                                        </button>
+                                    </div>
+                                    
+                                    {/* Antécédents médicaux */}
+                                    <div>
+                                        <h4 className="text-md font-semibold text-red-700 dark:text-red-400 mb-4">Antécédents médicaux</h4>
+                                        
+                                        {formData.antecedents.map((antecedent, index) => (
+                                            <div key={index} className="border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <h5 className="font-medium text-red-600 dark:text-red-400">Antécédent {index + 1}</h5>
+                                                    {formData.antecedents.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeListItem('antecedents', index)}
+                                                            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
+                                                        >
+                                                            Supprimer
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Type d'antécédent
+                                                        </label>
+                                                        <select
+                                                            value={antecedent.type_antecedent}
+                                                            onChange={(e) => updateListField('antecedents', index, 'type_antecedent', e.target.value)}
+                                                            className={inputClass}
+                                                        >
+                                                            <option value="maladie">Maladie</option>
+                                                            <option value="chirurgie">Chirurgie</option>
+                                                            <option value="traitement">Traitement</option>
+                                                            <option value="familial">Antécédent familial</option>
+                                                            <option value="autre">Autre</option>
+                                                        </select>
                                                     </div>
-                                                ))}
+                                                    
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Description
+                                                        </label>
+                                                        <textarea
+                                                            value={antecedent.description}
+                                                            onChange={(e) => updateListField('antecedents', index, 'description', e.target.value)}
+                                                            className={inputClass}
+                                                            placeholder="Description de l'antécédent médical"
+                                                            rows={3}
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Date de début
+                                                        </label>
+                                                        <input
+                                                            type="date"
+                                                            value={antecedent.date_debut}
+                                                            onChange={(e) => handleDateChange(
+                                                                e.target.value,
+                                                                'date_debut',
+                                                                (value) => updateListField('antecedents', index, 'date_debut', value)
+                                                            )}
+                                                            className={inputClass}
+                                                            max={new Date().toISOString().split('T')[0]}
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Date de fin
+                                                        </label>
+                                                        <input
+                                                            type="date"
+                                                            value={antecedent.date_fin}
+                                                            onChange={(e) => handleDateChange(
+                                                                e.target.value,
+                                                                'date_fin',
+                                                                (value) => updateListField('antecedents', index, 'date_fin', value)
+                                                            )}
+                                                            className={inputClass}
+                                                            max={new Date().toISOString().split('T')[0]}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ))}
+                                        
+                                        <button
+                                            type="button"
+                                            onClick={() => addListItem('antecedents', { type_antecedent: 'maladie', description: '', date_debut: '', date_fin: '' })}
+                                            className="w-full py-3 border-2 border-dashed border-red-300 dark:border-red-700 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                                        >
+                                            + Ajouter un autre antécédent
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -837,11 +989,10 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                             type="button"
                             onClick={prevStep}
                             disabled={currentStep === 1}
-                            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                                currentStep === 1
-                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
-                                    : 'bg-gray-600 text-white hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500'
-                            }`}
+                            className={`px-6 py-3 rounded-lg font-medium transition-colors ${currentStep === 1
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
+                                : 'bg-gray-600 text-white hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500'
+                                }`}
                         >
                             Précédent
                         </button>
@@ -859,9 +1010,9 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                 <button
                                     type="button"
                                     onClick={handleSubmit}
-                                    disabled={!validateStep(1)}
+                                    disabled={!isStep1Valid()}
                                     className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                                        validateStep(1)
+                                        isStep1Valid()
                                             ? 'bg-green-600 text-white hover:bg-green-700'
                                             : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                                     }`}
@@ -872,9 +1023,9 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                 <button
                                     type="button"
                                     onClick={nextStep}
-                                    disabled={!validateStep(currentStep)}
+                                    disabled={!isStep1Valid()}
                                     className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                                        validateStep(currentStep)
+                                        isStep1Valid()
                                             ? 'bg-blue-600 text-white hover:bg-blue-700'
                                             : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                                     }`}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { rendezVousService } from './services/RendezVousService';
-import { RendezVousModal } from './components/RendezVousModal';
+import { RendezVousProgressForm } from './components/RendezVousProgressForm';
 import { 
   RendezVous, 
   RendezVousFormData, 
@@ -44,6 +44,8 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
   const [showModal, setShowModal] = useState(false);
   const [editingRendezVous, setEditingRendezVous] = useState<RendezVous | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [deletingId, setDeletingId] = useState<number | undefined>();
   const [types, setTypes] = useState<RendezVousType[]>([]);
   const [statuts, setStatuts] = useState<RendezVousStatut[]>([]);
@@ -61,9 +63,13 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
     const statistics = rendezVousService.obtenirStatistiques(tenantId);
     setRendezVous(data);
     setStats(statistics);
+    console.log('Données chargées:', data);
+    console.log('Statistiques:', statistics);
   };
 
-  const handleSave = (formData: RendezVousFormData) => {
+  const handleSave = (formData: RendezVousFormData, isModifying: boolean) => {
+    console.log('Données reçues dans handleSave:', formData);
+    
     let result;
     
     if (editingRendezVous) {
@@ -72,12 +78,16 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
       result = rendezVousService.creerRendezVous(formData, tenantId);
     }
 
+    console.log('Résultat sauvegarde:', result);
+
     if (result.success) {
-      loadData();
-      setShowModal(false);
+      loadData(); // Recharger les données
+      setShowModal(false); // Fermer le modal
       setEditingRendezVous(null);
+      showSuccess(isModifying ? 'Rendez-vous modifié avec succès' : 'Rendez-vous créé avec succès');
     } else {
       console.error('Erreur:', result.errors);
+      showSuccess('Erreur: ' + (result.errors?.join(', ') || 'Action échouée'), true);
     }
   };
 
@@ -96,10 +106,21 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
       const result = rendezVousService.supprimerRendezVous(deletingId);
       if (result.success) {
         loadData();
+        showSuccess('Rendez-vous supprimé avec succès');
+      } else {
+        showSuccess('Erreur lors de la suppression', true);
       }
     }
     setShowDeleteModal(false);
     setDeletingId(undefined);
+  };
+
+  const showSuccess = (message: string, isError: boolean = false) => {
+    setSuccessMessage(message);
+    setShowSuccessModal(true);
+    setTimeout(() => {
+      setShowSuccessModal(false);
+    }, 3000);
   };
 
   const filteredRendezVous = rendezVous.filter(rdv => {
@@ -114,7 +135,7 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
     return matchesSearch && matchesStatut && matchesType && matchesDate;
   });
 
-  const _totalPages = Math.ceil(filteredRendezVous.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredRendezVous.length / itemsPerPage);
   const currentRendezVous = filteredRendezVous.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -162,12 +183,8 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
     }
   };
 
-
-
   return (
     <div className="space-y-6">
-
-
       {/* STATISTIQUES */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="p-4 bg-blue-50 rounded-lg text-center">
@@ -186,7 +203,6 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
           <div className="text-2xl font-bold text-gray-700">{stats.termine}</div>
           <div className="text-sm text-gray-900">Terminé</div>
         </div>
-        {/* Ou ka ajoute stats.annule, stats.aujourdhui, stats.cette_semaine si ou vle */}
       </div>
 
       {/* Contrôles */}
@@ -203,7 +219,10 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
 
           <div className="relative group">
             <button 
-              onClick={() => setShowModal(true)}
+              onClick={() => {
+                setEditingRendezVous(null);
+                setShowModal(true);
+              }}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -212,10 +231,6 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
               </svg>
               Nouveau Rendez-vous
             </button>
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap shadow-lg">
-              Créer un nouveau rendez-vous
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-            </div>
           </div>
         </div>
 
@@ -238,7 +253,9 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
               className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
             >
               {statutOptions.map(statut => (
-                <option key={statut} value={statut}>{statut === 'Tous' ? 'Tous' : statuts.find(s => s.statut_id.toString() === statut)?.nom}</option>
+                <option key={statut} value={statut}>
+                  {statut === 'Tous' ? 'Tous' : statuts.find(s => s.statut_id.toString() === statut)?.nom}
+                </option>
               ))}
             </select>
 
@@ -248,7 +265,9 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
               className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
             >
               {typeOptions.map(type => (
-                <option key={type} value={type}>{type === 'Tous' ? 'Tous' : types.find(t => t.type_id.toString() === type)?.nom}</option>
+                <option key={type} value={type}>
+                  {type === 'Tous' ? 'Tous' : types.find(t => t.type_id.toString() === type)?.nom}
+                </option>
               ))}
             </select>
 
@@ -333,12 +352,12 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
                   </TableCell>
                   <TableCell className="py-3">
                     <Badge size="sm" color={getTypeColor(types.find(t => t.type_id === rdv.type_id)?.nom || '')}>
-                      {types.find(t => t.type_id === rdv.type_id)?.nom}
+                      {types.find(t => t.type_id === rdv.type_id)?.nom || 'Non spécifié'}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3">
                     <Badge size="sm" color={getStatutColor(statuts.find(s => s.statut_id === rdv.statut_id)?.nom || '')}>
-                      {statuts.find(s => s.statut_id === rdv.statut_id)?.nom}
+                      {statuts.find(s => s.statut_id === rdv.statut_id)?.nom || 'Non spécifié'}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3">
@@ -383,18 +402,25 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
         </div>
       </div>
 
-      {/* Modal RendezVous */}
-      <RendezVousModal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setEditingRendezVous(null);
-        }}
-        onSave={handleSave}
-        rendezVous={editingRendezVous}
-        types={types}
-        statuts={statuts}
-      />
+      {/* Modal RendezVous Progress */}
+      {showModal && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl h-[95vh]">
+            <RendezVousProgressForm
+              tenantId={tenantId}
+              onSave={handleSave}
+              onClose={() => {
+                setShowModal(false);
+                setEditingRendezVous(null);
+              }}
+              rendezVousId={editingRendezVous?.rendez_vous_id}
+              onSuccess={(message) => {
+                console.log('Success callback:', message);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Modal de suppression */}
       {showDeleteModal && (
@@ -429,6 +455,39 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
                 Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de succès */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-600 dark:text-green-400">
+                  <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  Succès
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {successMessage}
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                OK
               </button>
             </div>
           </div>

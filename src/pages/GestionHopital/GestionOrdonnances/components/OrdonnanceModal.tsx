@@ -68,7 +68,8 @@ export const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({
       if (isModifying && ordonnanceId) {
         result = ordonnanceService.modifierOrdonnance(ordonnanceId, formData);
       } else {
-        result = ordonnanceService.creerOrdonnance(formData, _tenantId);
+        // Itilize tenantId ki pase kòm prop la
+        result = ordonnanceService.creerOrdonnance(formData, tenantId);
       }
 
       if (result.success) {

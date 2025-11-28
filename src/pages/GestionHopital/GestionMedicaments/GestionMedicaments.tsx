@@ -78,6 +78,14 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | "mouvement" | null>(null);
   const [selectedMedicament, setSelectedMedicament] = useState<Medicament | null>(null);
   const [selectedMouvementType, setSelectedMouvementType] = useState<TypeMouvement>("Entrée");
+
+  // Nouvo eta pou notifikasyon
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+  }>({ isOpen: false, title: '', message: '', type: 'success' });
   
   const itemsPerPage = 10;
 
@@ -152,9 +160,22 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
     if (selectedMedicament) {
       const result = medicamentService.supprimerMedicament(selectedMedicament.medicament_id);
       if (result.success) {
+        setNotification({
+          isOpen: true,
+          title: 'Suppression réussie',
+          message: `Le médicament "${selectedMedicament.nom}" a été supprimé avec succès.`,
+          type: 'success'
+        });
         loadData();
         setModalType(null);
         setSelectedMedicament(null);
+      } else {
+        setNotification({
+          isOpen: true,
+          title: 'Erreur',
+          message: result.errors?.join(', ') || 'Une erreur est survenue lors de la suppression',
+          type: 'error'
+        });
       }
     }
   };
@@ -176,6 +197,14 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
   };
 
   const handleSaveMouvement = () => {
+    if (selectedMedicament) {
+      setNotification({
+        isOpen: true,
+        title: 'Mouvement enregistré',
+        message: `Mouvement de stock pour "${selectedMedicament.nom}" a été enregistré avec succès.`,
+        type: 'success'
+      });
+    }
     loadData();
     closeModal();
   };
@@ -264,8 +293,6 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
             ))}
           </nav>
         </div>
-
-
 
         {/* Barre de recherche et filtres */}
         <div className="flex flex-col gap-4 mb-6 lg:flex-row">
@@ -578,12 +605,38 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                 if (isModifying && selectedMedicament) {
                   const result = medicamentService.modifierMedicament(selectedMedicament.medicament_id, formData);
                   if (result.success) {
+                    setNotification({
+                      isOpen: true,
+                      title: 'Modification réussie',
+                      message: 'Le médicament a été modifié avec succès.',
+                      type: 'success'
+                    });
                     handleSaveMedicament();
+                  } else {
+                    setNotification({
+                      isOpen: true,
+                      title: 'Erreur',
+                      message: result.errors?.join(', ') || 'Une erreur est survenue lors de la modification',
+                      type: 'error'
+                    });
                   }
                 } else {
                   const result = medicamentService.creerMedicament(formData, tenantId);
                   if (result.success) {
+                    setNotification({
+                      isOpen: true,
+                      title: 'Création réussie',
+                      message: 'Le médicament a été créé avec succès.',
+                      type: 'success'
+                    });
                     handleSaveMedicament();
+                  } else {
+                    setNotification({
+                      isOpen: true,
+                      title: 'Erreur',
+                      message: result.errors?.join(', ') || 'Une erreur est survenue lors de la création',
+                      type: 'error'
+                    });
                   }
                 }
               }}
@@ -616,6 +669,51 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
           medicament={selectedMedicament}
           onClose={closeModal}
         />
+      )}
+
+      {/* Modal Notifikasyon - Itilize DeleteModal ki deja egziste a */}
+      {notification.isOpen && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                notification.type === 'success' 
+                  ? 'bg-green-100 dark:bg-green-900/20' 
+                  : 'bg-red-100 dark:bg-red-900/20'
+              }`}>
+                {notification.type === 'success' ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-600 dark:text-green-400">
+                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-red-600 dark:text-red-400">
+                    <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" 
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {notification.title}
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {notification.message}
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setNotification({ isOpen: false, title: '', message: '', type: 'success' })}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -880,18 +978,18 @@ function MouvementStockModal({
   onClose: () => void;
 }) {
   const [formData, setFormData] = useState({
-    quantite: 0,
+    quantite: 1,
     motif: '',
     reference: '',
     prix_unitaire: type === "Entrée" ? medicament.prix_achat || 0 : medicament.prix_vente || 0,
-    date_peremption: '',
-    lot_number: '',
+    date_peremption: medicament.date_peremption || '',
+    lot_number: medicament.lot_number || '',
     fournisseur: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.quantite > 0) {
+    if (formData.quantite > 0 && formData.motif.trim()) {
       console.log('Mouvement de stock:', {
         medicament_id: medicament.medicament_id,
         type,
@@ -901,14 +999,42 @@ function MouvementStockModal({
     }
   };
 
+  const inputClass = "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500";
+
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden">
+        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            {type} de Stock
-          </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-full ${
+              type === "Entrée" 
+                ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+                : "bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400"
+            }`}>
+              {type === "Entrée" ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 6V18M12 6L7 11M12 6L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 6V18M12 18L7 13M12 18L17 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                {type === "Entrée" ? "Entrée de Stock" : "Sortie de Stock"}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {medicament.nom} - {medicament.code}
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -916,78 +1042,108 @@ function MouvementStockModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="mb-4">
-            <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mb-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Médicament:</p>
-              <p className="font-medium text-gray-900 dark:text-white">{medicament.nom}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Stock actuel: {medicament.stock_actuel} {medicament.unite_stock}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Quantité *
-              </label>
-              <input
-                type="number"
-                required
-                min="1"
-                max={type === "Sortie" ? medicament.stock_actuel : undefined}
-                value={formData.quantite}
-                onChange={(e) => setFormData(prev => ({ ...prev, quantite: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="Quantité à ajouter/retirer"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Motif *
-              </label>
-              <select
-                required
-                value={formData.motif}
-                onChange={(e) => setFormData(prev => ({ ...prev, motif: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              >
-                <option value="">Sélectionner un motif...</option>
-                {type === "Entrée" ? [
-                  <option key="achat" value="Achat">Achat</option>,
-                  <option key="don" value="Don">Don</option>,
-                  <option key="retour" value="Retour">Retour</option>,
-                  <option key="correction" value="Correction">Correction d'inventaire</option>
-                ] : [
-                  <option key="vente" value="Vente">Vente</option>,
-                  <option key="prescription" value="Prescription">Prescription</option>,
-                  <option key="perime" value="Périmé">Médicament périmé</option>,
-                  <option key="perte" value="Perte">Perte/Casse</option>,
-                  <option key="correction" value="Correction">Correction d'inventaire</option>
-                ]}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Référence
-              </label>
-              <input
-                type="text"
-                value={formData.reference}
-                onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                placeholder="Numéro de facture, bon de commande..."
-              />
-            </div>
-
-            {type === "Entrée" && (
-              <>
+        {/* Body */}
+        <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Informations du médicament */}
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <h4 className="font-medium text-gray-800 dark:text-white/90 mb-2">Informations du stock</h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Prix unitaire
+                  <span className="text-gray-500 dark:text-gray-400">Stock actuel:</span>
+                  <p className="font-medium text-gray-800 dark:text-white/90">
+                    {medicament.stock_actuel} {medicament.unite_stock}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Stock après:</span>
+                  <p className={`font-medium ${
+                    type === "Entrée" 
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-orange-600 dark:text-orange-400"
+                  }`}>
+                    {type === "Entrée" 
+                      ? (medicament.stock_actuel || 0) + formData.quantite
+                      : (medicament.stock_actuel || 0) - formData.quantite
+                    } {medicament.unite_stock}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Champs obligatoires */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Quantité <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  max={type === "Sortie" ? medicament.stock_actuel : undefined}
+                  value={formData.quantite}
+                  onChange={(e) => setFormData(prev => ({ ...prev, quantite: parseInt(e.target.value) || 1 }))}
+                  className={inputClass}
+                  placeholder="Quantité"
+                />
+                {type === "Sortie" && formData.quantite > (medicament.stock_actuel || 0) && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Stock insuffisant. Maximum: {medicament.stock_actuel}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Motif <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.motif}
+                  onChange={(e) => setFormData(prev => ({ ...prev, motif: e.target.value }))}
+                  className={inputClass}
+                >
+                  <option value="">Sélectionner un motif...</option>
+                  {type === "Entrée" ? [
+                    <option key="achat" value="Achat">Achat</option>,
+                    <option key="don" value="Don">Don</option>,
+                    <option key="retour" value="Retour">Retour patient</option>,
+                    <option key="inventaire" value="Inventaire">Correction d'inventaire</option>,
+                    <option key="autre" value="Autre">Autre</option>
+                  ] : [
+                    <option key="vente" value="Vente">Vente</option>,
+                    <option key="prescription" value="Prescription">Prescription</option>,
+                    <option key="perime" value="Périmé">Médicament périmé</option>,
+                    <option key="perte" value="Perte">Perte/Casse</option>,
+                    <option key="inventaire" value="Inventaire">Correction d'inventaire</option>,
+                    <option key="autre" value="Autre">Autre</option>
+                  ]}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Référence
+                </label>
+                <input
+                  type="text"
+                  value={formData.reference}
+                  onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
+                  className={inputClass}
+                  placeholder="Numéro de facture, bon de commande..."
+                />
+              </div>
+            </div>
+
+            {/* Champs spécifiques pour entrée */}
+            {type === "Entrée" && (
+              <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                <h4 className="font-medium text-gray-800 dark:text-white/90">Informations d'achat</h4>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Prix unitaire (€)
                   </label>
                   <input
                     type="number"
@@ -995,69 +1151,86 @@ function MouvementStockModal({
                     min="0"
                     value={formData.prix_unitaire}
                     onChange={(e) => setFormData(prev => ({ ...prev, prix_unitaire: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className={inputClass}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Date de péremption
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.date_peremption}
-                    onChange={(e) => setFormData(prev => ({ ...prev, date_peremption: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Numéro de lot
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.lot_number}
+                      onChange={(e) => setFormData(prev => ({ ...prev, lot_number: e.target.value }))}
+                      className={inputClass}
+                      placeholder="Ex: LOT2024001"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Date péremption
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.date_peremption}
+                      onChange={(e) => setFormData(prev => ({ ...prev, date_peremption: e.target.value }))}
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Numéro de lot
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.lot_number}
-                    onChange={(e) => setFormData(prev => ({ ...prev, lot_number: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Ex: LOT2024001"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Fournisseur
                   </label>
                   <input
                     type="text"
                     value={formData.fournisseur}
                     onChange={(e) => setFormData(prev => ({ ...prev, fournisseur: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className={inputClass}
                     placeholder="Nom du fournisseur"
                   />
                 </div>
-              </>
-            )}
-          </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+                {formData.prix_unitaire > 0 && formData.quantite > 0 && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                      Coût total: <span className="font-medium">{(formData.quantite * formData.prix_unitaire).toFixed(2)} €</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+              className="px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className={`px-4 py-2 rounded-lg text-white ${
-                type === "Entrée" ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
+              onClick={handleSubmit}
+              disabled={formData.quantite <= 0 || !formData.motif.trim() || (type === "Sortie" && formData.quantite > (medicament.stock_actuel || 0))}
+              className={`px-4 py-2.5 rounded-lg text-white font-medium transition-colors ${
+                type === "Entrée" 
+                  ? "bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed"
+                  : "bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 disabled:cursor-not-allowed"
               }`}
             >
               Confirmer {type}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -1160,4 +1333,3 @@ function ViewModal({ medicament, onClose }: { medicament: Medicament, onClose: (
     </div>
   );
 }
-

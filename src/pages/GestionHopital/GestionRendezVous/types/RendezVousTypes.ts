@@ -37,14 +37,32 @@ export const TYPES_CONSULTATION: TypeConsultation[] = [
   "Consultation", "Contrôle", "Urgence", "Suivi", "Téléconsultation"
 ];
 
+export const MOYENS_PAIEMENT = ["Espèces", "Carte bancaire", "Chèque", "Virement", "Assurance"];
+export const SALLES_CONSULTATION = ["Salle 101", "Salle 102", "Salle 103", "Salle 201", "Salle 202"];
+export const DUREES_CONSULTATION = [15, 30, 45, 60, 90, 120];
+export const HEURES_CONSULTATION = ["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];
+
 // Interfaces pou forms ak modals
 export interface RendezVousFormData {
   patient_id: number;
+  patient_nom: string;
+  patient_email: string;
+  patient_phone: string;
   medecin_id: number;
+  medecin_nom: string;
+  specialite: string;
   date_heure: string;
   type_id: number | null;
+  type_nom: string;
   statut_id: number;
+  statut_nom: string;
   motif: string;
+  duree: number;
+  salle: string;
+  prix: number;
+  notes: string;
+  moyen_paiement?: string;
+  assurance_validee: boolean;
 }
 
 export interface RendezVousFilters {
@@ -63,4 +81,24 @@ export interface RendezVousStats {
   annule: number;
   aujourdhui: number;
   cette_semaine: number;
+}
+
+// Interfaces pou rechèch ak données simule
+export interface Patient {
+  patient_id: number;
+  nom: string;
+  email: string;
+  telephone: string;
+  date_naissance?: string;
+  adresse?: string;
+  assurance?: string;
+}
+
+export interface Medecin {
+  medecin_id: number;
+  nom: string;
+  specialite: string;
+  telephone: string;
+  email: string;
+  disponibilite?: string[];
 }

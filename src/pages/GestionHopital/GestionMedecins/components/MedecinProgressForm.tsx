@@ -34,10 +34,97 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
   const [selectedSpecialites, setSelectedSpecialites] = useState<number[]>([]);
   const [selectedSpecialite, setSelectedSpecialite] = useState<number | ''>('');
   const [dragActive, setDragActive] = useState(false);
+  const [identificationType, setIdentificationType] = useState<'CIN' | 'NIF'>('CIN');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const specialites = medecinService.obtenirSpecialites();
   const isModifying = !!medecinId;
+
+  // Fonksyon pou kalkile date minimim ak maksimim
+  const getDateConstraints = () => {
+    const today = new Date();
+    const minDate = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate()); // 100 ane de sa
+    const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()); // 18 ane de sa (laj minimim pou doktè)
+    
+    return {
+      min: minDate.toISOString().split('T')[0],
+      max: maxDate.toISOString().split('T')[0]
+    };
+  };
+
+  const dateConstraints = getDateConstraints();
+
+  // Fonksyon pou valide CIN/NIF selon fòma ayisyen
+  const validateNumeroIdentification = (value: string, type: 'CIN' | 'NIF'): boolean => {
+    if (type === 'CIN') {
+      // CIN: 1234-5678-9012 (12 chif ak tirè)
+      const cinRegex = /^\d{4}-\d{4}-\d{4}$/;
+      return cinRegex.test(value);
+    } else {
+      // NIF: 1234567890 (10 chif)
+      const nifRegex = /^\d{10}$/;
+      return nifRegex.test(value);
+    }
+  };
+
+  // Fonksyon pou valide nimewo telefòn ayisyen
+  const validateTelephone = (value: string): boolean => {
+    // Fòma: +509 3123 4567 oubyen 50931234567
+    const phoneRegex = /^(?:\+509|509)\s?\d{2}\s?\d{2}\s?\d{4}$/;
+    return phoneRegex.test(value.replace(/\s/g, ''));
+  };
+
+  // Fonksyon pou valide email
+  const validateEmail = (value: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value);
+  };
+
+  // Fonksyon pou fòmate CIN/NIF otomatikman
+  const formatNumeroIdentification = (value: string, type: 'CIN' | 'NIF'): string => {
+    // Retire tout karaktè ki pa chif
+    const numericValue = value.replace(/\D/g, '');
+    
+    if (type === 'CIN') {
+      // Fòma CIN: 1234-5678-9012
+      if (numericValue.length <= 4) {
+        return numericValue;
+      } else if (numericValue.length <= 8) {
+        return `${numericValue.slice(0, 4)}-${numericValue.slice(4)}`;
+      } else {
+        return `${numericValue.slice(0, 4)}-${numericValue.slice(4, 8)}-${numericValue.slice(8, 12)}`;
+      }
+    } else {
+      // NIF: 10 chif san fòma
+      return numericValue.slice(0, 10);
+    }
+  };
+
+  // Fonksyon pou fòmate telefòn otomatikman
+  const formatTelephone = (value: string): string => {
+    // Retire tout karaktè ki pa chif
+    const numericValue = value.replace(/\D/g, '');
+    
+    // Si kòmanse ak 509, retire li epi ajoute +509
+    let formattedValue = numericValue;
+    if (numericValue.startsWith('509')) {
+      formattedValue = numericValue.slice(3);
+    }
+    
+    // Limite a 8 chif (apre +509)
+    formattedValue = formattedValue.slice(0, 8);
+    
+    // Fòmate: +509 XX XX XXXX
+    if (formattedValue.length <= 2) {
+      return `+509 ${formattedValue}`;
+    } else if (formattedValue.length <= 4) {
+      return `+509 ${formattedValue.slice(0, 2)} ${formattedValue.slice(2)}`;
+    } else if (formattedValue.length <= 6) {
+      return `+509 ${formattedValue.slice(0, 2)} ${formattedValue.slice(2, 4)} ${formattedValue.slice(4)}`;
+    } else {
+      return `+509 ${formattedValue.slice(0, 2)} ${formattedValue.slice(2, 4)} ${formattedValue.slice(4, 8)}`;
+    }
+  };
 
   useEffect(() => {
     if (medecinId) {
@@ -59,6 +146,15 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
           }
         });
         setSelectedSpecialites(medecin.specialites_secondaires || []);
+        
+        // Detèmine type idantifikasyon selon fòma
+        if (medecin.numero_identification) {
+          if (medecin.numero_identification.includes('-')) {
+            setIdentificationType('CIN');
+          } else {
+            setIdentificationType('NIF');
+          }
+        }
       }
     }
   }, [medecinId]);
@@ -80,9 +176,15 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.medecin.nom && formData.medecin.prenom && formData.medecin.date_naissance);
+        return !!(formData.medecin.nom.trim() && 
+                 formData.medecin.prenom.trim() && 
+                 formData.medecin.date_naissance &&
+                 validateNumeroIdentification(formData.medecin.numero_identification, identificationType));
       case 2:
-        return !!(formData.medecin.telephone && formData.medecin.email_professionnel && formData.medecin.numero_identification);
+        return !!(formData.medecin.telephone.trim() && 
+                 formData.medecin.email_professionnel.trim() &&
+                 validateTelephone(formData.medecin.telephone) &&
+                 validateEmail(formData.medecin.email_professionnel));
       case 3:
         return !!formData.medecin.specialite_principale_id;
       default:
@@ -104,6 +206,22 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
         [field]: value
       }
     }));
+  };
+
+  const handleNumeroIdentificationChange = (value: string) => {
+    const formattedValue = formatNumeroIdentification(value, identificationType);
+    handleInputChange('numero_identification', formattedValue);
+  };
+
+  const handleTelephoneChange = (value: string) => {
+    const formattedValue = formatTelephone(value);
+    handleInputChange('telephone', formattedValue);
+  };
+
+  const handleIdentificationTypeChange = (type: 'CIN' | 'NIF') => {
+    setIdentificationType(type);
+    // Reset valè a lè chanje type
+    handleInputChange('numero_identification', '');
   };
 
   const handleFileUpload = (file: File) => {
@@ -243,65 +361,7 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                   <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-6">Informations Personnelles</h3>
                 
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Nom <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.medecin.nom}
-                          onChange={(e) => handleInputChange('nom', e.target.value)}
-                          className={inputClass}
-                          placeholder="Entrez le nom de famille"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Prénom <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.medecin.prenom}
-                          onChange={(e) => handleInputChange('prenom', e.target.value)}
-                          className={inputClass}
-                          placeholder="Entrez le prénom"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Sexe <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          value={formData.medecin.sexe}
-                          onChange={(e) => handleInputChange('sexe', e.target.value)}
-                          className={inputClass}
-                          required
-                        >
-                          <option value="M">Masculin</option>
-                          <option value="F">Féminin</option>
-                          <option value="Autre">Autre</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Date de naissance <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          value={formData.medecin.date_naissance}
-                          onChange={(e) => handleInputChange('date_naissance', e.target.value)}
-                          className={inputClass}
-                          required
-                        />
-                      </div>
-                    </div>
-
+                    {/* Foto a deplase anlè */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Photo du médecin
@@ -359,6 +419,134 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                         />
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Nom <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.medecin.nom}
+                          onChange={(e) => handleInputChange('nom', e.target.value)}
+                          className={inputClass}
+                          placeholder="Entrez le nom de famille"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Prénom <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.medecin.prenom}
+                          onChange={(e) => handleInputChange('prenom', e.target.value)}
+                          className={inputClass}
+                          placeholder="Entrez le prénom"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Sexe <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={formData.medecin.sexe}
+                          onChange={(e) => handleInputChange('sexe', e.target.value)}
+                          className={inputClass}
+                          required
+                        >
+                          <option value="M">Masculin</option>
+                          <option value="F">Féminin</option>
+                          <option value="Autre">Autre</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Date de naissance <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.medecin.date_naissance}
+                          onChange={(e) => handleInputChange('date_naissance', e.target.value)}
+                          className={inputClass}
+                          min={dateConstraints.min}
+                          max={dateConstraints.max}
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Doit être entre {dateConstraints.min} et {dateConstraints.max}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Numéro d'identification <span className="text-red-500">*</span>
+                      </label>
+                      <div className="space-y-3">
+                        {/* Seleksyon type ID */}
+                        <div className="flex gap-4">
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="identificationType"
+                              value="CIN"
+                              checked={identificationType === 'CIN'}
+                              onChange={(e) => handleIdentificationTypeChange('CIN')}
+                              className="mr-2"
+                            />
+                            CIN
+                          </label>
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="identificationType"
+                              value="NIF"
+                              checked={identificationType === 'NIF'}
+                              onChange={(e) => handleIdentificationTypeChange('NIF')}
+                              className="mr-2"
+                            />
+                            NIF
+                          </label>
+                        </div>
+
+                        {/* Champ nimewo ID */}
+                        <input
+                          type="text"
+                          value={formData.medecin.numero_identification}
+                          onChange={(e) => handleNumeroIdentificationChange(e.target.value)}
+                          className={inputClass}
+                          placeholder={
+                            identificationType === 'CIN' 
+                              ? "Ex: 1234-5678-9012" 
+                              : "Ex: 1234567890"
+                          }
+                          required
+                        />
+                        
+                        {/* Mesaj gid */}
+                        <p className="text-xs text-gray-500">
+                          {identificationType === 'CIN' 
+                            ? "Format: 12 chiffres avec tirets (1234-5678-9012)" 
+                            : "Format: 10 chiffres sans tirets (1234567890)"}
+                        </p>
+
+                        {/* Mesaj erè */}
+                        {formData.medecin.numero_identification && 
+                         !validateNumeroIdentification(formData.medecin.numero_identification, identificationType) && (
+                          <p className="text-red-500 text-xs">
+                            {identificationType === 'CIN' 
+                              ? "Le CIN doit être au format 1234-5678-9012" 
+                              : "Le NIF doit contenir exactement 10 chiffres"}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -378,11 +566,21 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                         <input
                           type="tel"
                           value={formData.medecin.telephone}
-                          onChange={(e) => handleInputChange('telephone', e.target.value)}
+                          onChange={(e) => handleTelephoneChange(e.target.value)}
                           className={inputClass}
-                          placeholder="Ex: +509 3123 4567"
+                          placeholder="Ex: +509 31 23 4567"
                           required
                         />
+                        {formData.medecin.telephone && !validateTelephone(formData.medecin.telephone) && (
+                          <p className="text-red-500 text-xs mt-1">
+                            Format: +509 suivi de 8 chiffres (ex: +509 31 23 4567)
+                          </p>
+                        )}
+                        {formData.medecin.telephone && validateTelephone(formData.medecin.telephone) && (
+                          <p className="text-green-500 text-xs mt-1">
+                            Format téléphone valide
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -393,38 +591,33 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                           value={formData.medecin.email_professionnel}
                           onChange={(e) => handleInputChange('email_professionnel', e.target.value)}
                           className={inputClass}
-                          placeholder="dr.nom@hopital.com"
+                          placeholder="dr.nom@hopital.ht"
                           required
                         />
+                        {formData.medecin.email_professionnel && !validateEmail(formData.medecin.email_professionnel) && (
+                          <p className="text-red-500 text-xs mt-1">
+                            Format email invalide (ex: nom@domaine.com)
+                          </p>
+                        )}
+                        {formData.medecin.email_professionnel && validateEmail(formData.medecin.email_professionnel) && (
+                          <p className="text-green-500 text-xs mt-1">
+                            Format email valide
+                          </p>
+                        )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Numéro d'identification <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.medecin.numero_identification}
-                          onChange={(e) => handleInputChange('numero_identification', e.target.value)}
-                          className={inputClass}
-                          placeholder="Ex: 123456789012"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Matricule professionnel
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.medecin.numero_matricule_professionnel}
-                          onChange={(e) => handleInputChange('numero_matricule_professionnel', e.target.value)}
-                          className={inputClass}
-                          placeholder="Ex: MED001 (optionnel)"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Matricule professionnel
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.medecin.numero_matricule_professionnel}
+                        onChange={(e) => handleInputChange('numero_matricule_professionnel', e.target.value)}
+                        className={inputClass}
+                        placeholder="Ex: MED001 (optionnel)"
+                      />
                     </div>
                   </div>
                 </div>

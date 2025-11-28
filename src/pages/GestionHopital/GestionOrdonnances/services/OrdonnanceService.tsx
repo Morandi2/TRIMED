@@ -179,7 +179,7 @@ export class OrdonnanceService {
     this.saveToStorage();
   }
 
-  creerOrdonnance(formData: OrdonnanceFormData, _tenantId: number): { success: boolean; data?: Ordonnance; errors?: string[] } {
+  creerOrdonnance(formData: OrdonnanceFormData, tenantId: number): { success: boolean; data?: Ordonnance; errors?: string[] } {
     const errors: string[] = [];
 
     if (!formData.ordonnance.consultation_id) errors.push("Consultation est requise");
@@ -194,7 +194,7 @@ export class OrdonnanceService {
       const nouvelleOrdonnance: Ordonnance = {
         ...formData.ordonnance,
         ordonnance_id: Date.now(),
-        tenant_id: tenantId,
+        tenant_id: tenantId, // Itilize tenantId ki pase kòm paramèt
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -208,8 +208,8 @@ export class OrdonnanceService {
     }
   }
 
-  obtenirOrdonnancesParTenant(_tenantId: number): Ordonnance[] {
-    return this.ordonnances.filter(o => o.tenant_id === _tenantId);
+  obtenirOrdonnancesParTenant(tenantId: number): Ordonnance[] {
+    return this.ordonnances.filter(o => o.tenant_id === tenantId);
   }
 
   obtenirOrdonnance(ordonnanceId: number): Ordonnance | null {

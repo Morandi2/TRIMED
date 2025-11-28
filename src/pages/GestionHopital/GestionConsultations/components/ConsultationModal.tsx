@@ -64,33 +64,38 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
+
+  
   const handleSave = (formData: ConsultationFormData, isModifying: boolean) => {
-    try {
-      let result;
-      if (isModifying && consultationId) {
-        result = consultationService.modifierConsultation(consultationId, formData);
-      } else {
-        result = consultationService.creerConsultation(formData, _tenantId);
-      }
-
-      if (result.success) {
-        if (result.data) {
-          onSave(result.data);
-        } else if (consultationId) {
-          const updatedConsultation = consultationService.obtenirConsultation(consultationId);
-          if (updatedConsultation) {
-            onSave(updatedConsultation);
-          }
-        }
-        onClose();
-      } else {
-        console.error('Erreurs de validation:', result.errors);
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
+  try {
+    let result;
+    if (isModifying && consultationId) {
+      result = consultationService.modifierConsultation(consultationId, formData);
+    } else {
+      // ✅ Koreksyon: Pase tenantId kòm yon paramèt separe
+      result = consultationService.creerConsultation(formData, tenantId);
     }
-  };
 
+    if (result.success) {
+      if (result.data) {
+        onSave(result.data);
+      } else if (consultationId) {
+        const updatedConsultation = consultationService.obtenirConsultation(consultationId);
+        if (updatedConsultation) {
+          onSave(updatedConsultation);
+        }
+      }
+      onClose();
+    } else {
+      console.error('Erreurs de validation:', result.errors);
+      // ✅ Afiche erè a pou itilizatè a
+      alert('Erreurs: ' + (result.errors?.join(', ') || 'Erreur inconnue'));
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur lors de la sauvegarde');
+  }
+};
   if (!isOpen) return null;
 
   return (

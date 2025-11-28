@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   RendezVousFormData, 
   RendezVous,
@@ -6,22 +6,24 @@ import {
   TYPES_CONSULTATION,
   MOYENS_PAIEMENT,
   SALLES_CONSULTATION,
-  DUREES_CONSULTATION,
-  HEURES_CONSULTATION
+  DUREES_CONSULTATION
 } from '../types/RendezVousTypes';
+import { SearchableSelect } from './SearchableSelect';
 
 interface RendezVousProgressFormProps {
   tenantId: number;
   onSave: (formData: RendezVousFormData, isModifying: boolean) => void;
   onClose: () => void;
   rendezVousId?: number;
+  onSuccess?: (message: string) => void;
 }
 
 export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
   tenantId,
   onSave,
   onClose,
-  rendezVousId
+  rendezVousId,
+  onSuccess
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<RendezVousFormData>({
@@ -48,55 +50,197 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
 
   const [isModifying, setIsModifying] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedPatientName, setSelectedPatientName] = useState('');
+  const [selectedMedecinName, setSelectedMedecinName] = useState('');
 
   useEffect(() => {
     if (rendezVousId) {
       setIsModifying(true);
-      // Charger les données du rendez-vous existant
+      // Simulation de chargement des données existantes
+      const existingData = {
+        patient_id: 1,
+        patient_nom: 'Jean Dupont',
+        patient_email: 'jean.dupont@email.com',
+        patient_phone: '+509 48 12 34 56',
+        medecin_id: 1,
+        medecin_nom: 'Dr. Marie Cassandre',
+        specialite: 'Cardiologie',
+        date_heure: new Date().toISOString().split('T')[0] + 'T10:00',
+        type_id: 1,
+        type_nom: 'Consultation',
+        statut_id: 1,
+        statut_nom: 'Programmé',
+        motif: 'Consultation de routine',
+        duree: 30,
+        salle: 'Salle 101',
+        prix: 1500,
+        notes: 'Patient régulier',
+        moyen_paiement: 'Espèces',
+        assurance_validee: true
+      };
+      setFormData(existingData);
+      setSelectedPatientName('Jean Dupont');
+      setSelectedMedecinName('Dr. Marie Cassandre');
     } else {
       setIsModifying(false);
+      // Reset form data for new appointment
+      setFormData({
+        patient_id: 0,
+        patient_nom: '',
+        patient_email: '',
+        patient_phone: '',
+        medecin_id: 0,
+        medecin_nom: '',
+        specialite: '',
+        date_heure: new Date().toISOString().split('T')[0] + 'T09:00',
+        type_id: 1,
+        type_nom: 'Consultation',
+        statut_id: 1,
+        statut_nom: 'Programmé',
+        motif: '',
+        duree: 30,
+        salle: 'Salle 101',
+        prix: 0,
+        notes: '',
+        moyen_paiement: undefined,
+        assurance_validee: false
+      });
+      setSelectedPatientName('');
+      setSelectedMedecinName('');
     }
   }, [rendezVousId]);
 
+  // Ecouter les événements pour le pré-remplissage
+  useEffect(() => {
+    const handlePatientSelected = (event: CustomEvent) => {
+      const { patient_id, patient_nom, patient_email, patient_phone } = event.detail;
+      setFormData(prev => ({
+        ...prev,
+        patient_id,
+        patient_nom,
+        patient_email,
+        patient_phone
+      }));
+      setSelectedPatientName(patient_nom);
+    };
+
+    const handleMedecinSelected = (event: CustomEvent) => {
+      const { medecin_id, medecin_nom, specialite } = event.detail;
+      setFormData(prev => ({
+        ...prev,
+        medecin_id,
+        medecin_nom,
+        specialite
+      }));
+      setSelectedMedecinName(medecin_nom);
+    };
+
+    window.addEventListener('patientSelected', handlePatientSelected as EventListener);
+    window.addEventListener('medecinSelected', handleMedecinSelected as EventListener);
+
+    return () => {
+      window.removeEventListener('patientSelected', handlePatientSelected as EventListener);
+      window.removeEventListener('medecinSelected', handleMedecinSelected as EventListener);
+    };
+  }, []);
+
   const totalSteps = 4;
+
+  const validateStep = useCallback((step: number): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    switch (step) {
+      case 1:
+        if (!formData.patient_nom?.trim()) newErrors.patient_nom = "Nom du patient requis";
+        if (!formData.patient_phone?.trim()) newErrors.patient_phone = "Téléphone requis";
+        break;
+      case 2:
+        if (!formData.medecin_nom?.trim()) newErrors.medecin_nom = "Nom du médecin requis";
+        if (!formData.date_heure) newErrors.date_heure = "Date et heure requises";
+        break;
+      case 3:
+        if (!formData.motif?.trim()) newErrors.motif = "Motif requis";
+        if (!formData.salle?.trim()) newErrors.salle = "Salle requise";
+        break;
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return false;
+    }
+    
+    return true;
+  }, [formData]);
 
   const nextStep = () => {
     if (currentStep < totalSteps && validateStep(currentStep)) {
       setCurrentStep(currentStep + 1);
+      setErrors({});
     }
   };
 
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      setErrors({});
     }
   };
 
   const updateRendezVousField = (field: keyof RendezVousFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
-  const validateStep = (step: number): boolean => {
-    switch (step) {
-      case 1:
-        return !!(formData.patient_nom && formData.patient_phone);
-      case 2:
-        return !!(formData.medecin_nom && formData.date_heure);
-      case 3:
-        return !!(formData.motif && formData.salle);
-      case 4:
-        return true;
-      default:
-        return true;
+  const handlePatientChange = (patientName: string, patientId?: number) => {
+    setSelectedPatientName(patientName);
+    if (patientId) {
+      updateRendezVousField('patient_id', patientId);
+      updateRendezVousField('patient_nom', patientName);
+    }
+  };
+
+  const handleMedecinChange = (medecinName: string, medecinId?: number) => {
+    setSelectedMedecinName(medecinName);
+    if (medecinId) {
+      updateRendezVousField('medecin_id', medecinId);
+      updateRendezVousField('medecin_nom', medecinName);
     }
   };
 
   const handleSubmit = () => {
-    if (validateStep(1) && validateStep(2) && validateStep(3)) {
-      onSave(formData, isModifying);
+    console.log('Soumission du formulaire avec données:', formData);
+    
+    // Valider tout les étapes avant de soumettre
+    const step1Valid = validateStep(1);
+    const step2Valid = validateStep(2);
+    const step3Valid = validateStep(3);
+
+    console.log('Validation étapes:', { step1Valid, step2Valid, step3Valid });
+
+    if (step1Valid && step2Valid && step3Valid) {
+      console.log('Toutes les validations passent, appel de onSave');
+      
+      // Prepare data for service
+      const submitData = {
+        ...formData,
+        patient_id: formData.patient_id || 1,
+        medecin_id: formData.medecin_id || 1,
+        type_id: formData.type_id || 1,
+        statut_id: formData.statut_id || 1
+      };
+      
+      onSave(submitData, isModifying);
+      if (onSuccess) {
+        onSuccess(isModifying ? 'Rendez-vous modifié avec succès' : 'Rendez-vous créé avec succès');
+      }
+    } else {
+      console.log('Validations échouées');
     }
   };
 
@@ -106,7 +250,12 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
         {[1, 2, 3, 4].map(step => (
           <button
             key={step}
-            onClick={() => setCurrentStep(step)}
+            onClick={() => {
+              if (validateStep(currentStep)) {
+                setCurrentStep(step);
+                setErrors({});
+              }
+            }}
             className={`flex flex-col items-center transition-all duration-200 ${
               step <= currentStep 
                 ? 'text-blue-600 dark:text-blue-400' 
@@ -142,6 +291,21 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
 
   const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
 
+  const isStepValid = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        return !!(formData.patient_nom?.trim() && formData.patient_phone?.trim());
+      case 2:
+        return !!(formData.medecin_nom?.trim() && formData.date_heure);
+      case 3:
+        return !!(formData.motif?.trim() && formData.salle?.trim());
+      case 4:
+        return true;
+      default:
+        return true;
+    }
+  };
+
   return (
     <div className="w-full h-[90vh] flex flex-col">
       <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700">
@@ -170,18 +334,18 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
                 <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-6">Informations Patient</h3>
               
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Nom du patient <span className="text-red-500">*</span>
+                      Rechercher un patient <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={formData.patient_nom}
-                      onChange={(e) => updateRendezVousField('patient_nom', e.target.value)}
-                      placeholder="Ex: Jean Dupont"
-                      className={inputClass}
-                      required
+                    <SearchableSelect
+                      value={selectedPatientName}
+                      onChange={handlePatientChange}
+                      type="patient"
+                      required={true}
+                      placeholder="Rechercher par nom, téléphone ou email..."
                     />
+                    {errors.patient_nom && <p className="text-red-500 text-sm mt-1">{errors.patient_nom}</p>}
                   </div>
 
                   <div>
@@ -193,12 +357,12 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
                       value={formData.patient_phone}
                       onChange={(e) => updateRendezVousField('patient_phone', e.target.value)}
                       placeholder="+509 48 12 34 56"
-                      className={inputClass}
-                      required
+                      className={`${inputClass} ${errors.patient_phone ? 'border-red-500' : ''}`}
                     />
+                    {errors.patient_phone && <p className="text-red-500 text-sm mt-1">{errors.patient_phone}</p>}
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Email
                     </label>
@@ -221,18 +385,18 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
                 <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-6">Médecin et Horaire</h3>
               
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Médecin <span className="text-red-500">*</span>
+                      Rechercher un médecin <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={formData.medecin_nom}
-                      onChange={(e) => updateRendezVousField('medecin_nom', e.target.value)}
-                      placeholder="Dr. Marie Laurent"
-                      className={inputClass}
-                      required
+                    <SearchableSelect
+                      value={selectedMedecinName}
+                      onChange={handleMedecinChange}
+                      type="medecin"
+                      required={true}
+                      placeholder="Rechercher par nom, spécialité ou téléphone..."
                     />
+                    {errors.medecin_nom && <p className="text-red-500 text-sm mt-1">{errors.medecin_nom}</p>}
                   </div>
 
                   <div>
@@ -245,6 +409,7 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
                       onChange={(e) => updateRendezVousField('specialite', e.target.value)}
                       placeholder="Cardiologie"
                       className={inputClass}
+                      readOnly
                     />
                   </div>
 
@@ -256,9 +421,9 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
                       type="datetime-local"
                       value={formData.date_heure}
                       onChange={(e) => updateRendezVousField('date_heure', e.target.value)}
-                      className={inputClass}
-                      required
+                      className={`${inputClass} ${errors.date_heure ? 'border-red-500' : ''}`}
                     />
+                    {errors.date_heure && <p className="text-red-500 text-sm mt-1">{errors.date_heure}</p>}
                   </div>
 
                   <div>
@@ -308,12 +473,13 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
                     <select
                       value={formData.salle}
                       onChange={(e) => updateRendezVousField('salle', e.target.value)}
-                      className={inputClass}
+                      className={`${inputClass} ${errors.salle ? 'border-red-500' : ''}`}
                     >
                       {SALLES_CONSULTATION.map(salle => (
                         <option key={salle} value={salle}>{salle}</option>
                       ))}
                     </select>
+                    {errors.salle && <p className="text-red-500 text-sm mt-1">{errors.salle}</p>}
                   </div>
 
                   <div className="md:col-span-2">
@@ -325,9 +491,9 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
                       onChange={(e) => updateRendezVousField('motif', e.target.value)}
                       rows={3}
                       placeholder="Décrivez le motif de la consultation..."
-                      className={inputClass}
-                      required
+                      className={`${inputClass} ${errors.motif ? 'border-red-500' : ''}`}
                     />
+                    {errors.motif && <p className="text-red-500 text-sm mt-1">{errors.motif}</p>}
                   </div>
 
                   <div className="md:col-span-2">
@@ -444,9 +610,9 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!validateStep(1) || !validateStep(2) || !validateStep(3)}
+                disabled={!isStepValid(1) || !isStepValid(2) || !isStepValid(3)}
                 className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  validateStep(1) && validateStep(2) && validateStep(3)
+                  isStepValid(1) && isStepValid(2) && isStepValid(3)
                     ? 'bg-green-600 text-white hover:bg-green-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                 }`}
@@ -457,9 +623,9 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
               <button
                 type="button"
                 onClick={nextStep}
-                disabled={!validateStep(currentStep)}
+                disabled={!isStepValid(currentStep)}
                 className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  validateStep(currentStep)
+                  isStepValid(currentStep)
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                 }`}
