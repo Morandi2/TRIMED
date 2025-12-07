@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { UserProvider } from "./context/UserContext";
+import { TenantProvider } from "./context/TenantContext";
 // import SignIn from "./pages/AuthPages/SignIn";
 // import SignUp from "./pages/AuthPages/SignUp";
 // import NotFound from "./pages/OtherPage/NotFound";
@@ -17,7 +19,7 @@ import FormElements from "./pages/Forms/FormElements";
 import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import Home from "./pages/Dashboard/Home";
+import RoleBasedHome from "./pages/Dashboard/RoleBasedHome";
 import Utilisateur from "./pages/Dashboard/Utilisateur";
 import Patient from "./pages/GestionHopital/Patient";
 import Consultation from "./pages/GestionHopital/Consultation";
@@ -29,18 +31,20 @@ import Connexion from "./components/auth/Connexion";
 import NotFound from "./pages/OtherPage/NotFound";
 import Index from "./pages/index/Index";
 import RendezVous from "./pages/GestionHopital/Rendezvous";
+import Configuration from "./pages/GestionHopital/Configuration";
 
 
 export default function App() {
   return (
-    <>
-      <Router>
+    <TenantProvider>
+      <UserProvider>
+        <Router>
         <ScrollToTop />
         <Routes>
           <Route index path="/" element={<Index />}  ></Route>
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
-            <Route index path="/home" element={<Home />} />
+            <Route index path="/home" element={<RoleBasedHome />} />
             <Route index path="/Utilisateur" element={<Utilisateur />} />
             <Route path="/patient" element={<Patient />} />
 
@@ -74,6 +78,7 @@ export default function App() {
             <Route path="/ordonnance" element={<Ordonnance />} />
             <Route path="/paiement" element={<Paiement />} />
             <Route path="/rendezvous" element={<RendezVous />} />
+            <Route path="/configuration" element={<Configuration />} />
           </Route>
           {/* Auth Layout */}
           {/* <Route path="/signin" element={<SignIn />} />
@@ -84,11 +89,9 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
 
-      </Router>
-
-
-
-    </>
+        </Router>
+      </UserProvider>
+    </TenantProvider>
 
   );
 }

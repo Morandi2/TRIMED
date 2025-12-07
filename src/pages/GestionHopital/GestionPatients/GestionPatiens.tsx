@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Patient, patientService, Hopital, PatientFormData } from './services/PatientService';
+import { useUser } from '../../../context/UserContext';
 import { PatientProgressForm } from './components/PatientProgressForm';
 import { PatientTable } from './components/PatientTable';
 import { PatientStats } from './components/PatientStats';
@@ -183,38 +184,40 @@ const GestionPatients: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Tooltip text="Ajouter un nouveau patient" position="bottom">
-              <button 
-                onClick={handleAddPatient}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+          {useUser().permissions.canEditPatients && (
+            <div className="flex items-center gap-3">
+              <Tooltip text="Ajouter un nouveau patient" position="bottom">
+                <button 
+                  onClick={handleAddPatient}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
                 >
-                  <path
-                    d="M8 3.33331V12.6666"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M3.33301 8H12.6663"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Nouveau Patient
-              </button>
-            </Tooltip>
-          </div>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M8 3.33331V12.6666"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M3.33301 8H12.6663"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Nouveau Patient
+                </button>
+              </Tooltip>
+            </div>
+          )}
         </div>
 
         {/* STATISTIQUES ANLÈ */}

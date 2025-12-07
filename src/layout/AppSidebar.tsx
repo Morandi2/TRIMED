@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
-import { Asterisk, CalendarPlus2, CreditCard, Pill, ScanHeart, Stethoscope, TableIcon, UserRound} from 'lucide-react';
+import { Asterisk, CalendarPlus2, CreditCard, Pill, ScanHeart, Stethoscope, TableIcon, UserRound, Users} from 'lucide-react';
+import { useUser } from "../context/UserContext";
 
 // Assume these icons are imported from an icon library
 import {
@@ -24,7 +25,7 @@ type NavItem = {
   icon: React.ReactNode;
   path?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
-  
+  permission?: keyof import('../types/userRoles').UserPermissions;
 };
 
 // Menu
@@ -32,51 +33,62 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [{ name: "Statistiques", path: "/", pro: false },
-                { name: "Utilisateurs", path: "/Utilisateur", pro: true },
-    ],
-    
+    path: "/home",
+    permission: 'canViewDashboard',
+  },
+  {
+    icon: <Users />,
+    name: "Utilisateurs",
+    path: "/Utilisateur",
+    permission: 'canManageUsers',
   },
   {
     icon: <CalenderIcon />,
     name: "Calendrier",
     path: "/calendar",
-
+    permission: 'canViewCalendar',
   },
   {
-    icon: <UserRound />, // Patient
+    icon: <UserRound />,
     name: "Patient",
     path: "/patient",
+    permission: 'canViewPatients',
   },
   {
-    icon: <ScanHeart />, // Medecin
+    icon: <ScanHeart />,
     name: "Medecin",
     path: "/Medecin",
+    permission: 'canViewMedecins',
   },
   {
-    icon: <Stethoscope />, // Consultation
+    icon: <Stethoscope />,
     name: "Consultation",
     path: "/consultation",
+    permission: 'canViewConsultations',
   },
   {
-    icon: <Asterisk />, // Ordonnance
+    icon: <Asterisk />,
     name: "Ordonnance",
     path: "/ordonnance",
+    permission: 'canViewOrdonnances',
   },
   {
-    icon: <Pill />, // Medicament
+    icon: <Pill />,
     name: "Medicament",
     path: "/medicament",
+    permission: 'canViewMedicaments',
   },
   {
-    icon: <CalendarPlus2 />, // Rendez-vous
+    icon: <CalendarPlus2 />,
     name: "Rendez-vous",
     path: "/rendezvous",
+    permission: 'canViewRendezVous',
   },
   {
-    icon: <CreditCard />, // Paiement
+    icon: <CreditCard />,
     name: "Paiement",
     path: "/paiement",
+    permission: 'canViewPaiements',
   },
   // {
   //   icon: <Pill />,
@@ -153,6 +165,7 @@ const othersItems: NavItem[] = [
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { permissions } = useUser();
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
@@ -219,9 +232,15 @@ const AppSidebar: React.FC = () => {
     });
   };
 
-  const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
+  const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => {
+    const filteredItems = items.filter(nav => {
+      if (!nav.permission) return true;
+      return permissions[nav.permission];
+    });
+
+    return (
     <ul className="flex flex-col gap-4">
-      {items.map((nav, index) => (
+      {filteredItems.map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
             <button
@@ -340,7 +359,8 @@ const AppSidebar: React.FC = () => {
         </li>
       ))}
     </ul>
-  );
+    );
+  };
 
   return (
     <aside
