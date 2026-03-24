@@ -1,13 +1,15 @@
- 
+
 import React from 'react';
 
 interface PatientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
-  children: React.ReactNode;
+  title?: string;
+  children?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showCloseButton?: boolean;
+  patient?: any;
+  patientComplet?: any;
 }
 
 export const PatientModal: React.FC<PatientModalProps> = ({
@@ -57,13 +59,13 @@ export const PatientModal: React.FC<PatientModalProps> = ({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fadeIn">
       {/* Overlay avec z-index élevé */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300" 
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
         onClick={handleBackdropClick}
       ></div>
-      
+
       {/* Modal container avec z-index plus élevé */}
-      <div 
+      <div
         className={`relative bg-white dark:bg-gray-800 rounded-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden shadow-2xl transform transition-all duration-300 scale-100 animate-slideUp z-[10000]`}
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -71,19 +73,19 @@ export const PatientModal: React.FC<PatientModalProps> = ({
             {title}
           </h3>
           {showCloseButton && (
-            <button 
+            <button
               onClick={onClose}
               className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               aria-label="Fermer"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           )}
         </div>
-        
+
         {/* Container avec scroll interne */}
         <div className="overflow-y-auto bg-white dark:bg-gray-800" style={{ maxHeight: 'calc(90vh - 80px)' }}>
           <div className="p-6">
@@ -118,11 +120,11 @@ export const PatientDetailModal: React.FC<PatientModalProps> = ({
     const birthDate = new Date(dateNaissance);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    
+
     return age;
   };
 

@@ -6,11 +6,13 @@ interface MedicamentStatsProps {
 }
 
 export const MedicamentStats: React.FC<MedicamentStatsProps> = ({ medicaments }) => {
+  const safeMedicaments = Array.isArray(medicaments) ? medicaments : [];
+  
   const stats = {
-    total: medicaments.length,
-    disponible: medicaments.filter(m => m.statut === "Disponible").length,
-    stockBas: medicaments.filter(m => m.statut === "Stock bas").length,
-    rupture: medicaments.filter(m => m.statut === "Rupture").length
+    total: safeMedicaments.length,
+    disponible: safeMedicaments.filter(m => m.statut_stock?.niveau === "normal").length,
+    stockBas: safeMedicaments.filter(m => m.statut_stock?.niveau === "faible").length,
+    rupture: safeMedicaments.filter(m => m.statut_stock?.niveau === "rupture").length
   };
 
   return (

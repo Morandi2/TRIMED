@@ -4,7 +4,9 @@ import { Utilisateur, UtilisateurFormData, UtilisateurRole, UtilisateurStatut } 
 interface UtilisateurModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: UtilisateurFormData) => void;
+  onSave: (data: UtilisateurFormData) => Promise<void>;
+  serverErrors?: Record<string, string>;
+  generalError?: string;
   utilisateur?: Utilisateur | null;
   roles: UtilisateurRole[];
   statuts: UtilisateurStatut[];
@@ -14,67 +16,93 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  serverErrors,
+  generalError,
   utilisateur,
   roles,
   statuts
 }) => {
   const [formData, setFormData] = useState<UtilisateurFormData>({
-    nom: '',
-    prenom: '',
+    nom_complet: '',
     email: '',
-    telephone: '',
-    role_id: 1,
+    password: '',
+    password_confirm: '',
+    role_id: 2, // Défaut : Médecin
     statut_id: 1
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
+    if (serverErrors) {
+      setErrors(serverErrors);
+    }
+  }, [serverErrors]);
+
+  useEffect(() => {
+    setErrors({});
     if (utilisateur) {
       setFormData({
-        nom: utilisateur.nom,
-        prenom: utilisateur.prenom,
+        nom_complet: utilisateur.nom_complet || `${utilisateur.prenom} ${utilisateur.nom}`.trim(),
         email: utilisateur.email,
-        telephone: utilisateur.telephone || '',
+        password: '',
+        password_confirm: '',
         role_id: utilisateur.role_id,
         statut_id: utilisateur.statut_id
       });
     } else {
       setFormData({
-        nom: '',
-        prenom: '',
+        nom_complet: '',
         email: '',
-        telephone: '',
-        role_id: 1,
+        password: '',
+        password_confirm: '',
+        role_id: 2,
         statut_id: 1
       });
     }
   }, [utilisateur, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.nom_complet) newErrors.nom_complet = 'Le nom complet est obligatoire.';
+    if (!formData.email) newErrors.email = 'L\'email est obligatoire.';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email invalide.';
+
+    if (!utilisateur) { // Seulement pour la création
+      if (!formData.password) newErrors.password = 'Le mot de passe est obligatoire.';
+      else if (formData.password.length < 8) newErrors.password = 'Le mot de passe doit faire au moins 8 caractères.';
+      
+      if (formData.password !== formData.password_confirm) {
+        newErrors.password_confirm = 'Les mots de passe ne correspondent pas.';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    if (!validate()) return;
+    
+    setIsSubmitting(true);
+    try {
+      await onSave(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleNomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^a-zA-Z\s\u00C0-\u017F]/g, '');
-    setFormData(prev => ({ ...prev, nom: value }));
-  };
-
-  const handlePrenomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^a-zA-Z\s\u00C0-\u017F]/g, '');
-    setFormData(prev => ({ ...prev, prenom: value }));
+  const handleNomCompletChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, nom_complet: e.target.value }));
+    if (errors.nom_complet) setErrors(prev => ({ ...prev, nom_complet: '' }));
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase().replace(/[^a-z0-9@._-]/g, '');
     setFormData(prev => ({ ...prev, email: value }));
-  };
-
-  const handleTelephoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^0-9+\s-]/g, '');
-    if (value && !value.startsWith('+')) {
-      value = '+509 ' + value;
-    }
-    setFormData(prev => ({ ...prev, telephone: value }));
+    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
   };
 
   if (!isOpen) return null;
@@ -88,6 +116,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
           </h3>
           <button
             onClick={onClose}
+            type="button"
             className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -97,33 +126,23 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Nom *
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Entrez le nom"
-                value={formData.nom}
-                onChange={handleNomChange}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
-              />
+          {(generalError || serverErrors?.detail || serverErrors?.non_field_errors) && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg dark:bg-red-900/20 dark:text-red-400">
+              {generalError || serverErrors?.detail || serverErrors?.non_field_errors}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Prénom *
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Entrez le prénom"
-                value={formData.prenom}
-                onChange={handlePrenomChange}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
-              />
-            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Nom complet *
+            </label>
+            <input
+              type="text"
+              placeholder="Entrez le nom complet"
+              value={formData.nom_complet}
+              onChange={handleNomCompletChange}
+              className={`w-full rounded-lg border ${errors.nom_complet ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
+            />
+            {errors.nom_complet && <p className="mt-1 text-xs text-red-500">{errors.nom_complet}</p>}
           </div>
 
           <div>
@@ -132,26 +151,42 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
             </label>
             <input
               type="email"
-              required
               placeholder="exemple@hopital.com"
               value={formData.email}
               onChange={handleEmailChange}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
+              className={`w-full rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
             />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Téléphone
-            </label>
-            <input
-              type="tel"
-              placeholder="+509 1234-5678"
-              value={formData.telephone}
-              onChange={handleTelephoneChange}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
-            />
-          </div>
+          {!utilisateur && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Mot de passe *
+                </label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
+                  className={`w-full rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                />
+                {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Confirmer *
+                </label>
+                <input
+                  type="password"
+                  value={formData.password_confirm}
+                  onChange={(e) => setFormData(p => ({ ...p, password_confirm: e.target.value }))}
+                  className={`w-full rounded-lg border ${errors.password_confirm ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                />
+                {errors.password_confirm && <p className="mt-1 text-xs text-red-500">{errors.password_confirm}</p>}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -193,15 +228,17 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
             <button
               type="button"
               onClick={onClose}
+              disabled={isSubmitting}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              disabled={isSubmitting}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {utilisateur ? 'Modifier' : 'Créer'}
+              {isSubmitting ? 'Chargement...' : (utilisateur ? 'Modifier' : 'Créer')}
             </button>
           </div>
         </form>

@@ -52,28 +52,31 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
   };
 
   useEffect(() => {
-    if (ordonnanceId) {
-      setIsModifying(true);
-      const ordonnance = ordonnanceService.obtenirOrdonnance(ordonnanceId);
-      if (ordonnance) {
-        setFormData({
-          ordonnance: {
-            consultation_id: ordonnance.consultation_id,
-            patient_id: ordonnance.patient_id,
-            medecin_id: ordonnance.medecin_id,
-            date_ordonnance: ordonnance.date_ordonnance.replace('T', 'T').slice(0, 16),
-            recommandations: ordonnance.recommandations || '',
-            validite: ordonnance.validite,
-            prescriptions: ordonnance.prescriptions || []
-          }
-        });
-        setSelectedConsultationName(ordonnanceService.obtenirConsultationInfo(ordonnance.consultation_id));
-        setSelectedPatientName(ordonnanceService.obtenirNomPatient(ordonnance.patient_id));
-        setSelectedMedecinName(ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id));
+    const loadOrdonnance = async () => {
+      if (ordonnanceId) {
+        setIsModifying(true);
+        const ordonnance = await ordonnanceService.obtenirOrdonnance(ordonnanceId);
+        if (ordonnance) {
+          setFormData({
+            ordonnance: {
+              consultation_id: ordonnance.consultation_id,
+              patient_id: ordonnance.patient_id,
+              medecin_id: ordonnance.medecin_id,
+              date_ordonnance: ordonnance.date_ordonnance.replace('T', 'T').slice(0, 16),
+              recommandations: ordonnance.recommandations || '',
+              validite: ordonnance.validite,
+              prescriptions: ordonnance.prescriptions || []
+            }
+          });
+          setSelectedConsultationName(ordonnanceService.obtenirConsultationInfo(ordonnance.consultation_id));
+          setSelectedPatientName(ordonnanceService.obtenirNomPatient(ordonnance.patient_id));
+          setSelectedMedecinName(ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id));
+        }
+      } else {
+        setIsModifying(false);
       }
-    } else {
-      setIsModifying(false);
-    }
+    };
+    loadOrdonnance();
   }, [ordonnanceId]);
 
   const totalSteps = 3;
@@ -214,7 +217,7 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
       <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {isModifying ? 'Modifier Ordonnance' : 'Nouvelle Ordonnance'} - Étape {currentStep}/{totalSteps}
+            {isModifying ? 'Modifier l\'Ordonnance' : 'Créer une Ordonnance'} - Étape {currentStep}/{totalSteps}
           </h2>
           <button
             onClick={onClose}

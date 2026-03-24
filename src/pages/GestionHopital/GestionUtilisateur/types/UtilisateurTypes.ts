@@ -1,5 +1,6 @@
 export interface Utilisateur {
   utilisateur_id: number;
+  nom_complet: string;
   nom: string;
   prenom: string;
   email: string;
@@ -9,13 +10,14 @@ export interface Utilisateur {
   created_at: string;
   updated_at: string;
   tenant_id: number;
+  hopital_nom?: string;
 }
 
 export interface UtilisateurFormData {
-  nom: string;
-  prenom: string;
+  nom_complet: string;
   email: string;
-  telephone?: string;
+  password?: string;
+  password_confirm?: string;
   role_id: number;
   statut_id: number;
 }

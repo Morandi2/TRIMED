@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link } from "react-router-dom";
 import { UserRound, Stethoscope, Asterisk, CalendarPlus2, Calendar } from 'lucide-react';
 
 export const MedecinDashboard: React.FC = () => {

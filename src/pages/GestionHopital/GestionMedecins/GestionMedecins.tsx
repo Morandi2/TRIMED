@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Medecin, medecinService, MedecinFormData } from './services/MedecinService';
+import { Medecin, medecinService, MedecinFormData, Specialite } from './services/MedecinService';
 import { MedecinModal } from './components/MedecinModal';
 import { MedecinTable } from './components/MedecinTable';
 import { MedecinStats } from './components/MedecinStats';
@@ -9,14 +9,12 @@ import { DeleteConfirmationModal } from '../GestionPatients/components/DeleteCon
 import { SuccessModal } from '../GestionPatients/components/SuccessModal';
 import { Tooltip } from '../GestionPatients/components/Tooltip';
 
-const hopitalCourant = {
-  tenant_id: 1,
-  nom: "Hôpital Général de Port-au-Prince",
-  adresse: "Port-au-Prince",
-  telephone: "+509 28 11 22 33"
-};
+interface GestionMedecinsProps {
+  tenantId: number;
+  hopitalNom?: string;
+}
 
-const GestionMedecins: React.FC = () => {
+const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom }) => {
   const [medecins, setMedecins] = useState<Medecin[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,12 +28,14 @@ const GestionMedecins: React.FC = () => {
   }>({ isOpen: false, title: '', message: '', type: 'success' });
   const [showPrintPage, setShowPrintPage] = useState(false);
   const [printMedecin, setPrintMedecin] = useState<Medecin | null>(null);
+  const [specialites, setSpecialites] = useState<Specialite[]>([]);
   
   const medecinsPerPage = 5;
-  const hopitalId = hopitalCourant.tenant_id;
+  const hopitalId = tenantId;
 
   useEffect(() => {
     loadMedecins();
+    loadSpecialites();
   }, [hopitalId]);
 
   useEffect(() => {
@@ -50,22 +50,27 @@ const GestionMedecins: React.FC = () => {
     };
   }, [modalType]);
 
-  const loadMedecins = () => {
-    const medecinsData = medecinService.obtenirMedecinsParHopital(hopitalId);
+  const loadMedecins = async () => {
+    const medecinsData = await medecinService.obtenirMedecinsParHopital(hopitalId);
     setMedecins(medecinsData);
   };
 
-  const handleCreateMedecin = (formData: MedecinFormData, isModifying: boolean) => {
+  const loadSpecialites = async () => {
+    const specialitesData = await medecinService.obtenirSpecialites();
+    setSpecialites(specialitesData);
+  };
+
+  const handleCreateMedecin = async (formData: MedecinFormData, isModifying: boolean) => {
     let result;
     
     if (isModifying && selectedMedecin) {
-      result = medecinService.modifierMedecin(selectedMedecin.medecin_id, formData);
+      result = await medecinService.modifierMedecin(selectedMedecin.medecin_id, formData);
     } else {
-      result = medecinService.creerMedecin(formData, hopitalId);
+      result = await medecinService.creerMedecin(formData, hopitalId);
     }
     
     if (result.success) {
-      loadMedecins();
+      await loadMedecins();
       setModalType(null);
       setSelectedMedecin(null);
       
@@ -105,11 +110,11 @@ const GestionMedecins: React.FC = () => {
     setModalType("delete");
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedMedecin) {
-      const success = medecinService.supprimerMedecin(selectedMedecin.medecin_id);
+      const success = await medecinService.supprimerMedecin(selectedMedecin.medecin_id);
       if (success) {
-        loadMedecins();
+        await loadMedecins();
         setSuccessModal({
           isOpen: true,
           title: 'Suppression réussie',
@@ -140,10 +145,10 @@ const GestionMedecins: React.FC = () => {
   };
 
   const filteredMedecins = medecins.filter(medecin =>
-    `${medecin.nom} ${medecin.prenom}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    medecin.numero_matricule_professionnel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    medecin.telephone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    medecin.email_professionnel?.toLowerCase().includes(searchTerm.toLowerCase())
+    `${medecin.nom || ""} ${medecin.prenom || ""}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (medecin.numero_matricule_professionnel || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (medecin.telephone || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (medecin.email_professionnel || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const _totalPages = Math.ceil(filteredMedecins.length / medecinsPerPage);
@@ -155,7 +160,7 @@ const GestionMedecins: React.FC = () => {
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Gestion des Médecins - {hopitalCourant.nom}
+              Gestion des Médecins - {hopitalNom || "Mon Hôpital"}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Gérez les médecins de votre hôpital
@@ -163,7 +168,7 @@ const GestionMedecins: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Tooltip text="Ajouter un nouveau médecin" position="bottom">
+            <Tooltip text="Ajouter un médecin" position="bottom">
               <button 
                 onClick={handleAddMedecin}
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-blue-700"
@@ -190,7 +195,7 @@ const GestionMedecins: React.FC = () => {
                     strokeLinejoin="round"
                   />
                 </svg>
-                Nouveau Médecin
+                Ajouter un Médecin
               </button>
             </Tooltip>
           </div>
@@ -199,7 +204,7 @@ const GestionMedecins: React.FC = () => {
 
 
         {/* Seksyon Estatistik */}
-        <MedecinStats medecins={medecins} />
+        <MedecinStats medecins={medecins} specialites={specialites} />
 
         <div className="flex flex-col gap-4 mb-6 lg:flex-row">
           <div className="flex-1">
@@ -235,6 +240,7 @@ const GestionMedecins: React.FC = () => {
           onViewMedecin={handleViewMedecin}
           onEditMedecin={handleEditMedecin}
           onDeleteMedecin={handleDeleteClick}
+          specialites={specialites}
         />
 
         {_totalPages > 1 && (
@@ -325,7 +331,7 @@ const GestionMedecins: React.FC = () => {
         <MedecinViewModal
           medecin={selectedMedecin}
           onClose={closeModal}
-          hopitalNom={hopitalCourant.nom}
+          hopitalNom={hopitalNom || ""}
           onPrint={handlePrintMedecin}
         />
       ) : null}
@@ -334,7 +340,7 @@ const GestionMedecins: React.FC = () => {
       {showPrintPage && printMedecin && (
         <MedecinPrintPage
           medecin={printMedecin}
-          hopitalNom={hopitalCourant.nom}
+          hopitalNom={hopitalNom || ""}
           onClose={() => {
             setShowPrintPage(false);
             setPrintMedecin(null);

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router';
-import { UserRound, ScanHeart, Stethoscope, Asterisk, Pill, CalendarPlus2, Calendar, CreditCard, BarChart3 } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { UserRound, ScanHeart, Pill, CalendarPlus2, Calendar, BarChart3 } from 'lucide-react';
 
 export const ManagerDashboard: React.FC = () => {
+
   const modules = [
     { name: 'Patients', path: '/patient', icon: <UserRound className="w-8 h-8" />, color: 'bg-blue-500' },
     { name: 'Médecins', path: '/medecin', icon: <ScanHeart className="w-8 h-8" />, color: 'bg-teal-500' },

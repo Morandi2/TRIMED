@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import hospitalApi from '../../../../api/hospitalApi';
+
 export interface Specialite {
   specialite_id: number;
   nom_specialite: string;
@@ -23,177 +26,104 @@ export interface Medecin {
 }
 
 export interface MedecinFormData {
-  medecin: Omit<Medecin, 'medecin_id' | 'hopital_id' | 'cree_le' | 'modifie_le'>;
+  medecin: any;
 }
 
-export class MedecinService {
-  private medecins: Medecin[] = [];
-  private specialites: Specialite[] = [];
-
-  constructor() {
-    this.loadFromStorage();
-    this.initializeSampleData();
-  }
-
-  private loadFromStorage() {
-    try {
-      const medecinsData = localStorage.getItem('medecins');
-      const specialitesData = localStorage.getItem('specialites');
-
-      this.medecins = medecinsData ? JSON.parse(medecinsData) : [];
-      this.specialites = specialitesData ? JSON.parse(specialitesData) : [];
-    } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
-      this.medecins = [];
-      this.specialites = [];
-    }
-  }
-
-  private saveToStorage() {
-    try {
-      localStorage.setItem('medecins', JSON.stringify(this.medecins));
-      localStorage.setItem('specialites', JSON.stringify(this.specialites));
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde des données:', error);
-    }
-  }
-
-  private initializeSampleData() {
-    const hasSpecialites = localStorage.getItem('specialites');
-    const hasMedecins = localStorage.getItem('medecins');
-
-    if (!hasSpecialites || this.specialites.length === 0) {
-      this.specialites = [
-        { specialite_id: 1, nom_specialite: "Cardiologie", description: "Spécialité du cœur" },
-        { specialite_id: 2, nom_specialite: "Pédiatrie", description: "Médecine des enfants" },
-        { specialite_id: 3, nom_specialite: "Chirurgie", description: "Chirurgie générale" },
-        { specialite_id: 4, nom_specialite: "Neurologie", description: "Spécialité du système nerveux" }
-      ];
-      this.saveToStorage();
-    }
-
-    if (!hasMedecins || this.medecins.length === 0) {
-      this.medecins = [
-        {
-          medecin_id: 1,
-          hopital_id: 1,
-          nom: "DUPONT",
-          prenom: "Jean",
-          sexe: 'M',
-          date_naissance: "1975-05-15",
-          telephone: "+50931234567",
-          email_professionnel: "dr.dupont@hopital.com",
-          numero_identification: "12345678901",
-          numero_matricule_professionnel: "MED001",
-          specialite_principale_id: 1,
-          specialites_secondaires: [3],
-          cree_le: new Date().toISOString(),
-          modifie_le: new Date().toISOString()
-        },
-        {
-          medecin_id: 2,
-          hopital_id: 1,
-          nom: "MARTIN",
-          prenom: "Marie",
-          sexe: 'F',
-          date_naissance: "1980-08-22",
-          telephone: "+50942234567",
-          email_professionnel: "dr.martin@hopital.com",
-          numero_identification: "23456789012",
-          numero_matricule_professionnel: "MED002",
-          specialite_principale_id: 2,
-          specialites_secondaires: [],
-          cree_le: new Date().toISOString(),
-          modifie_le: new Date().toISOString()
+export const medecinService = {
+  // Obtenir tous les médecins
+  obtenirMedecinsParHopital: async (hopitalId: number) => {
+    const response = await hospitalApi.medecins.getAll({ hopital_id: hopitalId } as any);
+    if (response.success && response.data) {
+      let rawData = response.data;
+      if (rawData.data && typeof rawData.data === 'object') {
+        if (rawData.data.results && Array.isArray(rawData.data.results)) {
+          rawData = rawData.data.results;
+        } else if (rawData.data.data && Array.isArray(rawData.data.data)) {
+           rawData = rawData.data.data;
+        } else if (Array.isArray(rawData.data)) {
+          rawData = rawData.data;
         }
-      ];
-      this.saveToStorage();
-    }
-  }
+      } else if (rawData.results && Array.isArray(rawData.results)) {
+        rawData = rawData.results;
+      } else if (rawData.data && Array.isArray(rawData.data)) {
+        rawData = rawData.data;
+      }
 
-  creerMedecin(formData: MedecinFormData, hopitalId: number): { success: boolean; data?: Medecin; errors?: string[] } {
-    const errors: string[] = [];
-
-    if (!formData.medecin.nom?.trim()) errors.push("Nom est requis");
-    if (!formData.medecin.prenom?.trim()) errors.push("Prénom est requis");
-    if (!formData.medecin.sexe) errors.push("Sexe est requis");
-
-    if (errors.length > 0) return { success: false, errors };
-
-    try {
-      const nouveauMedecin: Medecin = {
-        ...formData.medecin,
-        medecin_id: Date.now(),
-        hopital_id: hopitalId,
-        cree_le: new Date().toISOString(),
-        modifie_le: new Date().toISOString()
-      };
-
-      this.medecins.push(nouveauMedecin);
-      this.saveToStorage();
-      return { success: true, data: nouveauMedecin };
-    } catch (error) {
-      console.error('Erreur lors de la création du médecin:', error);
-      return { success: false, errors: ["Erreur lors de la création"] };
-    }
-  }
-
-  obtenirMedecinsParHopital(hopitalId: number): Medecin[] {
-    return this.medecins.filter(m => m.hopital_id === hopitalId);
-  }
-
-  obtenirMedecin(medecinId: number): Medecin | null {
-    return this.medecins.find(m => m.medecin_id === medecinId) || null;
-  }
-
-  modifierMedecin(medecinId: number, formData: MedecinFormData): { success: boolean; errors?: string[] } {
-    const errors: string[] = [];
-
-    if (!formData.medecin.nom?.trim()) errors.push("Nom est requis");
-    if (!formData.medecin.prenom?.trim()) errors.push("Prénom est requis");
-    if (!formData.medecin.sexe) errors.push("Sexe est requis");
-
-    if (errors.length > 0) return { success: false, errors };
-
-    try {
-      const medecinIndex = this.medecins.findIndex(m => m.medecin_id === medecinId);
-      if (medecinIndex === -1) return { success: false, errors: ["Médecin non trouvé"] };
-
-      const originalMedecin = this.medecins[medecinIndex];
+      const medecins = Array.isArray(rawData) ? rawData : (rawData && typeof rawData === 'object' && (rawData.id || rawData.medecin_id) ? [rawData] : []);
       
-      this.medecins[medecinIndex] = {
-        ...originalMedecin,
-        ...formData.medecin,
-        medecin_id: medecinId,
-        hopital_id: originalMedecin.hopital_id,
-        cree_le: originalMedecin.cree_le,
-        modifie_le: new Date().toISOString()
-      };
-
-      this.saveToStorage();
-      return { success: true };
-    } catch (error) {
-      console.error('Erreur lors de la modification du médecin:', error);
-      return { success: false, errors: ["Erreur lors de la modification"] };
+      return medecins.map((m: any) => ({
+        ...m, // PRESERVE ALL ORIGINAL FIELDS
+        medecin_id: m.id || m.medecin_id || 0,
+        nom: m.nom || m.last_name || m.nom || '',
+        prenom: m.prenom || m.first_name || m.prenom || '',
+        email_professionnel: m.email_professionnel || m.email || m.email_professionnel || '',
+        telephone: m.telephone || m.phone || m.telephone || '',
+        specialite_principale_id: m.specialite_principale_id || (m.specialite_principale ? m.specialite_principale.id : 0),
+        statut: m.statut || 'Actif'
+      }));
     }
-  }
+    return [];
+  },
 
-  supprimerMedecin(medecinId: number): boolean {
-    const initialLength = this.medecins.length;
-    this.medecins = this.medecins.filter(m => m.medecin_id !== medecinId);
-    this.saveToStorage();
-    return this.medecins.length < initialLength;
-  }
+  // Créer un médecin
+  creerMedecin: async (formData: MedecinFormData, hopitalId: number) => {
+    const payload = {
+      ...formData.medecin,
+      hopital_id: hopitalId
+    };
+    const response = await hospitalApi.medecins.create(payload);
+    return {
+      success: response.success,
+      data: response.data,
+      errors: response.success ? undefined : [response.message]
+    };
+  },
 
-  obtenirSpecialites(): Specialite[] {
-    return this.specialites;
-  }
+  // Obtenir les spécialités
+  obtenirSpecialites: async () => {
+    console.log('Utilisation des spécialités par défaut (API non disponible)');
+    return [
+      { specialite_id: 1, nom_specialite: 'Médecine Générale' },
+      { specialite_id: 2, nom_specialite: 'Pédiatrie' },
+      { specialite_id: 3, nom_specialite: 'Gynécologie' },
+      { specialite_id: 4, nom_specialite: 'Chirurgie' },
+      { specialite_id: 5, nom_specialite: 'Cardiologie' },
+      { specialite_id: 6, nom_specialite: 'Ophtalmologie' },
+      { specialite_id: 7, nom_specialite: 'Dermatologie' },
+      { specialite_id: 8, nom_specialite: 'Urologie' },
+      { specialite_id: 9, nom_specialite: 'Neurologie' },
+      { specialite_id: 10, nom_specialite: 'Psychiatrie' },
+      { specialite_id: 11, nom_specialite: 'Orthopédie' },
+      { specialite_id: 12, nom_specialite: 'Oncologie' }
+    ];
+  },
 
-  obtenirNomSpecialite(specialiteId?: number): string {
-    if (!specialiteId) return "Non spécifiée";
-    const specialite = this.specialites.find(s => s.specialite_id === specialiteId);
-    return specialite?.nom_specialite || "Non spécifiée";
-  }
-}
+  // Obtenir yon sèl medsen pa ID
+  obtenirMedecin: async (medecinId: number) => {
+    const response = await hospitalApi.medecins.getById(medecinId);
+    return response.success ? response.data : null;
+  },
 
-export const medecinService = new MedecinService();
+  // Modifier yon medsen
+  modifierMedecin: async (medecinId: number, formData: MedecinFormData) => {
+    const response = await hospitalApi.medecins.update(medecinId, formData.medecin);
+    return {
+      success: response.success,
+      data: response.data,
+      errors: response.success ? undefined : [response.message]
+    };
+  },
+
+  // Supprimer un médecin
+  supprimerMedecin: async (medecinId: number) => {
+    const response = await hospitalApi.medecins.delete(medecinId);
+    return response.success;
+  },
+
+  // Helper pour obtenir le nom d'une spécialité (utile pour les tableaux)
+  obtenirNomSpecialite: (specialiteId?: number, specialites: Specialite[] = []) => {
+    if (!specialiteId) return 'Non spécifiée';
+    const specialite = specialites.find(s => s.specialite_id === specialiteId);
+    return specialite ? specialite.nom_specialite : 'Spécialité inconnue';
+  }
+};

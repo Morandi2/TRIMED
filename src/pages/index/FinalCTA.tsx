@@ -14,7 +14,7 @@ const FinalCTA = () => {
           
           {/* Description */}
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90 leading-relaxed">
-            Rejoignez les 50+ établissements de santé haïtiens qui font déjà confiance à TRIMED pour une gestion optimale.
+            Rejoignez les 50+ établissements de santé haïtiens qui font déjà confiance à TRIMEDH pour une gestion optimale.
           </p>
 
           {/* Boutons d'action */}

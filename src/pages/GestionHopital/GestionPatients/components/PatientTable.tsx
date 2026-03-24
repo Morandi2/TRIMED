@@ -29,7 +29,8 @@ export const PatientTable: React.FC<PatientTableProps> = ({
   onDeletePatient
 }) => {
   const { permissions } = useUser();
-  const currentPatients = patients.slice(
+  const safePatients = Array.isArray(patients) ? patients : [];
+  const currentPatients = safePatients.slice(
     (currentPage - 1) * patientsPerPage,
     currentPage * patientsPerPage
   );

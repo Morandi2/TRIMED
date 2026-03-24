@@ -1,20 +1,7 @@
-export interface Patient {
-  patient_id: number;
-  nom: string;
-  prenom: string;
-  sexe: 'M' | 'F' | 'Autre';
-  date_naissance?: string;
-  telephone?: string;
-  adresse?: string;
-  numero_identification?: string;
-}
-
-export interface Medecin {
-  medecin_id: number;
-  nom: string;
-  prenom: string;
-  specialite_principale_id?: number;
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import hospitalApi from '../../../../api/hospitalApi';
+import { patientService } from '../../GestionPatients/services/PatientService';
+import { medecinService } from '../../GestionMedecins/services/MedecinService';
 
 export interface Consultation {
   consultation_id: number;
@@ -31,216 +18,150 @@ export interface Consultation {
 }
 
 export interface ConsultationFormData {
-  consultation: Omit<Consultation, 'consultation_id' | 'tenant_id' | 'created_at' | 'updated_at'>;
+  consultation: any;
 }
 
-export class ConsultationService {
-  private consultations: Consultation[] = [];
-  private patients: Patient[] = [];
-  private medecins: Medecin[] = [];
+// Memory cache for names to avoid frequent lookups
+const namesCache: { [key: string]: string } = {};
 
-  constructor() {
-    this.loadFromStorage();
-    this.initializeSampleData();
-  }
-
-  private loadFromStorage() {
-    try {
-      const consultationsData = localStorage.getItem('consultations');
-      const patientsData = localStorage.getItem('patients');
-      const medecinsData = localStorage.getItem('medecins');
-
-      this.consultations = consultationsData ? JSON.parse(consultationsData) : [];
-      this.patients = patientsData ? JSON.parse(patientsData) : [];
-      this.medecins = medecinsData ? JSON.parse(medecinsData) : [];
-    } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
-      this.consultations = [];
-      this.patients = [];
-      this.medecins = [];
-    }
-  }
-
-  private saveToStorage() {
-    try {
-      localStorage.setItem('consultations', JSON.stringify(this.consultations));
-      localStorage.setItem('patients', JSON.stringify(this.patients));
-      localStorage.setItem('medecins', JSON.stringify(this.medecins));
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde des données:', error);
-    }
-  }
-
-  private initializeSampleData() {
-    if (this.patients.length === 0) {
-      this.patients = [
-        {
-          patient_id: 1,
-          nom: "PIERRE",
-          prenom: "Jean",
-          sexe: 'M',
-          date_naissance: "1985-03-15",
-          telephone: "+50931234567",
-          adresse: "Port-au-Prince, Haiti",
-          numero_identification: "98765432101"
-        },
-        {
-          patient_id: 2,
-          nom: "JOSEPH",
-          prenom: "Marie",
-          sexe: 'F',
-          date_naissance: "1990-07-22",
-          telephone: "+50942234567",
-          adresse: "Cap-Haïtien, Haiti",
-          numero_identification: "87654321012"
-        }
-      ];
-    }
-
-    if (this.medecins.length === 0) {
-      this.medecins = [
-        {
-          medecin_id: 1,
-          nom: "DUPONT",
-          prenom: "Jean",
-          specialite_principale_id: 1
-        },
-        {
-          medecin_id: 2,
-          nom: "MARTIN",
-          prenom: "Marie",
-          specialite_principale_id: 2
-        }
-      ];
-    }
-
-    if (this.consultations.length === 0) {
-      const timestamp = new Date().toISOString();
-      this.consultations = [
-        {
-          consultation_id: 1,
-          tenant_id: 1,
-          patient_id: 1,
-          medecin_id: 1,
-          rendez_vous_id: undefined,
-          date_consultation: "2024-01-15T09:00:00",
-          motif: "Douleur thoracique",
-          diagnostic_principal: "Hypertension artérielle",
-          notes: "Patient stable, contrôle dans 1 mois",
-          created_at: timestamp,
-          updated_at: timestamp
-        }
-      ];
-    }
-
-    this.saveToStorage();
-  }
-
-creerConsultation(formData: ConsultationFormData, tenantId: number): { success: boolean; data?: Consultation; errors?: string[] } {
-  try {
-
-    const nouvelleConsultation: Consultation = {
-      consultation_id: Math.max(0, ...this.consultations.map(c => c.consultation_id)) + 1,
-      patient_id: formData.consultation.patient_id,
-      medecin_id: formData.consultation.medecin_id,
-      tenant_id: tenantId, // ✅ Sèvi ak tenantId ki pase a
-      date_consultation: formData.consultation.date_consultation,
-      motif: formData.consultation.motif,
-      diagnostic_principal: formData.consultation.diagnostic_principal,
-      notes: formData.consultation.notes,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    this.consultations.push(nouvelleConsultation);
-    return { success: true, data: nouvelleConsultation };
-  } catch (error) {
-    console.error('Erreur création consultation:', error);
-    return { success: false, errors: [error.message] };
-  }
-}
-  obtenirConsultationsParTenant(_tenantId: number): Consultation[] {
-    return this.consultations.filter(c => c.tenant_id === _tenantId);
-  }
-
-  obtenirConsultation(consultationId: number): Consultation | null {
-    return this.consultations.find(c => c.consultation_id === consultationId) || null;
-  }
-
-  modifierConsultation(consultationId: number, formData: ConsultationFormData): {
-    data: any; success: boolean; errors?: string[] 
-} {
-    const errors: string[] = [];
-
-    if (!formData.consultation.patient_id) errors.push("Patient est requis");
-    if (!formData.consultation.medecin_id) errors.push("Médecin est requis");
-    if (!formData.consultation.date_consultation) errors.push("Date de consultation est requise");
-    if (!formData.consultation.motif?.trim()) errors.push("Motif de consultation est requis");
-    
-    // Vérifier que la date n'est pas dans le passé (sauf si c'est une consultation existante)
-    if (formData.consultation.date_consultation) {
-      const consultationDate = new Date(formData.consultation.date_consultation);
-      const currentDate = new Date();
-      const existingConsultation = this.obtenirConsultation(consultationId);
-      
-      // Permettre la modification si c'est la même date ou une date future
-      if (consultationDate < currentDate && 
-          (!existingConsultation || new Date(existingConsultation.date_consultation).getTime() !== consultationDate.getTime())) {
-        errors.push("La date de consultation ne peut pas être dans le passé");
+export const consultationService = {
+  // Obtenir toutes les consultations
+  obtenirConsultationsParTenant: async (tenantId: number) => {
+    const response = await hospitalApi.consultations.getAll();
+    if (response.success && response.data) {
+      let rawData = response.data;
+      if (rawData.results && Array.isArray(rawData.results)) {
+        rawData = rawData.results;
+      } else if (rawData.data && Array.isArray(rawData.data)) {
+        rawData = rawData.data;
       }
+      return Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
     }
+    return [];
+  },
 
-    if (errors.length > 0) return { success: false, errors };
-
-    try {
-      const consultationIndex = this.consultations.findIndex(c => c.consultation_id === consultationId);
-      if (consultationIndex === -1) return { success: false, errors: ["Consultation non trouvée"] };
-
-      const originalConsultation = this.consultations[consultationIndex];
-      
-      this.consultations[consultationIndex] = {
-        ...originalConsultation,
-        ...formData.consultation,
-        consultation_id: consultationId,
-        tenant_id: originalConsultation.tenant_id,
-        created_at: originalConsultation.created_at,
-        updated_at: new Date().toISOString()
-      };
-
-      this.saveToStorage();
-      return { success: true };
-    } catch (error) {
-      console.error('Erreur lors de la modification de la consultation:', error);
-      return { success: false, errors: ["Erreur lors de la modification"] };
+  // Obtenir une consultation par ID
+  obtenirConsultation: async (id: number) => {
+    const response = await hospitalApi.consultations.getById(id);
+    if (response.success) {
+      return response.data;
     }
-  }
+    return null;
+  },
 
-  supprimerConsultation(consultationId: number): boolean {
-    const initialLength = this.consultations.length;
-    this.consultations = this.consultations.filter(c => c.consultation_id !== consultationId);
-    this.saveToStorage();
-    return this.consultations.length < initialLength;
-  }
+  // Créer une consultation
+  creerConsultation: async (formData: ConsultationFormData, tenantId: number) => {
+    const payload = {
+      ...formData.consultation,
+      tenant: tenantId
+    };
+    const response = await hospitalApi.consultations.create(payload as any);
+    return {
+      success: response.success,
+      data: response.data,
+      errors: response.success ? undefined : [response.message]
+    };
+  },
 
-  obtenirPatients(): Patient[] {
-    return this.patients;
-  }
+  // Modifier une consultation
+  modifierConsultation: async (consultationId: number, formData: ConsultationFormData) => {
+    const response = await (hospitalApi.consultations as any).update(consultationId, formData.consultation);
+    return {
+      success: response.success,
+      data: response.data,
+      errors: response.success ? undefined : [response.message]
+    };
+  },
 
-  obtenirMedecins(): Medecin[] {
-    return this.medecins;
-  }
+  // Supprimer une consultation
+  supprimerConsultation: async (consultationId: number) => {
+    const response = await (hospitalApi.consultations as any).delete(consultationId);
+    return response.success;
+  },
 
-  obtenirNomPatient(patientId?: number): string {
-    if (!patientId) return "Non spécifié";
-    const patient = this.patients.find(p => p.patient_id === patientId);
-    return patient ? `${patient.prenom} ${patient.nom}` : "Non spécifié";
-  }
+  // Créer une ordonnance pour une consultation
+  creerOrdonnance: async (consultationId: number, ordonnanceData: any) => {
+    const response = await hospitalApi.consultations.creerOrdonnance(consultationId, ordonnanceData);
+    return {
+      success: response.success,
+      data: response.data,
+      errors: response.success ? undefined : [response.message]
+    };
+  },
 
-  obtenirNomMedecin(medecinId?: number): string {
-    if (!medecinId) return "Non spécifié";
-    const medecin = this.medecins.find(m => m.medecin_id === medecinId);
-    return medecin ? `Dr. ${medecin.prenom} ${medecin.nom}` : "Non spécifié";
-  }
-}
+  // Prescrire un examen
+  prescrireExamen: async (consultationId: number, examenData: any) => {
+    const response = await hospitalApi.consultations.prescrireExamen(consultationId, examenData);
+    return {
+      success: response.success,
+      data: response.data,
+      errors: response.success ? undefined : [response.message]
+    };
+  },
 
-export const consultationService = new ConsultationService();
+  // Obtenir les ordonnances
+  obtenirOrdonnances: async (params?: any) => {
+    const response = await hospitalApi.ordonnances.getAll(params);
+    if (response.success) {
+      return response.data.results || response.data;
+    }
+    return [];
+  },
+
+  // Obtenir les examens
+  obtenirExamens: async (params?: any) => {
+    const response = await hospitalApi.examens.getAll(params);
+    if (response.success) {
+      return response.data.results || response.data;
+    }
+    return [];
+  },
+
+  // Mettre à jour le résultat d'un examen
+  ajouterResultatExamen: async (examenId: number, data: { resultat: string; notes?: string }) => {
+    const response = await hospitalApi.examens.updateResultat(examenId, data);
+    return {
+      success: response.success,
+      message: response.message,
+      errors: response.success ? undefined : [response.message]
+    };
+  },
+
+  // Helpers pour les noms
+  obtenirNomPatient: (patientId: number) => {
+    return namesCache[`patient_${patientId}`] || `Patient #${patientId}`;
+  },
+
+  obtenirNomMedecin: (medecinId: number) => {
+    return namesCache[`medecin_${medecinId}`] || `Dr. #${medecinId}`;
+  },
+
+  // Méthode pour charger et mettre en cache les noms
+  loadCache: async (tenantId: number) => {
+    const [patients, medecins] = await Promise.all([
+      patientService.obtenirPatientsParHopital(tenantId),
+      medecinService.obtenirMedecinsParHopital(tenantId)
+    ]);
+
+    patients.forEach((p: any) => {
+      namesCache[`patient_${p.patient_id}`] = `${p.prenom} ${p.nom}`.trim();
+    });
+    (consultationService as any)._patients = patients;
+
+    medecins.forEach((m: any) => {
+      namesCache[`medecin_${m.medecin_id}`] = `Dr. ${m.prenom} ${m.nom}`.trim();
+    });
+    (consultationService as any)._medecins = medecins;
+  },
+
+  _patients: [] as any[],
+  _medecins: [] as any[],
+
+  obtenirPatients: () => {
+    return (consultationService as any)._patients;
+  },
+
+  obtenirMedecins: () => {
+    return (consultationService as any)._medecins;
+  }
+};

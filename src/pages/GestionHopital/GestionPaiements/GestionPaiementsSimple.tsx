@@ -83,7 +83,7 @@ export const GestionPaiementsSimple: React.FC<{ tenantId: number }> = ({ tenantI
               <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Nouveau Paiement
+            Enregistrer un Paiement
           </button>
         </div>
 

@@ -1,5 +1,24 @@
 export type UserRole = 'Administrateur' | 'Médecin' | 'Infirmier' | 'Réceptionniste' | 'Pharmacien' | 'Manager' | 'Technicien' | 'Finance' | 'Auditeur';
 
+export const normalizeRole = (role: string | null | undefined): UserRole => {
+  if (!role) return 'Administrateur'; // Fallback par défaut
+  
+  const r = role.toLowerCase().trim();
+  
+  // Mapping des slugs ou noms variés vers les types UI officiels
+  if (r.includes('admin') || r.includes('proprietaire')) return 'Administrateur';
+  if (r.includes('medecin') || r.includes('docteur')) return 'Médecin';
+  if (r.includes('infirmier')) return 'Infirmier';
+  if (r.includes('receptionniste') || r.includes('secretaire')) return 'Réceptionniste';
+  if (r.includes('pharmacien')) return 'Pharmacien';
+  if (r.includes('manager') || r.includes('gestionnaire')) return 'Manager';
+  if (r.includes('technicien') || r.includes('laborantin')) return 'Technicien';
+  if (r.includes('finance') || r.includes('comptable')) return 'Finance';
+  if (r.includes('auditeur')) return 'Auditeur';
+  
+  return 'Administrateur'; // Fallback final
+};
+
 export interface UserPermissions {
   canViewPatients: boolean;
   canEditPatients: boolean;

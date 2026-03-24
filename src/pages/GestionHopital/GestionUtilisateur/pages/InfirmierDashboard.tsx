@@ -1,8 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link } from "react-router-dom";
 import { UserRound, Stethoscope, Asterisk, CalendarPlus2, Calendar, Pill } from 'lucide-react';
 
 export const InfirmierDashboard: React.FC = () => {
+
   const modules = [
     { name: 'Patients', path: '/patient', icon: <UserRound className="w-8 h-8" />, color: 'bg-blue-500' },
     { name: 'Médecins', path: '/medecin', icon: <Stethoscope className="w-8 h-8" />, color: 'bg-teal-500' },

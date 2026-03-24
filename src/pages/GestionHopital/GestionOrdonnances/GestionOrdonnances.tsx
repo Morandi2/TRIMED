@@ -4,26 +4,27 @@ import { OrdonnanceModal } from './components/OrdonnanceModal';
 import { OrdonnancePrintPage } from './components/OrdonnancePrintPage';
 import { OrdonnanceStats } from './components/OrdonnanceStats';
 
-const GestionOrdonnances: React.FC = () => {
+interface GestionOrdonnancesProps {
+  tenantId: number;
+  hopitalNom?: string;
+}
+
+const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopitalNom }) => {
   const [ordonnances, setOrdonnances] = useState<Ordonnance[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrdonnanceId, setSelectedOrdonnanceId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const tenantConfig = {
-    tenant_id: 1,
-    nom: "Hôpital Général de Port-au-Prince",
-    adresse: "Port-au-Prince, Haïti",
-    telephone: "+509 2222-3333",
-    email: "contact@hopital.ht"
-  };
-
   useEffect(() => {
-    chargerOrdonnances();
-  }, []);
+    const init = async () => {
+      await ordonnanceService.loadMetadata(tenantId);
+      await chargerOrdonnances();
+    };
+    init();
+  }, [tenantId]);
 
-  const chargerOrdonnances = () => {
-    const ordonnancesData = ordonnanceService.obtenirOrdonnancesParTenant(tenantConfig.tenant_id);
+  const chargerOrdonnances = async () => {
+    const ordonnancesData = await ordonnanceService.obtenirOrdonnancesParTenant(tenantId);
     setOrdonnances(ordonnancesData);
   };
 
@@ -48,27 +49,27 @@ const GestionOrdonnances: React.FC = () => {
   const [showPrintPage, setShowPrintPage] = useState(false);
   const [printOrdonnance, setPrintOrdonnance] = useState<Ordonnance | null>(null);
 
-  const handleVoirOrdonnance = (ordonnanceId: number) => {
-    const ordonnance = ordonnanceService.obtenirOrdonnance(ordonnanceId);
+  const handleVoirOrdonnance = async (ordonnanceId: number) => {
+    const ordonnance = await ordonnanceService.obtenirOrdonnance(ordonnanceId);
     if (ordonnance) {
       setSelectedOrdonnance(ordonnance);
       setModalType('view');
     }
   };
 
-  const handleSupprimerOrdonnance = (ordonnanceId: number) => {
-    const ordonnance = ordonnanceService.obtenirOrdonnance(ordonnanceId);
+  const handleSupprimerOrdonnance = async (ordonnanceId: number) => {
+    const ordonnance = await ordonnanceService.obtenirOrdonnance(ordonnanceId);
     if (ordonnance) {
       setSelectedOrdonnance(ordonnance);
       setModalType('delete');
     }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedOrdonnance) {
-      const success = ordonnanceService.supprimerOrdonnance(selectedOrdonnance.ordonnance_id);
+      const success = await ordonnanceService.supprimerOrdonnance(selectedOrdonnance.ordonnance_id);
       if (success) {
-        chargerOrdonnances();
+        await chargerOrdonnances();
         setSuccessModal({
           isOpen: true,
           title: 'Suppression réussie',
@@ -98,8 +99,8 @@ const GestionOrdonnances: React.FC = () => {
     setShowPrintPage(true);
   };
 
-  const handleSaveOrdonnance = (ordonnance: Ordonnance) => {
-    chargerOrdonnances();
+  const handleSaveOrdonnance = async (ordonnance: Ordonnance) => {
+    await chargerOrdonnances();
     setSuccessModal({
       isOpen: true,
       title: 'Opération réussie',
@@ -128,7 +129,7 @@ const GestionOrdonnances: React.FC = () => {
                   Gestion des Ordonnances
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  {tenantConfig.nom}
+                  {hopitalNom || "Mon Hôpital"}
                 </p>
               </div>
               <button
@@ -138,7 +139,7 @@ const GestionOrdonnances: React.FC = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Nouvelle ordonnance
+                Créer une Ordonnance
               </button>
             </div>
 
@@ -268,7 +269,7 @@ const GestionOrdonnances: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveOrdonnance}
         ordonnanceId={selectedOrdonnanceId}
-        tenantId={tenantConfig.tenant_id}
+        tenantId={tenantId}
       />
 
       {/* Modal de visualisation */}
@@ -432,7 +433,7 @@ const GestionOrdonnances: React.FC = () => {
       {showPrintPage && printOrdonnance && (
         <OrdonnancePrintPage
           ordonnance={printOrdonnance}
-          hopitalNom={tenantConfig.nom}
+          hopitalNom={hopitalNom || ""}
           onClose={() => {
             setShowPrintPage(false);
             setPrintOrdonnance(null);

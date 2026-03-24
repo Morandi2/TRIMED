@@ -12,7 +12,7 @@ const MobileApp = () => {
             <div className="phone-mockup bg-white rounded-3xl p-8 shadow-2xl inline-block">
               <div className="mockup-placeholder w-64 h-96 bg-gray-100 rounded-2xl flex flex-col items-center justify-center text-gray-400 text-lg">
                 <i className="fas fa-mobile-alt text-4xl mb-4"></i>
-                <p>App TRIMED</p>
+                <p>App TRIMEDH</p>
               </div>
             </div>
             
@@ -33,7 +33,7 @@ const MobileApp = () => {
           <div className="mobile-content">
             <h2 className="text-4xl font-bold text-gray-900 mb-6">Votre hôpital dans votre poche</h2>
             <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              L'application mobile TRIMED permet aux médecins, infirmières et patients de rester connectés où qu'ils soient, même avec une connexion internet limitée.
+              L'application mobile TRIMEDH permet aux médecins, infirmières et patients de rester connectés où qu'ils soient, même avec une connexion internet limitée.
             </p>
 
             <div className="mobile-features space-y-6 mb-8">

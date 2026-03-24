@@ -1,5 +1,5 @@
 // components/FAQ.js
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 /**
  * Composant FAQ avec accordéon interactif
@@ -7,7 +7,7 @@ import React, { useState } from 'react';
  */
 const FAQ = () => {
   // État pour suivre quelle question est ouverte
-  const [activeIndex, setActiveIndex] = useState(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   // Données des questions/réponses
   const faqData = [
@@ -19,7 +19,7 @@ const FAQ = () => {
     {
       id: 2,
       question: 'Est-ce que ça fonctionne sans internet ?',
-      answer: 'Oui ! TRIMED dispose d\'un mode hors-ligne qui permet de continuer à travailler pendant les coupures d\'internet. Les données sont synchronisées automatiquement dès que la connexion est rétablie.'
+      answer: 'Oui ! TRIMEDH dispose d\'un mode hors-ligne qui permet de continuer à travailler pendant les coupures d\'internet. Les données sont synchronisées automatiquement dès que la connexion est rétablie.'
     },
     {
       id: 3,
@@ -37,34 +37,38 @@ const FAQ = () => {
    * Basculer l'état d'ouverture d'une question FAQ
    * @param {number} questionIndex - Index de la question
    */
-  
-  return (
+  const handleQuestionToggle = (questionIndex: number) => {
+    if (activeIndex === questionIndex) {
+      setActiveIndex(null);
+    } else {
+      setActiveIndex(questionIndex);
+    }
+  }; return (
     <section id="faq" className="faq-section bg-white py-20">
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* En-tête de section */}
         <div className="section-header text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
             Questions Fréquentes
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Tout ce que vous devez savoir sur TRIMED
+            Tout ce que vous devez savoir sur TRIMEDH
           </p>
         </div>
 
         {/* Grille des questions */}
         <div className="faq-grid space-y-4">
           {faqData.map((faq, index) => (
-            <div 
+            <div
               key={faq.id}
-              className={`faq-item bg-gray-50 rounded-xl border transition-all duration-300 ${
-                activeIndex === index 
-                  ? 'border-emerald-300 shadow-lg' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`faq-item bg-gray-50 rounded-xl border transition-all duration-300 ${activeIndex === index
+                ? 'border-emerald-300 shadow-lg'
+                : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               {/* Bouton de la question */}
-              <button 
+              <button
                 className="faq-question w-full p-6 text-left flex justify-between items-center hover:bg-gray-100 transition-colors rounded-xl"
                 onClick={() => handleQuestionToggle(index)}
                 aria-expanded={activeIndex === index}
@@ -73,19 +77,17 @@ const FAQ = () => {
                 <h3 className="text-lg font-semibold text-gray-900 pr-4">
                   {faq.question}
                 </h3>
-                <i className={`fas fa-chevron-down text-emerald-500 transition-transform duration-300 ${
-                  activeIndex === index ? 'rotate-180' : ''
-                }`}></i>
+                <i className={`fas fa-chevron-down text-emerald-500 transition-transform duration-300 ${activeIndex === index ? 'rotate-180' : ''
+                  }`}></i>
               </button>
-              
+
               {/* Réponse */}
-              <div 
+              <div
                 id={`faq-answer-${faq.id}`}
-                className={`faq-answer transition-all duration-300 overflow-hidden ${
-                  activeIndex === index 
-                    ? 'max-h-96 opacity-100' 
-                    : 'max-h-0 opacity-0'
-                }`}
+                className={`faq-answer transition-all duration-300 overflow-hidden ${activeIndex === index
+                  ? 'max-h-96 opacity-100'
+                  : 'max-h-0 opacity-0'
+                  }`}
               >
                 <div className="px-6 pb-6">
                   <p className="text-gray-600 leading-relaxed">

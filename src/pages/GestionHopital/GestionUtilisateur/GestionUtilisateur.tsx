@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { utilisateurService } from './services/UtilisateurService';
 import { UtilisateurModal } from './components/UtilisateurModal';
+import { UtilisateurViewModal } from './components/UtilisateurViewModal';
 import { 
   Utilisateur, 
   UtilisateurFormData, 
@@ -46,8 +47,14 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
   const [statuts, setStatuts] = useState<UtilisateurStatut[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingUtilisateur, setViewingUtilisateur] = useState<Utilisateur | null>(null);
 
   const itemsPerPage = 10;
+
+  const [loading, setLoading] = useState(false);
+  const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -55,30 +62,53 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
     setStatuts(utilisateurService.obtenirStatuts());
   }, [tenantId]);
 
-  const loadData = () => {
-    const data = utilisateurService.obtenirTousUtilisateurs(tenantId);
-    const statistics = utilisateurService.obtenirStatistiques(tenantId);
-    setUtilisateurs(data);
-    setStats(statistics);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const data = await utilisateurService.obtenirTousUtilisateurs(tenantId);
+      const statistics = await utilisateurService.obtenirStatistiques(tenantId);
+      setUtilisateurs(data);
+      setStats(statistics);
+    } catch (error) {
+      console.error('Erreur chargement données:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSave = (formData: UtilisateurFormData) => {
+  const handleSave = async (formData: UtilisateurFormData) => {
+    setLoading(true);
+    setServerErrors({});
+    setGeneralError(null);
     let result;
     
-    if (editingUtilisateur) {
-      result = utilisateurService.modifierUtilisateur(editingUtilisateur.utilisateur_id, formData);
-    } else {
-      result = utilisateurService.creerUtilisateur(formData, tenantId);
-    }
+    try {
+      if (editingUtilisateur) {
+        result = await utilisateurService.modifierUtilisateur(editingUtilisateur.utilisateur_id, formData, editingUtilisateur.email);
+      } else {
+        result = await utilisateurService.creerUtilisateur(formData, tenantId);
+      }
 
-    if (result.success) {
-      loadData();
-      setShowModal(false);
-      setEditingUtilisateur(null);
-      setSuccessMessage(editingUtilisateur ? 'Utilisateur modifié avec succès!' : 'Utilisateur créé avec succès!');
-      setShowSuccessModal(true);
-    } else {
-      console.error('Erreur:', result.errors);
+      if (result.success) {
+        await loadData();
+        setShowModal(false);
+        setEditingUtilisateur(null);
+        setSuccessMessage(editingUtilisateur ? 'Utilisateur modifié avec succès!' : 'Utilisateur créé avec succès!');
+        setShowSuccessModal(true);
+      } else {
+        if (result.fieldErrors) {
+          setServerErrors(result.fieldErrors);
+        }
+        
+        if (result.message) {
+          setGeneralError(result.message);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur sauvegarde:', error);
+      setGeneralError('Une erreur inattendue est survenue');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -87,18 +117,30 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
     setShowModal(true);
   };
 
+  const handleView = (utilisateur: Utilisateur) => {
+    setViewingUtilisateur(utilisateur);
+    setShowViewModal(true);
+  };
+
   const handleDelete = (id: number) => {
     setDeletingId(id);
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingId) {
-      const result = utilisateurService.supprimerUtilisateur(deletingId);
-      if (result.success) {
-        loadData();
-        setSuccessMessage('Utilisateur supprimé avec succès!');
-        setShowSuccessModal(true);
+      setLoading(true);
+      try {
+        const result = await utilisateurService.supprimerUtilisateur(deletingId);
+        if (result.success) {
+          await loadData();
+          setSuccessMessage('Utilisateur supprimé avec succès!');
+          setShowSuccessModal(true);
+        }
+      } catch (error) {
+        console.error('Erreur suppression:', error);
+      } finally {
+        setLoading(false);
       }
     }
     setShowDeleteModal(false);
@@ -106,8 +148,7 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
   };
 
   const filteredUtilisateurs = utilisateurs.filter(user => {
-    const matchesSearch = user.nom.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-                         user.prenom.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+    const matchesSearch = user.nom_complet.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(filters.searchTerm.toLowerCase());
     const matchesRole = filters.role === 'Tous' || user.role_id.toString() === filters.role;
     const matchesStatut = filters.statut === 'Tous' || user.statut_id.toString() === filters.statut;
@@ -273,7 +314,12 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
         </div>
 
         {/* Tableau */}
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+            </div>
+          )}
           <Table>
             <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
               <TableRow>
@@ -307,7 +353,7 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
                   <TableCell className="py-3">
                     <div>
                       <p className="font-medium text-black text-sm dark:text-white/90">
-                        {user.prenom} {user.nom}
+                        {user.nom_complet}
                       </p>
                       <span className="text-gray-500 text-xs dark:text-gray-400">
                         ID: {user.utilisateur_id}
@@ -341,6 +387,16 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
                   </TableCell>
                   <TableCell className="py-3">
                     <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleView(user)}
+                        className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                        title="Voir les détails"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </button>
                       <button 
                         onClick={() => handleEdit(user)}
                         className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
@@ -387,9 +443,25 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
         onClose={() => {
           setShowModal(false);
           setEditingUtilisateur(null);
+          setServerErrors({});
+          setGeneralError(null);
         }}
         onSave={handleSave}
+        serverErrors={serverErrors}
+        generalError={generalError || undefined}
         utilisateur={editingUtilisateur}
+        roles={roles}
+        statuts={statuts}
+      />
+
+      {/* Modal Consultation Utilisateur */}
+      <UtilisateurViewModal
+        isOpen={showViewModal}
+        onClose={() => {
+          setShowViewModal(false);
+          setViewingUtilisateur(null);
+        }}
+        utilisateur={viewingUtilisateur}
         roles={roles}
         statuts={statuts}
       />

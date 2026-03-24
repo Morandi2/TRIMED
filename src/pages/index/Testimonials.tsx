@@ -8,14 +8,14 @@ const Testimonials = () => {
       name: 'Dr. Jean-Louis',
       position: 'Hôpital Universitaire de la Paix',
       rating: 5,
-      text: '"TRIMED a révolutionné notre façon de travailler. La gestion des patients est maintenant fluide et nous pouvons concentrer notre énergie sur les soins plutôt que sur l\'administration."'
+      text: '"TRIMEDH a révolutionné notre façon de travailler. La gestion des patients est maintenant fluide et nous pouvons concentrer notre énergie sur les soins plutôt que sur l\'administration."'
     },
     {
       avatar: 'user-nurse',
       name: 'Marie L. Pierre',
       position: 'Directrice, Clinique Saint-François',
       rating: 5,
-      text: '"Depuis l\'implémentation de TRIMED, nous avons réduit nos temps d\'attente de 60%. Les patients adorent pouvoir prendre rendez-vous via l\'application mobile."'
+      text: '"Depuis l\'implémentation de TRIMEDH, nous avons réduit nos temps d\'attente de 60%. Les patients adorent pouvoir prendre rendez-vous via l\'application mobile."'
     },
     {
       avatar: 'clipboard-list',
@@ -32,7 +32,7 @@ const Testimonials = () => {
         <div className="section-header text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">Ils nous font confiance</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Découvrez ce que les professionnels de santé haïtiens disent de TRIMED
+            Découvrez ce que les professionnels de santé haïtiens disent de TRIMEDH
           </p>
         </div>
 

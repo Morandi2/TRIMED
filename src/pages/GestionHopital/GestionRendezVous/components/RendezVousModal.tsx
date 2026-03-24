@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  RendezVousFormData, 
+import {
+  RendezVousFormData,
   RendezVous,
   RendezVousType,
   RendezVousStatut
@@ -58,16 +58,16 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.patient_id.toString().trim()) newErrors.patient_id = "Patient requis";
     if (!formData.medecin_id.toString().trim()) newErrors.medecin_id = "Médecin requis";
     if (!formData.date_heure) newErrors.date_heure = "Date et heure requises";
     if (!formData.motif.trim()) newErrors.motif = "Motif requis";
-    
+
     setErrors(newErrors);
-    
+
     if (Object.keys(newErrors).length === 0) {
       const saveData = {
         ...formData,
@@ -79,9 +79,9 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
   };
 
   const updateField = (field: keyof RendezVousFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData({ ...formData, [field]: value });
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors({ ...errors, [field]: '' });
     }
   };
 
@@ -92,15 +92,15 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
       <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            {rendezVous ? 'Modifier Rendez-vous' : 'Nouveau Rendez-vous'}
+            {rendezVous ? 'Modifier le Rendez-vous' : 'Ajouter un Rendez-vous'}
           </h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -116,9 +116,8 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
                 value={formData.patient_id || ''}
                 onChange={(e) => updateField('patient_id', e.target.value)}
                 placeholder="Ex: 1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${
-                  errors.patient_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.patient_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
                 required
               />
               {errors.patient_id && <p className="text-red-500 text-sm mt-1">{errors.patient_id}</p>}
@@ -133,9 +132,8 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
                 value={formData.medecin_id || ''}
                 onChange={(e) => updateField('medecin_id', e.target.value)}
                 placeholder="Ex: 1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${
-                  errors.medecin_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.medecin_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
                 required
               />
               {errors.medecin_id && <p className="text-red-500 text-sm mt-1">{errors.medecin_id}</p>}
@@ -149,9 +147,8 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
                 type="datetime-local"
                 value={formData.date_heure}
                 onChange={(e) => updateField('date_heure', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${
-                  errors.date_heure ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.date_heure ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
                 required
               />
               {errors.date_heure && <p className="text-red-500 text-sm mt-1">{errors.date_heure}</p>}
@@ -198,9 +195,8 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
               value={formData.motif}
               onChange={(e) => updateField('motif', e.target.value)}
               rows={3}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${
-                errors.motif ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.motif ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
               placeholder="Décrivez le motif du rendez-vous..."
               required
             />

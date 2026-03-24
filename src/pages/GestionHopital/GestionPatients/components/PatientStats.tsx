@@ -20,12 +20,14 @@ export const PatientStats: React.FC<PatientStatsProps> = ({ patients }) => {
     return age;
   };
 
+  const safePatients = Array.isArray(patients) ? patients : [];
+
   const stats = {
-    total: patients.length,
-    masculin: patients.filter(p => p.sexe === "M").length,
-    feminin: patients.filter(p => p.sexe === "F").length,
-    enfants: patients.filter(p => calculateAge(p.date_naissance) < 18).length,
-    adultes: patients.filter(p => calculateAge(p.date_naissance) >= 18).length
+    total: safePatients.length,
+    masculin: safePatients.filter(p => p.sexe === "M").length,
+    feminin: safePatients.filter(p => p.sexe === "F").length,
+    enfants: safePatients.filter(p => calculateAge(p.date_naissance) < 18).length,
+    adultes: safePatients.filter(p => calculateAge(p.date_naissance) >= 18).length
   };
 
   return (

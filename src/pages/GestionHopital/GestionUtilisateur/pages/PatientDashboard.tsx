@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link } from "react-router-dom";
 import { CalendarPlus2, FileText, MessageSquare, CreditCard, Download } from 'lucide-react';
 
 export const PatientDashboard: React.FC = () => {

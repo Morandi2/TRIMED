@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link } from "react-router-dom";
 import { UserRound, Asterisk, Pill } from 'lucide-react';
 
 export const PharmacienDashboard: React.FC = () => {

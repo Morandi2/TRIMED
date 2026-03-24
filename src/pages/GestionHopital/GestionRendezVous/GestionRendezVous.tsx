@@ -20,9 +20,10 @@ import {
 
 interface GestionRendezVousProps {
   tenantId: number;
+  hopitalNom?: string;
 }
 
-export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }) => {
+export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, hopitalNom }) => {
   const [rendezVous, setRendezVous] = useState<RendezVous[]>([]);
   const [stats, setStats] = useState<RendezVousStats>({
     total: 0,
@@ -53,35 +54,42 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
   const itemsPerPage = 10;
 
   useEffect(() => {
-    loadData();
-    setTypes(rendezVousService.obtenirTypes(tenantId));
-    setStatuts(rendezVousService.obtenirStatuts(tenantId));
+    const init = async () => {
+      await Promise.all([
+        rendezVousService.loadMetadata(tenantId),
+        rendezVousService.loadCache(tenantId)
+      ]);
+      setTypes(rendezVousService.obtenirTypes());
+      setStatuts(rendezVousService.obtenirStatuts());
+      await loadData();
+    };
+    init();
   }, [tenantId]);
 
-  const loadData = () => {
-    const data = rendezVousService.obtenirTousRendezVous(tenantId);
-    const statistics = rendezVousService.obtenirStatistiques(tenantId);
+  const loadData = async () => {
+    const data = await rendezVousService.obtenirTousRendezVous({ tenant: tenantId });
+    const statistics = await rendezVousService.obtenirStatistiques(tenantId);
     setRendezVous(data);
     setStats(statistics);
     console.log('Données chargées:', data);
     console.log('Statistiques:', statistics);
   };
 
-  const handleSave = (formData: RendezVousFormData, isModifying: boolean) => {
+  const handleSave = async (formData: RendezVousFormData, isModifying: boolean) => {
     console.log('Données reçues dans handleSave:', formData);
     
     let result;
     
     if (editingRendezVous) {
-      result = rendezVousService.modifierRendezVous(editingRendezVous.rendez_vous_id, formData);
+      result = await rendezVousService.modifierRendezVous(editingRendezVous.rendez_vous_id, formData);
     } else {
-      result = rendezVousService.creerRendezVous(formData, tenantId);
+      result = await rendezVousService.creerRendezVous(formData);
     }
 
     console.log('Résultat sauvegarde:', result);
 
     if (result.success) {
-      loadData(); // Recharger les données
+      await loadData(); // Recharger les données
       setShowModal(false); // Fermer le modal
       setEditingRendezVous(null);
       showSuccess(isModifying ? 'Rendez-vous modifié avec succès' : 'Rendez-vous créé avec succès');
@@ -101,11 +109,11 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingId) {
-      const result = rendezVousService.supprimerRendezVous(deletingId);
+      const result = await rendezVousService.supprimerRendezVous(deletingId);
       if (result.success) {
-        loadData();
+        await loadData();
         showSuccess('Rendez-vous supprimé avec succès');
       } else {
         showSuccess('Erreur lors de la suppression', true);
@@ -210,10 +218,10 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Gestion des Rendez-vous
+              Gestion des Rendez-vous - {hopitalNom || "Mon Hôpital"}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Gérez les rendez-vous des patients et le planning médical
+              Planifiez et gérez les rendez-vous des patients
             </p>
           </div>
 
@@ -229,7 +237,7 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
                 <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Nouveau Rendez-vous
+              Ajouter un Rendez-vous
             </button>
           </div>
         </div>
@@ -289,10 +297,10 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
                   ID
                 </TableCell>
                 <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Patient ID
+                  Patient
                 </TableCell>
                 <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Médecin ID
+                  Médecin
                 </TableCell>
                 <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
                   Date & Heure
@@ -301,10 +309,10 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
                   Motif
                 </TableCell>
                 <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Type
+                  Statut
                 </TableCell>
                 <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Statut
+                  Type
                 </TableCell>
                 <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
                   Actions
@@ -327,12 +335,12 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
                   </TableCell>
                   <TableCell className="py-3">
                     <p className="font-medium text-black text-sm dark:text-white/90">
-                      {rdv.patient_id}
+                      {rdv.patient_nom || rendezVousService.obtenirNomPatient(rdv.patient_id || (rdv as any).patient)}
                     </p>
                   </TableCell>
                   <TableCell className="py-3">
                     <p className="text-black text-sm dark:text-white/90">
-                      {rdv.medecin_id}
+                      {rdv.medecin_nom || rendezVousService.obtenirNomMedecin(rdv.medecin_id || (rdv as any).medecin)}
                     </p>
                   </TableCell>
                   <TableCell className="py-3">
@@ -351,13 +359,13 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId }
                     </p>
                   </TableCell>
                   <TableCell className="py-3">
-                    <Badge size="sm" color={getTypeColor(types.find(t => t.type_id === rdv.type_id)?.nom || '')}>
-                      {types.find(t => t.type_id === rdv.type_id)?.nom || 'Non spécifié'}
+                    <Badge size="sm" color={getStatutColor(rdv.statut_nom || (statuts.find(s => s.statut_id === (rdv.statut_id || (rdv as any).statut))?.nom) || '')}>
+                      {rdv.statut_nom || statuts.find(s => s.statut_id === (rdv.statut_id || (rdv as any).statut))?.nom || 'Non spécifié'}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3">
-                    <Badge size="sm" color={getStatutColor(statuts.find(s => s.statut_id === rdv.statut_id)?.nom || '')}>
-                      {statuts.find(s => s.statut_id === rdv.statut_id)?.nom || 'Non spécifié'}
+                    <Badge size="sm" color={getTypeColor(rdv.type_nom || (types.find(t => t.type_id === (rdv.type_id || (rdv as any).type))?.nom) || '')}>
+                      {rdv.type_nom || types.find(t => t.type_id === (rdv.type_id || (rdv as any).type))?.nom || 'Non spécifié'}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3">

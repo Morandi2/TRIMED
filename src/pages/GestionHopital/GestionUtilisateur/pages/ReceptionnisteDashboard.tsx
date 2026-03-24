@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router';
-import { UserRound, CalendarPlus2, Calendar, CreditCard } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { UserRound, CalendarPlus2, Calendar } from 'lucide-react';
 
 export const ReceptionnisteDashboard: React.FC = () => {
   const modules = [

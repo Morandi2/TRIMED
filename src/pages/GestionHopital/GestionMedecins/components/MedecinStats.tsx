@@ -1,23 +1,26 @@
 import React from 'react';
-import { Medecin, medecinService } from '../services/MedecinService';
+import { Medecin, Specialite } from '../services/MedecinService';
 
 interface MedecinStatsProps {
   medecins: Medecin[];
+  specialites: Specialite[];
 }
 
-export const MedecinStats: React.FC<MedecinStatsProps> = ({ medecins }) => {
-  const totalMedecins = medecins.length;
-  const medecinsHommes = medecins.filter(m => m.sexe === 'M').length;
-  const medecinsFemmes = medecins.filter(m => m.sexe === 'F').length;
+export const MedecinStats: React.FC<MedecinStatsProps> = ({ medecins, specialites }) => {
+  const safeMedecins = Array.isArray(medecins) ? medecins : [];
+  const safeSpecialites = Array.isArray(specialites) ? specialites : [];
+  
+  const totalMedecins = safeMedecins.length;
+  const medecinsHommes = safeMedecins.filter(m => m.sexe === 'M').length;
+  const medecinsFemmes = safeMedecins.filter(m => m.sexe === 'F').length;
   
   // Statistiques par spécialité
-  const specialites = medecinService.obtenirSpecialites();
-  const statsSpecialites = specialites.map(specialite => ({
+  const statsSpecialites = safeSpecialites.map(specialite => ({
     nom: specialite.nom_specialite,
-    count: medecins.filter(m => m.specialite_principale_id === specialite.specialite_id).length
+    count: safeMedecins.filter(m => m.specialite_principale_id === specialite.specialite_id).length
   }));
 
-  const medecinsSansSpecialite = medecins.filter(m => !m.specialite_principale_id).length;
+  const medecinsSansSpecialite = safeMedecins.filter(m => !m.specialite_principale_id).length;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

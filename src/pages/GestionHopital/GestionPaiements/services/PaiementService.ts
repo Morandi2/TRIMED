@@ -1,15 +1,13 @@
-import { 
-  Paiement, 
-  PaiementFormData, 
-  PaiementStats, 
-  MethodePaiement, 
-  StatutPaiement 
+import hospitalApi from '../../../../api/hospitalApi';
+import {
+  Paiement,
+  PaiementFormData,
+  PaiementStats,
+  MethodePaiement,
+  StatutPaiement
 } from '../types/PaiementTypes';
 
 class PaiementService {
-  private paiements: Paiement[] = [];
-  private nextId = 1;
-
   // Méthodes de paiement disponibles
   private methodesPaiement: MethodePaiement[] = [
     { methode_id: 1, nom: 'Espèces', actif: true },
@@ -27,79 +25,43 @@ class PaiementService {
     { statut_id: 4, nom: 'Annulé', couleur: 'error' }
   ];
 
-  obtenirTousPaiements(tenantId: number): Paiement[] {
-    return this.paiements.filter(p => p.tenant_id === tenantId);
+  async obtenirTousPaiements(tenantId: number): Promise<Paiement[]> {
+    const response = await hospitalApi.facturation.paiements.getAll({ tenant: tenantId });
+    if (response.success) {
+      return response.data.results || response.data;
+    }
+    return [];
   }
 
-  obtenirPaiementParId(id: number): Paiement | undefined {
-    return this.paiements.find(p => p.paiement_id === id);
+  async obtenirPaiementParId(id: number): Promise<Paiement | null> {
+    // Note: Le backend n'a pas forcément de getById spécifique pour paiement dans views.py
+    // mais on peut le rajouter si besoin ou filtrer la liste
+    const response = await hospitalApi.facturation.paiements.getAll({ id });
+    if (response.success && response.data.length > 0) {
+      return response.data[0];
+    }
+    return null;
   }
 
-  creerPaiement(data: PaiementFormData, tenantId: number): { success: boolean; paiement?: Paiement; errors?: string[] } {
-    try {
-      const nouveauPaiement: Paiement = {
-        paiement_id: this.nextId++,
-        ...data,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        tenant_id: tenantId
+  async creerPaiement(data: PaiementFormData, tenantId: number): Promise<{ success: boolean; data?: any; message?: string }> {
+    const response = await (hospitalApi.facturation.paiements as any).create({ ...data, tenant: tenantId });
+    return response;
+  }
+
+  async obtenirStatistiques(tenantId: number): Promise<PaiementStats> {
+    const response = await hospitalApi.facturation.paiements.getStats();
+    if (response.success) {
+      const stats = response.data;
+      return {
+        total: stats.total_paiements || 0,
+        paye: stats.par_statut?.find((s: any) => s.statut__nom === 'payé')?.total || 0,
+        en_attente: stats.par_statut?.find((s: any) => s.statut__nom === 'en attente')?.total || 0,
+        rembourse: 0,
+        montant_total: stats.montant_total || 0,
+        montant_mois: stats.montant_mois || 0
       };
-
-      this.paiements.push(nouveauPaiement);
-      return { success: true, paiement: nouveauPaiement };
-    } catch (_error) {
-      return { success: false, errors: ['Erreur lors de la création du paiement'] };
     }
-  }
-
-  modifierPaiement(id: number, data: PaiementFormData): { success: boolean; paiement?: Paiement; errors?: string[] } {
-    try {
-      const index = this.paiements.findIndex(p => p.paiement_id === id);
-      if (index === -1) {
-        return { success: false, errors: ['Paiement non trouvé'] };
-      }
-
-      this.paiements[index] = {
-        ...this.paiements[index],
-        ...data,
-        updated_at: new Date().toISOString()
-      };
-
-      return { success: true, paiement: this.paiements[index] };
-    } catch (_error) {
-      return { success: false, errors: ['Erreur lors de la modification du paiement'] };
-    }
-  }
-
-  supprimerPaiement(id: number): { success: boolean; errors?: string[] } {
-    try {
-      const index = this.paiements.findIndex(p => p.paiement_id === id);
-      if (index === -1) {
-        return { success: false, errors: ['Paiement non trouvé'] };
-      }
-
-      this.paiements.splice(index, 1);
-      return { success: true };
-    } catch (_error) {
-      return { success: false, errors: ['Erreur lors de la suppression du paiement'] };
-    }
-  }
-
-  obtenirStatistiques(tenantId: number): PaiementStats {
-    const paiements = this.obtenirTousPaiements(tenantId);
-    const maintenant = new Date();
-    const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1);
-
-    return {
-      total: paiements.length,
-      paye: paiements.filter(p => p.statut === 'Payé').length,
-      en_attente: paiements.filter(p => p.statut === 'En attente').length,
-      rembourse: paiements.filter(p => p.statut === 'Remboursé').length,
-      montant_total: paiements.reduce((sum, p) => sum + p.montant, 0),
-      montant_mois: paiements
-        .filter(p => new Date(p.date_paiement) >= debutMois)
-        .reduce((sum, p) => sum + p.montant, 0)
-    };
+    return { total: 0, paye: 0, en_attente: 0, rembourse: 0, montant_total: 0, montant_mois: 0 };
   }
 
   obtenirMethodesPaiement(): MethodePaiement[] {

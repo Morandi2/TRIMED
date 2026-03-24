@@ -8,20 +8,30 @@ export interface RendezVous {
   type_id: number | null;
   statut_id: number;
   motif: string | null;
+  
+  // Read-only fields
+  patient_nom?: string;
+  patient_prenom?: string;
+  medecin_nom?: string;
+  medecin_prenom?: string;
+  type_nom?: string;
+  statut_nom?: string;
+  statut_couleur?: string;
+  
   created_at: string;
   updated_at: string;
 }
 
 export interface RendezVousType {
   type_id: number;
-  tenant_id: number;
+  tenant_id?: number;
   nom: string;
   description?: string;
 }
 
 export interface RendezVousStatut {
   statut_id: number;
-  tenant_id: number;
+  tenant_id?: number;
   nom: string;
   description?: string;
 }

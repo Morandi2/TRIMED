@@ -1,3 +1,4 @@
+import React from 'react';
 // components/Hero.js
 
 const Hero = () => {
@@ -13,7 +14,7 @@ const Hero = () => {
         <div className="hero-overlay"></div>
         <div className="hero-content text-neutral-content text-center">
           <div className="">
-            <h1 className="mb-5 text-5xl font-bold">Avec TRIMED</h1>
+            <h1 className="mb-5 text-5xl font-bold">Avec TRIMEDH</h1>
             <h1 className="hero-title text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
               Révolutionnez la Gestion
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-cyan-200 block">
@@ -33,7 +34,7 @@ const Hero = () => {
         </div>
 
       </div>
-      
+
       {/* <section id="accueil" className="min-h-screen bg-gradient-to-br from-blue-600 to-green-600 flex items-center justify-center">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">

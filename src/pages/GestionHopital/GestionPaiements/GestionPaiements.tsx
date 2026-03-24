@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { paiementService } from './services/PaiementService';
 import { PaiementModal } from './components/PaiementModal';
-import { 
-  Paiement, 
-  PaiementFormData, 
+import {
+  Paiement,
+  PaiementFormData,
   PaiementFilters,
   PaiementStats,
   MethodePaiement,
@@ -22,7 +22,7 @@ interface GestionPaiementsProps {
   tenantId: number;
 }
 
-export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId }) => {
+export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) => {
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [stats, setStats] = useState<PaiementStats>({
     total: 0,
@@ -39,7 +39,6 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
     dateDebut: '',
     dateFin: ''
   });
-  const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editingPaiement, setEditingPaiement] = useState<Paiement | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -56,19 +55,19 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
   }, [tenantId]);
 
   const loadData = () => {
-    const data = paiementService.obtenirTousPaiements(_tenantId);
-    const statistics = paiementService.obtenirStatistiques(_tenantId);
+    const data = paiementService.obtenirTousPaiements(tenantId);
+    const statistics = paiementService.obtenirStatistiques(tenantId);
     setPaiements(data);
     setStats(statistics);
   };
 
   const handleSave = (formData: PaiementFormData) => {
     let result;
-    
+
     if (editingPaiement) {
       result = paiementService.modifierPaiement(editingPaiement.paiement_id, formData);
     } else {
-      result = paiementService.creerPaiement(formData, _tenantId);
+      result = paiementService.creerPaiement(formData, tenantId);
     }
 
     if (result.success) {
@@ -102,21 +101,20 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
   };
 
   const filteredPaiements = paiements.filter(paiement => {
-    const matchesSearch = paiement.paiement_id.toString().includes(filters.searchTerm) ||
-                         paiement.patient_id.toString().includes(filters.searchTerm) ||
-                         (paiement.reference && paiement.reference.toLowerCase().includes(filters.searchTerm.toLowerCase()));
-    const matchesStatut = filters.statut === 'Tous' || paiement.statut === filters.statut;
-    const matchesMethode = filters.methode === 'Tous' || paiement.methode_paiement === filters.methode;
+    const matchesSearch = (paiement.paiement_id?.toString() || '').includes(filters.searchTerm) ||
+      (paiement.patient_id?.toString() || '').includes(filters.searchTerm) ||
+      (paiement.reference && paiement.reference.toLowerCase().includes(filters.searchTerm.toLowerCase()));
+    const matchesStatut = filters.statut === 'Tous' || (paiement.statut || '') === filters.statut;
+    const matchesMethode = filters.methode === 'Tous' || (paiement.methode_paiement || '') === filters.methode;
     const matchesDateDebut = !filters.dateDebut || paiement.date_paiement >= filters.dateDebut;
     const matchesDateFin = !filters.dateFin || paiement.date_paiement <= filters.dateFin;
-    
+
     return matchesSearch && matchesStatut && matchesMethode && matchesDateDebut && matchesDateFin;
   });
 
-  const _totalPages = Math.ceil(filteredPaiements.length / itemsPerPage);
   const currentPaiements = filteredPaiements.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    0,
+    itemsPerPage
   );
 
   const formatDate = (dateString: string) => {
@@ -131,7 +129,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
     }).format(montant);
   };
 
-  const getStatutColor = (statut: string) => {
+  const getStatutColor = (statut: string): any => {
     const statutObj = statuts.find(s => s.nom === statut);
     return statutObj?.couleur || 'primary';
   };
@@ -144,7 +142,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
               <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
               </svg>
             </div>
             <div>
@@ -158,7 +156,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
               <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
@@ -172,7 +170,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/20">
               <svg className="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
@@ -186,7 +184,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/20">
               <svg className="h-6 w-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
               </svg>
             </div>
             <div>
@@ -209,15 +207,15 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
             </p>
           </div>
 
-          <button 
+          <button
             onClick={() => setShowModal(true)}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Nouveau Paiement
+            Enregistrer un Paiement
           </button>
         </div>
 
@@ -323,29 +321,29 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
                     </p>
                   </TableCell>
                   <TableCell className="py-3">
-                    <Badge size="sm" color={getStatutColor(paiement.statut)}>
+                    <Badge size="sm" color={getStatutColor(paiement.statut || '')}>
                       {paiement.statut}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3">
                     <div className="flex items-center gap-2">
-                      <button 
+                      <button
                         onClick={() => handleEdit(paiement)}
                         className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M7.33301 1.33331H5.99967C2.66634 1.33331 1.33301 2.66665 1.33301 5.99998V9.99998C1.33301 13.3333 2.66634 14.6666 5.99967 14.6666H9.99967C13.333 14.6666 14.6663 13.3333 14.6663 9.99998V8.66665" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M10.6933 2.01332L5.43992 7.26665C5.23992 7.46665 5.03992 7.85999 4.99992 8.14665L4.71325 10.1533C4.60659 10.88 5.11992 11.3867 5.84659 11.2867L7.85325 11C8.13325 10.96 8.52659 10.76 8.73325 10.56L13.9866 5.30665C14.8933 4.39999 15.3199 3.34665 13.9866 2.01332C12.6533 0.679985 11.5999 1.10665 10.6933 2.01332Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M7.33301 1.33331H5.99967C2.66634 1.33331 1.33301 2.66665 1.33301 5.99998V9.99998C1.33301 13.3333 2.66634 14.6666 5.99967 14.6666H9.99967C13.333 14.6666 14.6663 13.3333 14.6663 9.99998V8.66665" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M10.6933 2.01332L5.43992 7.26665C5.23992 7.46665 5.03992 7.85999 4.99992 8.14665L4.71325 10.1533C4.60659 10.88 5.11992 11.3867 5.84659 11.2867L7.85325 11C8.13325 10.96 8.52659 10.76 8.73325 10.56L13.9866 5.30665C14.8933 4.39999 15.3199 3.34665 13.9866 2.01332C12.6533 0.679985 11.5999 1.10665 10.6933 2.01332Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(paiement.paiement_id)}
                         className="rounded p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M13.3337 3.98666C11.2203 3.76666 9.10033 3.65332 6.98699 3.65332C5.66699 3.65332 4.34699 3.71999 3.02699 3.85332L2.66699 3.98666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M5.66699 3.31333L5.81366 2.44C5.92033 1.80667 6.00033 1.33333 7.12699 1.33333H8.87366C10.0003 1.33333 10.0869 1.83333 10.187 2.44667L10.3337 3.31333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M12.5663 6.09332L12.133 12.8067C12.0597 13.8533 11.9997 14.6667 10.1397 14.6667H5.85967C3.99967 14.6667 3.93967 13.8533 3.86634 12.8067L3.43301 6.09332" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M13.3337 3.98666C11.2203 3.76666 9.10033 3.65332 6.98699 3.65332C5.66699 3.65332 4.34699 3.71999 3.02699 3.85332L2.66699 3.98666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M5.66699 3.31333L5.81366 2.44C5.92033 1.80667 6.00033 1.33333 7.12699 1.33333H8.87366C10.0003 1.33333 10.0869 1.83333 10.187 2.44667L10.3337 3.31333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M12.5663 6.09332L12.133 12.8067C12.0597 13.8533 11.9997 14.6667 10.1397 14.6667H5.85967C3.99967 14.6667 3.93967 13.8533 3.86634 12.8067L3.43301 6.09332" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
                     </div>
@@ -358,7 +356,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
           {filteredPaiements.length === 0 && (
             <div className="text-center py-8">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
               </svg>
               <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucun paiement trouvé</h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -389,7 +387,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ _tenantId })
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-red-600 dark:text-red-400">
-                  <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <div>

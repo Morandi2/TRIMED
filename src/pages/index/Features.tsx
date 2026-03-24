@@ -1,4 +1,3 @@
-
 const FeaturesSection = () => {
   const features = [
     {
@@ -6,7 +5,7 @@ const FeaturesSection = () => {
       description: "Dossiers médicaux électroniques complets avec historique des soins"
     },
     {
-      title: "Rendez-vous Intelligents", 
+      title: "Rendez-vous Intelligents",
       description: "Système de réservation optimisé avec rappels automatiques"
     },
     {
@@ -26,7 +25,7 @@ const FeaturesSection = () => {
             Tout ce dont votre établissement de santé a besoin
           </p>
         </div>
-        
+
         <div className="grid md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <div key={index} className="bg-white p-6 rounded-2xl shadow-lg">

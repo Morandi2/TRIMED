@@ -180,7 +180,7 @@ export const PatientPrintPage: React.FC<PatientPrintPageProps> = ({
         {/* Pied de page */}
         <div className="mt-12 pt-6 border-t-2 border-gray-300 text-center text-sm text-gray-600">
           <p>Ce document est confidentiel et destiné uniquement à un usage médical.</p>
-          <p>Généré automatiquement par le système de gestion hospitalière TRIMED</p>
+          <p>Généré automatiquement par le système de gestion hospitalière TRIMEDH</p>
         </div>
       </div>
     </div>

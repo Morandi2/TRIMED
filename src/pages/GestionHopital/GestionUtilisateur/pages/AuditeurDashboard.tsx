@@ -1,8 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link } from "react-router-dom";
 import { BarChart3, Shield } from 'lucide-react';
 
 export const AuditeurDashboard: React.FC = () => {
+
   const modules = [
     { name: 'Rapports', path: '/home', icon: <BarChart3 className="w-8 h-8" />, color: 'bg-gray-600' },
     { name: 'Logs d\'audit', path: '/home', icon: <Shield className="w-8 h-8" />, color: 'bg-red-600' },

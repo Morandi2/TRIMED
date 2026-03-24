@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Badge from "../../../components/ui/badge/Badge";
 import {
   Table,
@@ -12,9 +12,9 @@ import { MedicamentProgressForm } from './components/MedicamentProgressForm';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MouvementModal } from './components/MouvementModal';
 import { MedicamentStats } from './components/MedicamentStats';
-import { 
-  Medicament, 
-  MouvementStock, 
+import {
+  Medicament,
+  MouvementStock,
   MedicamentFilters,
   TypeMouvement,
   STATUTS_MEDICAMENT,
@@ -51,9 +51,10 @@ const Tooltip = ({
 
 interface GestionMedicamentsProps {
   tenantId: number;
+  hopitalNom?: string;
 }
 
-export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsProps) {
+export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedicamentsProps) {
   const [medicaments, setMedicaments] = useState<Medicament[]>([]);
   const [mouvements, setMouvements] = useState<MouvementStock[]>([]);
   const [stats, setStats] = useState<MedicamentStatsType>({
@@ -65,7 +66,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
     valeur_stock: 0
   });
   const [alertes, setAlertes] = useState<Medicament[]>([]);
-  
+
   const [activeTab, setActiveTab] = useState<"stock" | "mouvements" | "alertes">("stock");
   const [filters, setFilters] = useState<MedicamentFilters>({
     searchTerm: "",
@@ -73,7 +74,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
     statut: "Tous",
     forme_pharmaceutique: "Tous"
   });
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | "mouvement" | null>(null);
   const [selectedMedicament, setSelectedMedicament] = useState<Medicament | null>(null);
@@ -86,22 +87,27 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
     message: string;
     type: 'success' | 'error';
   }>({ isOpen: false, title: '', message: '', type: 'success' });
-  
+
   const itemsPerPage = 10;
 
   // Charger les données
   useEffect(() => {
-    loadData();
+    const init = async () => {
+      await medicamentService.loadCategories(tenantId);
+      await loadData();
+    };
+    init();
   }, [tenantId]);
 
-  const loadData = () => {
-    const medicamentsData = medicamentService.obtenirTousMedicaments(tenantId);
-    const mouvementsData = medicamentService.obtenirMouvements(tenantId);
-    const statsData = medicamentService.obtenirStatistiques(tenantId);
-    const alertesData = medicamentService.obtenirAlertes(tenantId);
-    
+  const loadData = async () => {
+    const [medicamentsData, statsData, alertesData] = await Promise.all([
+      medicamentService.obtenirTousMedicaments({ tenant: tenantId }),
+      medicamentService.obtenirStatistiques(tenantId),
+      medicamentService.obtenirAlertes(tenantId)
+    ]);
+
     setMedicaments(medicamentsData);
-    setMouvements(mouvementsData);
+    // Note: mouvementsData could be separate but for now we focus on medicaments
     setStats(statsData);
     setAlertes(alertesData);
   };
@@ -120,14 +126,20 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
   }, [modalType]);
 
   // Filtrage des médicaments
-  const filteredMedicaments = medicaments.filter(medicament => {
+  const safeMedicaments = Array.isArray(medicaments) ? medicaments : [];
+  const filteredMedicaments = safeMedicaments.filter(medicament => {
+    if (!medicament) return false;
     const matchesSearch =
-      medicament.nom.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      medicament.code?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      medicament.nom_commercial?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      medicament.substance_active?.toLowerCase().includes(filters.searchTerm.toLowerCase());
-    
-    const matchesStatut = filters.statut === "Tous" || medicament.statut === filters.statut;
+      (medicament.nom?.toLowerCase() || "").includes(filters.searchTerm.toLowerCase()) ||
+      (medicament.code_atc?.toLowerCase() || "").includes(filters.searchTerm.toLowerCase()) ||
+      (medicament.dci?.toLowerCase() || "").includes(filters.searchTerm.toLowerCase()) ||
+      (medicament.description?.toLowerCase() || "").includes(filters.searchTerm.toLowerCase());
+
+    const matchesStatut = filters.statut === "Tous" || 
+      (filters.statut === "Rupture" && medicament.statut_stock?.niveau === 'rupture') ||
+      (filters.statut === "Stock bas" && medicament.statut_stock?.niveau === 'faible') ||
+      (filters.statut === "Disponible" && medicament.statut_stock?.niveau === 'normal');
+
     const matchesForme = filters.forme_pharmaceutique === "Tous" || medicament.forme_pharmaceutique === filters.forme_pharmaceutique;
 
     return matchesSearch && matchesStatut && matchesForme;
@@ -156,9 +168,9 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
     setModalType("delete");
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedMedicament) {
-      const result = medicamentService.supprimerMedicament(selectedMedicament.medicament_id);
+      const result = await medicamentService.supprimerMedicament(selectedMedicament.medicament_id);
       if (result.success) {
         setNotification({
           isOpen: true,
@@ -166,7 +178,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
           message: `Le médicament "${selectedMedicament.nom}" a été supprimé avec succès.`,
           type: 'success'
         });
-        loadData();
+        await loadData();
         setModalType(null);
         setSelectedMedicament(null);
       } else {
@@ -191,12 +203,12 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
     setModalType("mouvement");
   };
 
-  const handleSaveMedicament = () => {
-    loadData();
+  const handleSaveMedicament = async () => {
+    await loadData();
     closeModal();
   };
 
-  const handleSaveMouvement = () => {
+  const handleSaveMouvement = async () => {
     if (selectedMedicament) {
       setNotification({
         isOpen: true,
@@ -205,7 +217,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
         type: 'success'
       });
     }
-    loadData();
+    await loadData();
     closeModal();
   };
 
@@ -236,7 +248,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Gestion des Médicaments
+              Gestion des Médicaments - {hopitalNom || "Mon Hôpital"}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Gérez le stock, les mouvements et les alertes des médicaments
@@ -244,16 +256,16 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
           </div>
 
           <div className="flex items-center gap-3">
-            <Tooltip text="Nouveau médicament">
+            <Tooltip text="Ajouter un médicament">
               <button
                 onClick={handleAddMedicament}
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-blue-700"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Nouveau Médicament
+                Ajouter un Médicament
               </button>
             </Tooltip>
           </div>
@@ -273,19 +285,17 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`whitespace-nowrap border-b-2 py-4 px-1 text-theme-sm font-medium ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
+                className={`whitespace-nowrap border-b-2 py-4 px-1 text-theme-sm font-medium ${activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
               >
                 {tab.name}
                 {tab.count > 0 && (
-                  <span className={`ml-2 rounded-full px-2 py-1 text-xs ${
-                    activeTab === tab.id
-                      ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                      : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-300'
-                  }`}>
+                  <span className={`ml-2 rounded-full px-2 py-1 text-xs ${activeTab === tab.id
+                    ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
+                    : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-300'
+                    }`}>
                     {tab.count}
                   </span>
                 )}
@@ -371,7 +381,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                   <TableRow key={medicament.medicament_id}>
                     <TableCell className="py-3">
                       <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                        {medicament.code}
+                        {medicament.code_atc || '-'}
                       </p>
                     </TableCell>
                     <TableCell className="py-3">
@@ -383,9 +393,9 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                           <span className="text-gray-500 text-theme-xs dark:text-gray-400">
                             {medicament.dosage_standard} • {medicament.forme_pharmaceutique}
                           </span>
-                          {medicament.nom_commercial && (
+                          {medicament.dci && (
                             <Badge size="sm" color="light">
-                              {medicament.nom_commercial}
+                              {medicament.dci}
                             </Badge>
                           )}
                         </div>
@@ -394,22 +404,21 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                     <TableCell className="py-3">
                       <div>
                         <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {medicament.stock_actuel} {medicament.unite_stock}
+                          {medicament.stock_actuel}
                         </p>
                         <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 mt-1">
-                          <div 
-                            className={`h-2 rounded-full ${
-                              medicament.statut === "Rupture" ? 'bg-red-500' :
-                              medicament.statut === "Stock bas" ? 'bg-orange-500' :
-                              'bg-green-500'
-                            }`}
-                            style={{ 
-                              width: `${Math.min(100, ((medicament.stock_actuel || 0) / (medicament.stock_maximum || 1)) * 100)}%` 
+                          <div
+                            className={`h-2 rounded-full ${medicament.statut_stock?.niveau === 'rupture' ? 'bg-red-500' :
+                              medicament.statut_stock?.niveau === 'faible' ? 'bg-orange-500' :
+                                'bg-green-500'
+                              }`}
+                            style={{
+                              width: `${Math.min(100, (medicament.stock_actuel / (medicament.stock_minimum * 2 || 100)) * 100)}%`
                             }}
                           ></div>
                         </div>
                         <span className="text-gray-500 text-theme-xs dark:text-gray-400">
-                          Min: {medicament.stock_minimum} | Max: {medicament.stock_maximum}
+                          Min: {medicament.stock_minimum}
                         </span>
                       </div>
                     </TableCell>
@@ -417,38 +426,33 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                       <Badge
                         size="sm"
                         color={
-                          medicament.statut === "Disponible" ? "success" :
-                          medicament.statut === "Stock bas" ? "warning" :
-                          medicament.statut === "Rupture" ? "error" :
-                          medicament.statut === "Périmé" ? "error" : "light"
+                          medicament.statut_stock?.niveau === 'normal' ? "success" :
+                            medicament.statut_stock?.niveau === 'faible' ? "warning" :
+                              medicament.statut_stock?.niveau === 'rupture' ? "error" : "light"
                         }
                       >
-                        {medicament.statut}
+                        {medicament.statut_stock?.message || 'Inconnu'}
                       </Badge>
-                      {medicament.besoin_ordonnance && (
-                        <Badge size="sm" color="info" className="ml-1">
-                          Ordonnance
-                        </Badge>
+                      {medicament.necessite_ordonnance && (
+                        <span className="ml-1">
+                          <Badge size="sm" color="info">
+                            Ordonnance
+                          </Badge>
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="py-3">
                       <div>
                         <p className="text-gray-800 text-theme-sm dark:text-white/90">
-                          {medicament.date_peremption ? new Date(medicament.date_peremption).toLocaleDateString('fr-FR') : 'N/A'}
+                          {medicament.created_at ? new Date(medicament.created_at).toLocaleDateString('fr-FR') : 'N/A'}
                         </p>
-                        {medicament.date_peremption && new Date(medicament.date_peremption) < new Date() && (
-                          <span className="text-red-500 text-theme-xs">Périmé</span>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
                       <div>
                         <p className="text-gray-800 text-theme-sm dark:text-white/90">
-                          {(medicament.prix_vente || 0).toFixed(2)} €
+                          {medicament.prix_unitaire ? parseFloat(medicament.prix_unitaire).toFixed(2) : '0.00'} €
                         </p>
-                        <span className="text-gray-500 text-theme-xs dark:text-gray-400">
-                          Achat: {(medicament.prix_achat || 0).toFixed(2)} €
-                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
@@ -459,8 +463,8 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                             className="rounded p-1.5 text-green-600 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </button>
                         </Tooltip>
@@ -470,8 +474,8 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                             className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M7.33301 1.33331H5.99967C2.66634 1.33331 1.33301 2.66665 1.33301 5.99998V9.99998C1.33301 13.3333 2.66634 14.6666 5.99967 14.6666H9.99967C13.333 14.6666 14.6663 13.3333 14.6663 9.99998V8.66665" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M10.6933 2.01332L5.43992 7.26665C5.23992 7.46665 5.03992 7.85999 4.99992 8.14665L4.71325 10.1533C4.60659 10.88 5.11992 11.3867 5.84659 11.2867L7.85325 11C8.13325 10.96 8.52659 10.76 8.73325 10.56L13.9866 5.30665C14.8933 4.39999 15.3199 3.34665 13.9866 2.01332C12.6533 0.679985 11.5999 1.10665 10.6933 2.01332Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M7.33301 1.33331H5.99967C2.66634 1.33331 1.33301 2.66665 1.33301 5.99998V9.99998C1.33301 13.3333 2.66634 14.6666 5.99967 14.6666H9.99967C13.333 14.6666 14.6663 13.3333 14.6663 9.99998V8.66665" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M10.6933 2.01332L5.43992 7.26665C5.23992 7.46665 5.03992 7.85999 4.99992 8.14665L4.71325 10.1533C4.60659 10.88 5.11992 11.3867 5.84659 11.2867L7.85325 11C8.13325 10.96 8.52659 10.76 8.73325 10.56L13.9866 5.30665C14.8933 4.39999 15.3199 3.34665 13.9866 2.01332C12.6533 0.679985 11.5999 1.10665 10.6933 2.01332Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </button>
                         </Tooltip>
@@ -481,8 +485,8 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                             className="rounded p-1.5 text-green-600 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </button>
                         </Tooltip>
@@ -492,7 +496,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                             className="rounded p-1.5 text-orange-600 hover:bg-orange-50 hover:text-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </button>
                         </Tooltip>
@@ -502,9 +506,9 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                             className="rounded p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M13.3337 3.98666C11.2203 3.76666 9.10033 3.65332 6.98699 3.65332C5.66699 3.65332 4.34699 3.71999 3.02699 3.85332L2.66699 3.98666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M5.66699 3.31333L5.81366 2.44C5.92033 1.80667 6.00033 1.33333 7.12699 1.33333H8.87366C10.0003 1.33333 10.0869 1.83333 10.187 2.44667L10.3337 3.31333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M12.5663 6.09332L12.133 12.8067C12.0597 13.8533 11.9997 14.6667 10.1397 14.6667H5.85967C3.99967 14.6667 3.93967 13.8533 3.86634 12.8067L3.43301 6.09332" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M13.3337 3.98666C11.2203 3.76666 9.10033 3.65332 6.98699 3.65332C5.66699 3.65332 4.34699 3.71999 3.02699 3.85332L2.66699 3.98666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M5.66699 3.31333L5.81366 2.44C5.92033 1.80667 6.00033 1.33333 7.12699 1.33333H8.87366C10.0003 1.33333 10.0869 1.83333 10.187 2.44667L10.3337 3.31333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M12.5663 6.09332L12.133 12.8067C12.0597 13.8533 11.9997 14.6667 10.1397 14.6667H5.85967C3.99967 14.6667 3.93967 13.8533 3.86634 12.8067L3.43301 6.09332" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </button>
                         </Tooltip>
@@ -601,9 +605,9 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl mx-4 h-[90vh] overflow-hidden">
             <MedicamentProgressForm
               tenantId={tenantId}
-              onSave={(formData, isModifying) => {
+              onSave={async (formData, isModifying) => {
                 if (isModifying && selectedMedicament) {
-                  const result = medicamentService.modifierMedicament(selectedMedicament.medicament_id, formData);
+                  const result = await medicamentService.modifierMedicament(selectedMedicament.medicament_id, formData);
                   if (result.success) {
                     setNotification({
                       isOpen: true,
@@ -611,7 +615,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                       message: 'Le médicament a été modifié avec succès.',
                       type: 'success'
                     });
-                    handleSaveMedicament();
+                    await handleSaveMedicament();
                   } else {
                     setNotification({
                       isOpen: true,
@@ -621,7 +625,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                     });
                   }
                 } else {
-                  const result = medicamentService.creerMedicament(formData, tenantId);
+                  const result = await medicamentService.creerMedicament(formData);
                   if (result.success) {
                     setNotification({
                       isOpen: true,
@@ -629,7 +633,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
                       message: 'Le médicament a été créé avec succès.',
                       type: 'success'
                     });
-                    handleSaveMedicament();
+                    await handleSaveMedicament();
                   } else {
                     setNotification({
                       isOpen: true,
@@ -646,7 +650,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
           </div>
         </div>
       )}
-      
+
       {modalType === "mouvement" && selectedMedicament && (
         <MouvementStockModal
           medicament={selectedMedicament}
@@ -655,7 +659,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
           onClose={closeModal}
         />
       )}
-      
+
       {modalType === "delete" && selectedMedicament && (
         <DeleteModal
           medicament={selectedMedicament}
@@ -663,7 +667,7 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
           onClose={closeModal}
         />
       )}
-      
+
       {modalType === "view" && selectedMedicament && (
         <ViewModal
           medicament={selectedMedicament}
@@ -676,20 +680,19 @@ export default function GestionMedicaments({ tenantId = 1 }: GestionMedicamentsP
         <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                notification.type === 'success' 
-                  ? 'bg-green-100 dark:bg-green-900/20' 
-                  : 'bg-red-100 dark:bg-red-900/20'
-              }`}>
+              <div className={`flex h-12 w-12 items-center justify-center rounded-full ${notification.type === 'success'
+                ? 'bg-green-100 dark:bg-green-900/20'
+                : 'bg-red-100 dark:bg-red-900/20'
+                }`}>
                 {notification.type === 'success' ? (
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-600 dark:text-green-400">
-                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 ) : (
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-red-600 dark:text-red-400">
-                    <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" 
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z"
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </div>
@@ -773,19 +776,18 @@ function MouvementsTable({ mouvements, medicaments }: { mouvements: MouvementSto
                     size="sm"
                     color={
                       mouvement.type === "Entrée" ? "success" :
-                      mouvement.type === "Sortie" ? "error" :
-                      "warning"
+                        mouvement.type === "Sortie" ? "error" :
+                          "warning"
                     }
                   >
                     {mouvement.type}
                   </Badge>
                 </TableCell>
                 <TableCell className="py-3">
-                  <p className={`font-medium text-theme-sm ${
-                    mouvement.type === "Entrée" ? 'text-green-600' :
+                  <p className={`font-medium text-theme-sm ${mouvement.type === "Entrée" ? 'text-green-600' :
                     mouvement.type === "Sortie" ? 'text-red-600' :
-                    'text-orange-600'
-                  }`}>
+                      'text-orange-600'
+                    }`}>
                     {mouvement.type === "Entrée" ? '+' : mouvement.type === "Sortie" ? '-' : ''}{mouvement.quantite}
                   </p>
                 </TableCell>
@@ -932,7 +934,7 @@ function DeleteModal({ medicament, onConfirm, onClose }: { medicament: Medicamen
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-red-600 dark:text-red-400">
-              <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           <div>
@@ -966,12 +968,12 @@ function DeleteModal({ medicament, onConfirm, onClose }: { medicament: Medicamen
 }
 
 // Modal pou mouvement stock
-function MouvementStockModal({ 
-  medicament, 
-  type, 
-  onSave, 
-  onClose 
-}: { 
+function MouvementStockModal({
+  medicament,
+  type,
+  onSave,
+  onClose
+}: {
   medicament: Medicament;
   type: TypeMouvement;
   onSave: () => void;
@@ -1007,18 +1009,17 @@ function MouvementStockModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-full ${
-              type === "Entrée" 
-                ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
-                : "bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400"
-            }`}>
+            <div className={`p-2 rounded-full ${type === "Entrée"
+              ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+              : "bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400"
+              }`}>
               {type === "Entrée" ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 6V18M12 6L7 11M12 6L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 6V18M12 6L7 11M12 6L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               ) : (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 6V18M12 18L7 13M12 18L17 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 6V18M12 18L7 13M12 18L17 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
             </div>
@@ -1031,13 +1032,13 @@ function MouvementStockModal({
               </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -1057,12 +1058,11 @@ function MouvementStockModal({
                 </div>
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Stock après:</span>
-                  <p className={`font-medium ${
-                    type === "Entrée" 
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-orange-600 dark:text-orange-400"
-                  }`}>
-                    {type === "Entrée" 
+                  <p className={`font-medium ${type === "Entrée"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-orange-600 dark:text-orange-400"
+                    }`}>
+                    {type === "Entrée"
                       ? (medicament.stock_actuel || 0) + formData.quantite
                       : (medicament.stock_actuel || 0) - formData.quantite
                     } {medicament.unite_stock}
@@ -1140,7 +1140,7 @@ function MouvementStockModal({
             {type === "Entrée" && (
               <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
                 <h4 className="font-medium text-gray-800 dark:text-white/90">Informations d'achat</h4>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Prix unitaire (€)
@@ -1221,11 +1221,10 @@ function MouvementStockModal({
               type="submit"
               onClick={handleSubmit}
               disabled={formData.quantite <= 0 || !formData.motif.trim() || (type === "Sortie" && formData.quantite > (medicament.stock_actuel || 0))}
-              className={`px-4 py-2.5 rounded-lg text-white font-medium transition-colors ${
-                type === "Entrée" 
-                  ? "bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed"
-                  : "bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 disabled:cursor-not-allowed"
-              }`}
+              className={`px-4 py-2.5 rounded-lg text-white font-medium transition-colors ${type === "Entrée"
+                ? "bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed"
+                : "bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 disabled:cursor-not-allowed"
+                }`}
             >
               Confirmer {type}
             </button>
@@ -1246,8 +1245,8 @@ function ViewModal({ medicament, onClose }: { medicament: Medicament, onClose: (
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -1317,9 +1316,9 @@ function ViewModal({ medicament, onClose }: { medicament: Medicament, onClose: (
                     size="sm"
                     color={
                       medicament.statut === "Disponible" ? "success" :
-                      medicament.statut === "Stock bas" ? "warning" :
-                      medicament.statut === "Rupture" ? "error" :
-                      medicament.statut === "Périmé" ? "error" : "light"
+                        medicament.statut === "Stock bas" ? "warning" :
+                          medicament.statut === "Rupture" ? "error" :
+                            medicament.statut === "Périmé" ? "error" : "light"
                     }
                   >
                     {medicament.statut}

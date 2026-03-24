@@ -62,28 +62,28 @@ export const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  const handleSave = (formData: OrdonnanceFormData, isModifying: boolean) => {
+  const handleSave = async (formData: OrdonnanceFormData, isModifying: boolean) => {
     try {
       let result;
       if (isModifying && ordonnanceId) {
-        result = ordonnanceService.modifierOrdonnance(ordonnanceId, formData);
-      } else {
-        // Itilize tenantId ki pase kòm prop la
-        result = ordonnanceService.creerOrdonnance(formData, tenantId);
-      }
-
-      if (result.success) {
-        if (result.data) {
-          onSave(result.data);
-        } else if (ordonnanceId) {
-          const updatedOrdonnance = ordonnanceService.obtenirOrdonnance(ordonnanceId);
+        result = await ordonnanceService.modifierOrdonnance(ordonnanceId, formData);
+        if (result.success) {
+          const updatedOrdonnance = await ordonnanceService.obtenirOrdonnance(ordonnanceId);
           if (updatedOrdonnance) {
             onSave(updatedOrdonnance);
           }
+          onClose();
+        } else {
+          console.error('Erreurs de validation:', result.errors);
         }
-        onClose();
       } else {
-        console.error('Erreurs de validation:', result.errors);
+        const creationResult = await ordonnanceService.creerOrdonnance(formData, tenantId);
+        if (creationResult.success && creationResult.data) {
+          onSave(creationResult.data);
+          onClose();
+        } else {
+          console.error('Erreurs de validation:', creationResult.errors);
+        }
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -94,12 +94,12 @@ export const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center animate-fadeIn">
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300" 
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
       ></div>
-      
-      <div 
+
+      <div
         className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl transform transition-all duration-300 scale-100 animate-slideUp z-[100000]"
       >
         <OrdonnanceProgressForm

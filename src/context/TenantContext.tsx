@@ -27,11 +27,18 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   useEffect(() => {
     // Charger config depuis localStorage
-    const savedConfig = localStorage.getItem('tenant_config');
-    if (savedConfig) {
-      const config = JSON.parse(savedConfig);
-      setTenantConfigState(config);
-      applyTenantStyles(config);
+    try {
+      const savedConfig = localStorage.getItem('tenant_config');
+      if (savedConfig && savedConfig !== 'undefined') {
+        const config = JSON.parse(savedConfig);
+        if (config) {
+          setTenantConfigState(config);
+          applyTenantStyles(config);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de la configuration du tenant:', error);
+      // Optionnel: localStorage.removeItem('tenant_config');
     }
   }, []);
 
@@ -42,22 +49,36 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const applyTenantStyles = (config: TenantConfig) => {
-    // Appliquer couleur principale
-    document.documentElement.style.setProperty('--primary-color', config.couleur_principale);
-    
-    // Appliquer au body pour les composants
-    const root = document.documentElement;
-    root.style.setProperty('--brand-500', config.couleur_principale);
-    root.style.setProperty('--brand-600', adjustColor(config.couleur_principale, -20));
-    root.style.setProperty('--brand-700', adjustColor(config.couleur_principale, -40));
+    if (!config || !config.couleur_principale) return;
+
+    try {
+      // Appliquer couleur principale
+      document.documentElement.style.setProperty('--primary-color', config.couleur_principale);
+
+      // Appliquer au body pour les composants
+      const root = document.documentElement;
+      root.style.setProperty('--brand-500', config.couleur_principale);
+      root.style.setProperty('--brand-600', adjustColor(config.couleur_principale, -20));
+      root.style.setProperty('--brand-700', adjustColor(config.couleur_principale, -40));
+    } catch (error) {
+      console.error('Erreur lors de l\'application des styles du tenant:', error);
+    }
   };
 
   const adjustColor = (color: string, amount: number): string => {
-    const num = parseInt(color.replace('#', ''), 16);
-    const r = Math.max(0, Math.min(255, (num >> 16) + amount));
-    const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
-    const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
-    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+    if (!color) return '#0066CC';
+    try {
+      const hex = color.startsWith('#') ? color.replace('#', '') : color;
+      const num = parseInt(hex, 16);
+      if (isNaN(num)) return color;
+
+      const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+      const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+      const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+      return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+    } catch {
+      return color;
+    }
   };
 
   return (

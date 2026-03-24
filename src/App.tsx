@@ -1,22 +1,13 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { TenantProvider } from "./context/TenantContext";
-// import SignIn from "./pages/AuthPages/SignIn";
-// import SignUp from "./pages/AuthPages/SignUp";
-// import NotFound from "./pages/OtherPage/NotFound";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import SignIn from "./pages/AuthPages/SignIn";
+import SignUp from "./pages/AuthPages/SignUp";
+import NotFound from "./pages/OtherPage/NotFound";
 import UserProfiles from "./pages/UserProfiles";
-import Videos from "./pages/UiElements/Videos";
-import Images from "./pages/UiElements/Images";
-import Alerts from "./pages/UiElements/Alerts";
-import Badges from "./pages/UiElements/Badges";
-import Avatars from "./pages/UiElements/Avatars";
-import Buttons from "./pages/UiElements/Buttons";
-import LineChart from "./pages/Charts/LineChart";
-import BarChart from "./pages/Charts/BarChart";
 import Calendar from "./pages/Calendar";
-import BasicTables from "./pages/Tables/BasicTables";
-import FormElements from "./pages/Forms/FormElements";
-import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import RoleBasedHome from "./pages/Dashboard/RoleBasedHome";
@@ -27,71 +18,52 @@ import Medecin from "./pages/GestionHopital/Medecin";
 import Medicament from "./pages/GestionHopital/Medicament";
 import Ordonnance from "./pages/GestionHopital/Ordonnance";
 import Paiement from "./pages/GestionHopital/Paiement";
-import Connexion from "./components/auth/Connexion";
-import NotFound from "./pages/OtherPage/NotFound";
-import Index from "./pages/index/Index";
-import RendezVous from "./pages/GestionHopital/Rendezvous";
+import RendezVous from "./pages/GestionHopital/RendezVous";
 import Configuration from "./pages/GestionHopital/Configuration";
-
+import Index from "./pages/index/Index";
+import ForgotPassword from "./pages/AuthPages/ForgotPassword";
 
 export default function App() {
   return (
-    <TenantProvider>
-      <UserProvider>
-        <Router>
-        <ScrollToTop />
-        <Routes>
-          <Route index path="/" element={<Index />}  ></Route>
-          {/* Dashboard Layout */}
-          <Route element={<AppLayout />}>
-            <Route index path="/home" element={<RoleBasedHome />} />
-            <Route index path="/Utilisateur" element={<Utilisateur />} />
-            <Route path="/patient" element={<Patient />} />
+    <Router>
+      <TenantProvider>
+        <AuthProvider>
+          <UserProvider>
+            <ScrollToTop />
+            <Routes>
+              {/* Routes Publiques */}
+              <Route path="/" element={<Index />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/connexion" element={<SignIn />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
 
-            {/* Others Page */}
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/blank" element={<Blank />} />
+              {/* Espace Protégé */}
+              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route path="/home" element={<RoleBasedHome />} />
+                <Route path="/Utilisateur" element={<ProtectedRoute requiredPermission="canManageUsers"><Utilisateur /></ProtectedRoute>} />
 
-            {/* Forms */}
-            <Route path="/form-elements" element={<FormElements />} />
+                {/* Gestion de l'Hôpital */}
+                <Route path="/patient" element={<ProtectedRoute requiredPermission="canViewPatients"><Patient /></ProtectedRoute>} />
+                <Route path="/consultation" element={<ProtectedRoute requiredPermission="canViewConsultations"><Consultation /></ProtectedRoute>} />
+                <Route path="/medecin" element={<ProtectedRoute requiredPermission="canViewMedecins"><Medecin /></ProtectedRoute>} />
+                <Route path="/medicament" element={<ProtectedRoute requiredPermission="canViewMedicaments"><Medicament /></ProtectedRoute>} />
+                <Route path="/ordonnance" element={<ProtectedRoute requiredPermission="canViewOrdonnances"><Ordonnance /></ProtectedRoute>} />
+                <Route path="/paiement" element={<ProtectedRoute requiredPermission="canViewPaiements"><Paiement /></ProtectedRoute>} />
+                <Route path="/rendezvous" element={<ProtectedRoute requiredPermission="canViewRendezVous"><RendezVous /></ProtectedRoute>} />
+                <Route path="/configuration" element={<ProtectedRoute requiredPermission="canManageSystem"><Configuration /></ProtectedRoute>} />
 
-            {/* Tables */}
-            <Route path="/basic-tables" element={<BasicTables />} />
+                {/* Autres Pages */}
+                <Route path="/profile" element={<UserProfiles />} />
+                <Route path="/calendar" element={<ProtectedRoute requiredPermission="canViewCalendar"><Calendar /></ProtectedRoute>} />
+              </Route>
 
-            {/* Ui Elements */}
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/avatars" element={<Avatars />} />
-            <Route path="/badge" element={<Badges />} />
-            <Route path="/buttons" element={<Buttons />} />
-            <Route path="/images" element={<Images />} />
-            <Route path="/videos" element={<Videos />} />
-
-            {/* Charts */}
-            <Route path="/line-chart" element={<LineChart />} />
-            <Route path="/bar-chart" element={<BarChart />} />
-
-            {/* Gestion Hopital */}
-            <Route path="/consultation" element={<Consultation />} />
-            <Route path="/medecin" element={<Medecin />} />
-            <Route path="/medicament" element={<Medicament />} />
-            <Route path="/ordonnance" element={<Ordonnance />} />
-            <Route path="/paiement" element={<Paiement />} />
-            <Route path="/rendezvous" element={<RendezVous />} />
-            <Route path="/configuration" element={<Configuration />} />
-          </Route>
-          {/* Auth Layout */}
-          {/* <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} /> */}
-          <Route path="/connexion" element={<Connexion />} />
-
-          {/* Fallback Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-
-        </Router>
-      </UserProvider>
-    </TenantProvider>
-
+              {/* Itinéraire de Secours (Fallback) */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </UserProvider>
+        </AuthProvider>
+      </TenantProvider>
+    </Router>
   );
 }

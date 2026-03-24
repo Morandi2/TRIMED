@@ -311,7 +311,7 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
       <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {isModifying ? 'Modifier Rendez-vous' : 'Nouveau Rendez-vous'} - Étape {currentStep}/{totalSteps}
+            {isModifying ? 'Modifier le Rendez-vous' : 'Ajouter un Rendez-vous'} - Étape {currentStep}/{totalSteps}
           </h2>
           <button
             onClick={onClose}

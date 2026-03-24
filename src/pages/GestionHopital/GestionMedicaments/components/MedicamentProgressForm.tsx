@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { medicamentService } from '../services/MedicamentService';
-import { 
-  MedicamentFormData, 
+import {
+  MedicamentFormData,
   Medicament,
   FORMES_PHARMACEUTIQUES,
   UNITES_STOCK,
@@ -11,7 +11,7 @@ import {
 
 interface MedicamentProgressFormProps {
   tenantId: number;
-  onSave: (formData: MedicamentFormData, isModifying: boolean) => void;
+  onSave: (formData: MedicamentFormData, isModifying: boolean) => Promise<void>;
   onClose: () => void;
   medicamentId?: number;
 }
@@ -27,14 +27,19 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
     nom: '',
     forme_pharmaceutique: 'Comprimé',
     dosage_standard: '',
-    categorie_id: null,
+    categorie: null,
     description: '',
+    stock_actuel: 0,
+    stock_minimum: 10,
+    prix_unitaire: '0',
+    necessite_ordonnance: false,
+    actif: true,
+    code_atc: '',
+    dci: '',
+    // UI Only/Legacy fields
     nom_commercial: '',
     laboratoire: '',
     substance_active: '',
-    dci: '',
-    stock_actuel: 0,
-    stock_minimum: 10,
     stock_maximum: 100,
     unite_stock: 'Boîte',
     quantite_par_unite: 1,
@@ -45,56 +50,46 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
     tva: 10,
     date_peremption: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     date_fabrication: '',
-    besoin_ordonnance: false,
-    classe_therapeutique: 'Classe A',
-    conditions_conservation: 'Ambiance',
-    lot_number: '',
-    numero_autorisation: '',
     pays_fabrication: ''
   });
 
   const [isModifying, setIsModifying] = useState(false);
-  const [categories, setCategories] = useState(medicamentService.obtenirCategories(tenantId));
+  const [categories, setCategories] = useState<any[]>([]);
   const [_errors, _setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (medicamentId) {
-      setIsModifying(true);
-      const medicament = medicamentService.obtenirMedicament(medicamentId);
-      if (medicament) {
-        setFormData({
-          nom: medicament.nom,
-          forme_pharmaceutique: medicament.forme_pharmaceutique,
-          dosage_standard: medicament.dosage_standard || '',
-          categorie_id: medicament.categorie_id,
-          description: medicament.description || '',
-          nom_commercial: medicament.nom_commercial || '',
-          laboratoire: medicament.laboratoire || '',
-          substance_active: medicament.substance_active || '',
-          dci: medicament.dci || '',
-          stock_actuel: medicament.stock_actuel || 0,
-          stock_minimum: medicament.stock_minimum || 10,
-          stock_maximum: medicament.stock_maximum || 100,
-          unite_stock: medicament.unite_stock || 'Boîte',
-          quantite_par_unite: medicament.quantite_par_unite || 1,
-          conditionnement: medicament.conditionnement || '',
-          code_cip: medicament.code_cip || '',
-          prix_achat: medicament.prix_achat || 0,
-          prix_vente: medicament.prix_vente || 0,
-          tva: medicament.tva || 10,
-          date_peremption: medicament.date_peremption || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          date_fabrication: medicament.date_fabrication || '',
-          besoin_ordonnance: medicament.besoin_ordonnance || false,
-          classe_therapeutique: medicament.classe_therapeutique || 'Classe A',
-          conditions_conservation: medicament.conditions_conservation || 'Ambiance',
-          lot_number: medicament.lot_number || '',
-          numero_autorisation: medicament.numero_autorisation || '',
-          pays_fabrication: medicament.pays_fabrication || ''
-        });
+    const loadInitData = async () => {
+      await medicamentService.loadCategories();
+      setCategories(medicamentService.obtenirCategories());
+
+      if (medicamentId) {
+        setIsModifying(true);
+        const medicament = await medicamentService.obtenirMedicament(medicamentId);
+        if (medicament) {
+          setFormData({
+            nom: medicament.nom,
+            forme_pharmaceutique: medicament.forme_pharmaceutique,
+            dosage_standard: medicament.dosage_standard || '',
+            categorie: medicament.categorie,
+            description: medicament.description || '',
+            stock_actuel: medicament.stock_actuel,
+            stock_minimum: medicament.stock_minimum,
+            prix_unitaire: medicament.prix_unitaire || '0',
+            necessite_ordonnance: medicament.necessite_ordonnance,
+            actif: medicament.actif,
+            code_atc: medicament.code_atc || '',
+            dci: medicament.dci || '',
+            // Populate legacy fields if they existed in the response (optional)
+            nom_commercial: (medicament as any).nom_commercial || '',
+            laboratoire: (medicament as any).laboratoire || '',
+            substance_active: (medicament as any).substance_active || '',
+          } as any);
+        }
+      } else {
+        setIsModifying(false);
       }
-    } else {
-      setIsModifying(false);
-    }
+    };
+    loadInitData();
   }, [medicamentId]);
 
   const totalSteps = 4;
@@ -120,9 +115,9 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
       case 1:
         return !!(formData.nom && formData.forme_pharmaceutique && formData.dosage_standard);
       case 2:
-        return !!(formData.stock_minimum >= 0 && formData.stock_maximum >= formData.stock_minimum);
+        return (formData.stock_minimum ?? 0) >= 0;
       case 3:
-        return !!(formData.prix_achat >= 0 && formData.prix_vente >= 0);
+        return true; // Simple for now
       case 4:
         return true;
       default:
@@ -130,9 +125,9 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateStep(1) && validateStep(2) && validateStep(3)) {
-      onSave(formData, isModifying);
+      await onSave(formData, isModifying);
     }
   };
 
@@ -143,18 +138,16 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
           <button
             key={step}
             onClick={() => setCurrentStep(step)}
-            className={`flex flex-col items-center transition-all duration-200 ${
-              step <= currentStep 
-                ? 'text-blue-600 dark:text-blue-400' 
-                : 'text-gray-400 dark:text-gray-500'
-            }`}
+            className={`flex flex-col items-center transition-all duration-200 ${step <= currentStep
+              ? 'text-blue-600 dark:text-blue-400'
+              : 'text-gray-400 dark:text-gray-500'
+              }`}
           >
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${
-                step <= currentStep 
-                  ? 'bg-blue-600 border-blue-600 text-white' 
-                  : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
-              }`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${step <= currentStep
+                ? 'bg-blue-600 border-blue-600 text-white'
+                : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
+                }`}
             >
               {step}
             </div>
@@ -183,15 +176,15 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
       <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {isModifying ? 'Modifier Médicament' : 'Nouveau Médicament'} - Étape {currentStep}/{totalSteps}
+            {isModifying ? 'Modifier le Médicament' : 'Ajouter un Médicament'} - Étape {currentStep}/{totalSteps}
           </h2>
           <button
             onClick={onClose}
             className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-              <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -204,7 +197,7 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
             <div className="space-y-6">
               <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
                 <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-6">Informations Générales</h3>
-              
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -267,8 +260,8 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                       Catégorie
                     </label>
                     <select
-                      value={formData.categorie_id || ''}
-                      onChange={(e) => updateMedicamentField('categorie_id', e.target.value ? parseInt(e.target.value) : null)}
+                      value={formData.categorie || ''}
+                      onChange={(e) => updateMedicamentField('categorie', e.target.value ? parseInt(e.target.value) : null)}
                       className={inputClass}
                     >
                       <option value="">Sélectionner une catégorie...</option>
@@ -312,7 +305,7 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
             <div className="space-y-6">
               <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
                 <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-6">Gestion du Stock</h3>
-              
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -402,47 +395,19 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
             <div className="space-y-6">
               <div className="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg">
                 <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-300 mb-6">Informations Financières</h3>
-              
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Prix d'achat (€)
+                      Prix unitaire (€)
                     </label>
                     <input
                       type="number"
                       step="0.01"
-                      value={formData.prix_achat}
-                      onChange={(e) => updateMedicamentField('prix_achat', parseFloat(e.target.value) || 0)}
+                      value={formData.prix_unitaire}
+                      onChange={(e) => updateMedicamentField('prix_unitaire', e.target.value)}
                       className={inputClass}
                       min="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Prix de vente (€)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formData.prix_vente}
-                      onChange={(e) => updateMedicamentField('prix_vente', parseFloat(e.target.value) || 0)}
-                      className={inputClass}
-                      min="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      TVA (%)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.tva}
-                      onChange={(e) => updateMedicamentField('tva', parseFloat(e.target.value) || 0)}
-                      className={inputClass}
-                      min="0"
-                      max="100"
                     />
                   </div>
                 </div>
@@ -480,7 +445,7 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
             <div className="space-y-6">
               <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg">
                 <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-6">Sécurité et Réglementation</h3>
-              
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -539,18 +504,31 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 mt-6">
-                  <input
-                    type="checkbox"
-                    id="besoinOrdonnance"
-                    checked={formData.besoin_ordonnance}
-                    onChange={(e) => updateMedicamentField('besoin_ordonnance', e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor="besoinOrdonnance" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Nécessite une ordonnance
-                  </label>
-                </div>
+                  <div className="flex items-center gap-3 mt-6">
+                    <input
+                      type="checkbox"
+                      id="besoinOrdonnance"
+                      checked={formData.necessite_ordonnance}
+                      onChange={(e) => updateMedicamentField('necessite_ordonnance', e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="besoinOrdonnance" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Nécessite une ordonnance
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-3 mt-4">
+                    <input
+                      type="checkbox"
+                      id="estActif"
+                      checked={formData.actif}
+                      onChange={(e) => updateMedicamentField('actif', e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="estActif" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Médicament actif
+                    </label>
+                  </div>
               </div>
             </div>
           )}
@@ -563,11 +541,10 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
             type="button"
             onClick={prevStep}
             disabled={currentStep === 1}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-              currentStep === 1
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
-                : 'bg-gray-600 text-white hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500'
-            }`}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors ${currentStep === 1
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
+              : 'bg-gray-600 text-white hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500'
+              }`}
           >
             Précédent
           </button>
@@ -586,11 +563,10 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                 type="button"
                 onClick={handleSubmit}
                 disabled={!validateStep(1) || !validateStep(2) || !validateStep(3)}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  validateStep(1) && validateStep(2) && validateStep(3)
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
-                }`}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${validateStep(1) && validateStep(2) && validateStep(3)
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
+                  }`}
               >
                 {isModifying ? 'Modifier' : 'Enregistrer'}
               </button>
@@ -599,11 +575,10 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                 type="button"
                 onClick={nextStep}
                 disabled={!validateStep(currentStep)}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  validateStep(currentStep)
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
-                }`}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${validateStep(currentStep)
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
+                  }`}
               >
                 Suivant
               </button>

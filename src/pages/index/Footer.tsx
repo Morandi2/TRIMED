@@ -16,7 +16,7 @@ const Footer = () => {
               <div className="logo-icon w-10 h-10 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-lg flex items-center justify-center text-white text-lg">
                 <i className="fas fa-heartbeat"></i>
               </div>
-              <span className="logo-text text-2xl font-bold">TRIMED</span>
+              <span className="logo-text text-2xl font-bold">TRIMEDH</span>
             </div>
             
             <p className="footer-description text-gray-400 leading-relaxed mb-6">
@@ -92,7 +92,7 @@ const Footer = () => {
             <h4 className="text-lg font-semibold mb-6">Contact</h4>
             <ul className="footer-contact space-y-4">
               {[
-                { icon: 'envelope', text: 'info@trimed.ht' },
+                { icon: 'envelope', text: 'info@TRIMEDH.ht' },
                 { icon: 'phone', text: '+509 48 XX-XXXX' },
                 { icon: 'map-marker-alt', text: 'Port-au-Prince, Haïti' },
                 { icon: 'clock', text: 'Support 24/7/365' }
@@ -133,7 +133,7 @@ const Footer = () => {
             {/* Copyright */}
             <div className="text-center md:text-left">
               <p className="text-gray-400 text-sm">
-                &copy; 2024 TRIMED. Tous droits réservés. Fièrement développé en Haïti.
+                &copy; 2024 TRIMEDH. Tous droits réservés. Fièrement développé en Haïti.
               </p>
             </div>
 

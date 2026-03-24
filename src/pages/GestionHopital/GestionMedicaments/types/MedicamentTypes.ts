@@ -1,48 +1,45 @@
 // Types ak interfaces pou gestion medicaments
 export interface Medicament {
   medicament_id: number;
-  tenant_id: number;
+  tenant: number;
   nom: string;
   forme_pharmaceutique: string;
   dosage_standard: string | null;
-  categorie_id: number | null;
+  categorie: number | null;
+  code_atc?: string;
+  dci?: string;
   description: string | null;
+  stock_actuel: number;
+  stock_minimum: number;
+  prix_unitaire: string | null;
+  necessite_ordonnance: boolean;
+  actif: boolean;
+  
+  // Read-only fields
+  categorie_nom?: string;
+  besoin_reapprovisionnement?: boolean;
+  statut_stock?: {
+    niveau: 'rupture' | 'faible' | 'normal';
+    couleur: string;
+    message: string;
+  };
   created_at: string;
   updated_at: string;
   
-  // Champs addisyonèl pou gestion stock
+  // Legacy fields for UI compatibility
   code?: string;
   nom_commercial?: string;
   laboratoire?: string;
   substance_active?: string;
-  dci?: string;
-  stock_actuel?: number;
-  stock_minimum?: number;
-  stock_maximum?: number;
-  unite_stock?: string;
-  quantite_par_unite?: number;
-  conditionnement?: string;
-  code_cip?: string;
-  prix_achat?: number;
-  prix_vente?: number;
-  tva?: number;
-  date_peremption?: string;
-  date_fabrication?: string;
-  date_entree_stock?: string;
-  statut?: MedicamentStatut;
-  besoin_ordonnance?: boolean;
-  classe_therapeutique?: string;
-  conditions_conservation?: string;
-  lot_number?: string;
-  numero_autorisation?: string;
-  pays_fabrication?: string;
+  statut?: string;
 }
 
 export interface MedicamentCategorie {
   categorie_id: number;
-  tenant_id: number;
+  tenant: number;
   nom: string;
   description?: string;
+  nb_medicaments?: number;
   created_at: string;
   updated_at: string;
 }
@@ -122,14 +119,20 @@ export interface MedicamentFormData {
   nom: string;
   forme_pharmaceutique: string;
   dosage_standard: string;
-  categorie_id: number | null;
+  categorie: number | null;
   description: string;
+  stock_actuel: number;
+  stock_minimum: number;
+  prix_unitaire: string;
+  necessite_ordonnance: boolean;
+  actif: boolean;
+  code_atc?: string;
+  dci?: string;
+  
+  // UI Only / Legacy fields to avoid lint errors and support future backend expansion
   nom_commercial?: string;
   laboratoire?: string;
   substance_active?: string;
-  dci?: string;
-  stock_actuel?: number;
-  stock_minimum?: number;
   stock_maximum?: number;
   unite_stock?: string;
   quantite_par_unite?: number;
@@ -140,7 +143,6 @@ export interface MedicamentFormData {
   tva?: number;
   date_peremption?: string;
   date_fabrication?: string;
-  besoin_ordonnance?: boolean;
   classe_therapeutique?: string;
   conditions_conservation?: string;
   lot_number?: string;

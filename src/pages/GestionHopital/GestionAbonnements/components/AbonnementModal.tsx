@@ -7,6 +7,7 @@ interface AbonnementModalProps {
   onSave: (data: AbonnementFormData) => void;
   abonnement?: Abonnement | null;
   statuts: AbonnementStatut[];
+  tenantId: number;
 }
 
 export const AbonnementModal: React.FC<AbonnementModalProps> = ({
@@ -14,10 +15,11 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
   onClose,
   onSave,
   abonnement,
-  statuts
+  statuts,
+  tenantId
 }) => {
   const [formData, setFormData] = useState<AbonnementFormData>({
-    tenant_id: 0,
+    tenant_id: tenantId,
     plan_id: 1,
     date_debut: new Date().toISOString().split('T')[0],
     date_fin: '',
@@ -39,14 +41,14 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
       dateFin.setMonth(dateFin.getMonth() + 1);
       
       setFormData({
-        tenant_id: 1,
+        tenant_id: tenantId,
         plan_id: 1,
         date_debut: dateDebut.toISOString().split('T')[0],
         date_fin: dateFin.toISOString().split('T')[0],
         statut_id: statuts[0]?.statut_id || 1
       });
     }
-  }, [abonnement, statuts]);
+  }, [abonnement, statuts, tenantId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

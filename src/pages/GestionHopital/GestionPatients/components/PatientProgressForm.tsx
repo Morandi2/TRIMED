@@ -41,8 +41,8 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
     });
 
     const [isModifying, setIsModifying] = useState(false);
-    const [errors, setErrors] = useState<{[key: string]: string}>({});
-    const [touched, setTouched] = useState<{[key: string]: boolean}>({});
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 
     useEffect(() => {
         if (patientId) {
@@ -95,10 +95,10 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
 
     const totalSteps = 5;
 
-    // ✅ VALIDASYON KOREK POU ETAP 1
-    const validateStep1 = (): {isValid: boolean; newErrors: {[key: string]: string}} => {
+    // Validation pour l'étape 1
+    const validateStep1 = (): { isValid: boolean; newErrors: { [key: string]: string } } => {
         const { nom, prenom, date_naissance, sexe, email, telephone } = formData.patient;
-        const newErrors: {[key: string]: string} = {};
+        const newErrors: { [key: string]: string } = {};
 
         // Validasyon chan obligatwa
         if (!nom || nom.trim().length === 0) {
@@ -153,8 +153,8 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
 
     const handleFieldBlur = (fieldName: string) => {
         setTouched(prev => ({ ...prev, [fieldName]: true }));
-        
-        // Valide chan an imedyatman apre li pèdi fokis
+
+        // Valide le champ immédiatement après la perte de focus
         if (currentStep === 1) {
             const validation = validateStep1();
             setErrors(validation.newErrors);
@@ -166,15 +166,15 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
             const validation = validateStep1();
             setErrors(validation.newErrors);
             setTouched({
-                nom: true, prenom: true, date_naissance: true, 
+                nom: true, prenom: true, date_naissance: true,
                 sexe: true, email: true, telephone: true
             });
-            
+
             if (!validation.isValid) {
                 return;
             }
         }
-        
+
         if (currentStep < totalSteps) {
             setCurrentStep(currentStep + 1);
         }
@@ -192,7 +192,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
             patient: { ...prev.patient, [field]: value }
         }));
 
-        // Efase erè yo lè itilizatè ap tape
+        // Effacer les erreurs lors de la saisie
         if (errors[field]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
@@ -243,7 +243,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
         const validation = validateStep1();
         setErrors(validation.newErrors);
         setTouched({
-            nom: true, prenom: true, date_naissance: true, 
+            nom: true, prenom: true, date_naissance: true,
             sexe: true, email: true, telephone: true
         });
 
@@ -265,8 +265,8 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
 
     const formatTelephone = (value: string): string => {
         const cleaned = value.replace(/\D/g, '');
-        
-        // Si gen +509 deja, asire w li gen 8 chif apre
+
+        // Si +509 est déjà présent, s'assurer qu'il y a 8 chiffres après
         if (cleaned.startsWith('509')) {
             const numbersAfter509 = cleaned.slice(3);
             if (numbersAfter509.length <= 8) {
@@ -274,38 +274,38 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                 return `+509 ${formatted}`.trim();
             }
         }
-        
-        // Si se 8 chif sèlman, ajoute +509
+
+        // Si seulement 8 chiffres, ajouter +509
         if (cleaned.length === 8) {
             const formatted = cleaned.replace(/(\d{2})(?=\d)/g, '$1 ');
             return `+509 ${formatted}`.trim();
         }
-        
+
         return value;
     };
 
     const handleTelephoneChange = (value: string) => {
         let formatted = value;
-        
-        // Si itilizatè ap efase, pa aji
+
+        // Si l'utilisateur efface, ne pas formater
         if (value.length < 6) {
             updatePatientField('telephone', value);
             return;
         }
 
-        // Fòma konsekan
+        // Formatage cohérent
         if (!value.startsWith('+509')) {
             const cleaned = value.replace(/\D/g, '');
             if (cleaned.length <= 8) {
                 formatted = `+509 ${cleaned.replace(/(\d{2})(?=\d)/g, '$1 ')}`.trim();
             } else {
-                // Sipoze gen +509 deja nan done yo
+                // Supposer que +509 est déjà dans les données
                 formatted = `+509 ${cleaned.slice(-8).replace(/(\d{2})(?=\d)/g, '$1 ')}`.trim();
             }
         } else {
             formatted = formatTelephone(value);
         }
-        
+
         updatePatientField('telephone', formatted);
     };
 
@@ -324,11 +324,11 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
         return selectedDate >= minDate && selectedDate <= today;
     };
 
-    // Fonksyon pou jere chanjman dat ak eksperyans itilizatè pi bon
+    // Gestion des dates
     const handleDateChange = (value: string, field: string, callback: (value: string) => void) => {
         if (validateDate(value, field)) {
             callback(value);
-            // Efase erè si te genyen
+            // Effacer les erreurs s'il y en avait
             if (errors[field]) {
                 setErrors(prev => {
                     const newErrors = { ...prev };
@@ -337,7 +337,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                 });
             }
         } else {
-            // Afiche erè imedyatman
+            // Afficher l'erreur immédiatement
             setErrors(prev => ({
                 ...prev,
                 [field]: field === 'date_naissance' ? 'Date de naissance invalide' : 'Date expiration invalide'
@@ -466,8 +466,8 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 type="date"
                                                 value={formData.patient.date_naissance}
                                                 onChange={(e) => handleDateChange(
-                                                    e.target.value, 
-                                                    'date_naissance', 
+                                                    e.target.value,
+                                                    'date_naissance',
                                                     (value) => updatePatientField('date_naissance', value)
                                                 )}
                                                 onBlur={() => handleFieldBlur('date_naissance')}
@@ -582,7 +582,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                             <div className="space-y-6">
                                 <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
                                     <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-6">Adresse</h3>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -670,7 +670,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                             <div className="space-y-6">
                                 <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg">
                                     <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-6">Contacts d'urgence</h3>
-                                    
+
                                     {formData.contacts.map((contact, index) => (
                                         <div key={index} className="border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-4">
                                             <div className="flex justify-between items-center mb-4">
@@ -685,7 +685,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                     </button>
                                                 )}
                                             </div>
-                                            
+
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -699,7 +699,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                         placeholder="Nom du contact"
                                                     />
                                                 </div>
-                                                
+
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                         Téléphone
@@ -712,7 +712,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                         placeholder="+509 00 00 00 00"
                                                     />
                                                 </div>
-                                                
+
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                         Relation
@@ -728,7 +728,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                             </div>
                                         </div>
                                     ))}
-                                    
+
                                     <button
                                         type="button"
                                         onClick={() => addListItem('contacts', { nom: '', telephone: '', relation: '' })}
@@ -744,7 +744,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                             <div className="space-y-6">
                                 <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg">
                                     <h3 className="text-lg font-semibold text-orange-800 dark:text-orange-300 mb-6">Assurances</h3>
-                                    
+
                                     {formData.assurances.map((assurance, index) => (
                                         <div key={index} className="border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-4">
                                             <div className="flex justify-between items-center mb-4">
@@ -759,7 +759,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                     </button>
                                                 )}
                                             </div>
-                                            
+
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -773,7 +773,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                         placeholder="Nom de l'assurance"
                                                     />
                                                 </div>
-                                                
+
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                         Numéro de police
@@ -786,7 +786,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                         placeholder="Numéro de police"
                                                     />
                                                 </div>
-                                                
+
                                                 <div className="md:col-span-2">
                                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                         Date d'expiration
@@ -806,7 +806,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                             </div>
                                         </div>
                                     ))}
-                                    
+
                                     <button
                                         type="button"
                                         onClick={() => addListItem('assurances', { nom_assurance: '', numero_police: '', date_expiration: '' })}
@@ -822,11 +822,11 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                             <div className="space-y-6">
                                 <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg">
                                     <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-6">Informations de Santé</h3>
-                                    
+
                                     {/* Allergies */}
                                     <div className="mb-8">
                                         <h4 className="text-md font-semibold text-red-700 dark:text-red-400 mb-4">Allergies</h4>
-                                        
+
                                         {formData.allergies.map((allergie, index) => (
                                             <div key={index} className="border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
                                                 <div className="flex justify-between items-center mb-4">
@@ -841,7 +841,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                         </button>
                                                     )}
                                                 </div>
-                                                
+
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -855,7 +855,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                             placeholder="Nom de l'allergie"
                                                         />
                                                     </div>
-                                                    
+
                                                     <div className="md:col-span-2">
                                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                             Description
@@ -871,7 +871,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 </div>
                                             </div>
                                         ))}
-                                        
+
                                         <button
                                             type="button"
                                             onClick={() => addListItem('allergies', { nom_allergie: '', description: '' })}
@@ -880,11 +880,11 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                             + Ajouter une autre allergie
                                         </button>
                                     </div>
-                                    
+
                                     {/* Antécédents médicaux */}
                                     <div>
                                         <h4 className="text-md font-semibold text-red-700 dark:text-red-400 mb-4">Antécédents médicaux</h4>
-                                        
+
                                         {formData.antecedents.map((antecedent, index) => (
                                             <div key={index} className="border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
                                                 <div className="flex justify-between items-center mb-4">
@@ -899,7 +899,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                         </button>
                                                     )}
                                                 </div>
-                                                
+
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -917,7 +917,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                             <option value="autre">Autre</option>
                                                         </select>
                                                     </div>
-                                                    
+
                                                     <div className="md:col-span-2">
                                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                             Description
@@ -930,7 +930,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                             rows={3}
                                                         />
                                                     </div>
-                                                    
+
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                             Date de début
@@ -947,7 +947,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                             max={new Date().toISOString().split('T')[0]}
                                                         />
                                                     </div>
-                                                    
+
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                             Date de fin
@@ -967,7 +967,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 </div>
                                             </div>
                                         ))}
-                                        
+
                                         <button
                                             type="button"
                                             onClick={() => addListItem('antecedents', { type_antecedent: 'maladie', description: '', date_debut: '', date_fin: '' })}
@@ -1011,11 +1011,10 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                     type="button"
                                     onClick={handleSubmit}
                                     disabled={!isStep1Valid()}
-                                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                                        isStep1Valid()
+                                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${isStep1Valid()
                                             ? 'bg-green-600 text-white hover:bg-green-700'
                                             : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
-                                    }`}
+                                        }`}
                                 >
                                     {isModifying ? 'Modifier' : 'Enregistrer'}
                                 </button>
@@ -1024,11 +1023,10 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                     type="button"
                                     onClick={nextStep}
                                     disabled={!isStep1Valid()}
-                                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                                        isStep1Valid()
+                                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${isStep1Valid()
                                             ? 'bg-blue-600 text-white hover:bg-blue-700'
                                             : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
-                                    }`}
+                                        }`}
                                 >
                                     Suivant
                                 </button>

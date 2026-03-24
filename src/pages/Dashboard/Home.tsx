@@ -1,39 +1,36 @@
- import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "../../components/ecommerce/StatisticsChart";
-import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
-import RecentOrders from "../../components/ecommerce/RecentOrders";
-import DemographicCard from "../../components/ecommerce/DemographicCard";
+import HospitalMetrics from "../../components/medical/HospitalMetrics";
+import ConsultationVolumeChart from "../../components/medical/ConsultationVolumeChart";
+import HospitalActivityChart from "../../components/medical/HospitalActivityChart";
+import MedicalRecentAppointments from "../../components/medical/MedicalRecentAppointments";
+import PatientDemographicCard from "../../components/medical/PatientDemographicCard";
 import PageMeta from "../../components/common/PageMeta";
 
 export default function Home() {
   return (
     <>
       <PageMeta
-        title="TRIMED"
-        description="TRIMED se yon platfòm jesyon sante ki vize amelyore aksè ak efikasite nan sèvis sante atravè teknoloji avanse."
+        title="Dashboard | TRIMEDH"
+        description="Tablo bò TRIMEDH pou jesyon lopital ak klinik."
       />
       <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 space-y-6 xl:col-span-7">
-          <EcommerceMetrics />
-
-          <MonthlySalesChart />
-        </div>
-
-        <div className="col-span-12 xl:col-span-5">
-          <MonthlyTarget />
-        </div>
-
         <div className="col-span-12">
-          <StatisticsChart />
-        </div>
-
-        <div className="col-span-12 xl:col-span-5">
-          <DemographicCard />
+          <HospitalMetrics />
         </div>
 
         <div className="col-span-12 xl:col-span-7">
-          <RecentOrders />
+          <HospitalActivityChart />
+        </div>
+
+        <div className="col-span-12 xl:col-span-5">
+          <ConsultationVolumeChart />
+        </div>
+
+        <div className="col-span-12 xl:col-span-4">
+          <PatientDemographicCard />
+        </div>
+
+        <div className="col-span-12 xl:col-span-8">
+          <MedicalRecentAppointments />
         </div>
       </div>
     </>

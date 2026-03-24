@@ -1,5 +1,5 @@
 import React from 'react';
-import { Medecin, medecinService } from '../services/MedecinService';
+import { Medecin, medecinService, Specialite } from '../services/MedecinService';
 import { Tooltip } from '../../GestionPatients/components/Tooltip';
 
 interface MedecinTableProps {
@@ -9,6 +9,7 @@ interface MedecinTableProps {
   onViewMedecin: (medecin: Medecin) => void;
   onEditMedecin: (medecin: Medecin) => void;
   onDeleteMedecin: (medecin: Medecin) => void;
+  specialites: Specialite[];
 }
 
 export const MedecinTable: React.FC<MedecinTableProps> = ({
@@ -17,11 +18,13 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
   medecinsPerPage,
   onViewMedecin,
   onEditMedecin,
-  onDeleteMedecin
+  onDeleteMedecin,
+  specialites
 }) => {
+  const safeMedecins = Array.isArray(medecins) ? medecins : [];
   const startIndex = (currentPage - 1) * medecinsPerPage;
   const endIndex = startIndex + medecinsPerPage;
-  const currentMedecins = medecins.slice(startIndex, endIndex);
+  const currentMedecins = safeMedecins.slice(startIndex, endIndex);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Non spécifiée';
@@ -94,7 +97,7 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
               </td>
               <td className="px-4 py-4">
                 <div className="text-sm text-gray-900 dark:text-white">
-                  {medecinService.obtenirNomSpecialite(medecin.specialite_principale_id)}
+                  {medecinService.obtenirNomSpecialite(medecin.specialite_principale_id, specialites)}
                 </div>
               </td>
               <td className="px-4 py-4">

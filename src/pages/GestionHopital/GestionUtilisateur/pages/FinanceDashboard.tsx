@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { UserRound, CreditCard, BarChart3 } from 'lucide-react';
 
 export const FinanceDashboard: React.FC = () => {

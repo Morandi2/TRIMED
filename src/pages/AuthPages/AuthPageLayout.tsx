@@ -1,6 +1,6 @@
 import React from "react";
 import GridShape from "../../components/common/GridShape";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import ThemeTogglerTwo from "../../components/common/ThemeTogglerTwo";
 
 export default function AuthLayout({
@@ -23,11 +23,11 @@ export default function AuthLayout({
                   height={37}
                   className="w-auto h-auto dark:color-white"
                   src="/images/logo/logo.svg"
-                  alt="TRIMED logo"
+                  alt="TRIMEDH logo"
                 />
               </Link>
               <p className="text-center text-black dark:text-white/60">
-                La plateforme médicale complète pour gérer vos patients, rendez-vous et prescriptions en toute simplicité. 
+                La plateforme médicale complète pour gérer vos patients, rendez-vous et prescriptions en toute simplicité.
                 Accédez à tous vos outils professionnels en un seul endroit sécurisé.
               </p>
 

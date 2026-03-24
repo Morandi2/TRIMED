@@ -1,5 +1,5 @@
 import GridShape from "../../components/common/GridShape";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
 
 export default function NotFound() {
@@ -36,7 +36,7 @@ export default function NotFound() {
         </div>
         {/* <!-- Footer --> */}
         <p className="absolute text-sm text-center text-gray-500 -translate-x-1/2 bottom-6 left-1/2 dark:text-gray-400">
-          &copy; {new Date().getFullYear()} - TRIMED
+          &copy; {new Date().getFullYear()} - TRIMEDH
         </p>
       </div>
     </>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { UserRole, UserPermissions, rolePermissions } from '../types/userRoles';
+import { UserRole, UserPermissions, rolePermissions, normalizeRole } from '../types/userRoles';
 
 interface UserContextType {
   currentUserRole: UserRole;
@@ -10,9 +10,20 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Administrateur');
+  const [currentUserRole, setCurrentUserRole] = useState<UserRole>(() => {
+    const storedUserData = localStorage.getItem('user_data');
+    if (storedUserData) {
+      try {
+        const user = JSON.parse(storedUserData);
+        return normalizeRole(user.role);
+      } catch (e) {
+        console.error("Erreur init role context:", e);
+      }
+    }
+    return 'Administrateur';
+  });
 
-  const permissions = rolePermissions[currentUserRole];
+  const permissions = rolePermissions[currentUserRole] || rolePermissions.Administrateur;
 
   return (
     <UserContext.Provider value={{ currentUserRole, setCurrentUserRole, permissions }}>

@@ -21,7 +21,11 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
   const [formData, setFormData] = useState<PaiementFormData>({
     patient_id: 0,
     consultation_id: undefined,
+    abonnement_id: 0,
+    tenant_id: 0,
     montant: 0,
+    methode_id: 0,
+    statut_id: 0,
     methode_paiement: '',
     statut: '',
     date_paiement: new Date().toISOString().split('T')[0],
@@ -32,12 +36,16 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
   useEffect(() => {
     if (paiement) {
       setFormData({
-        patient_id: paiement.patient_id,
+        patient_id: paiement.patient_id || 0,
         consultation_id: paiement.consultation_id,
+        abonnement_id: paiement.abonnement_id,
+        tenant_id: paiement.tenant_id,
         montant: paiement.montant,
+        methode_id: paiement.methode_id,
+        statut_id: paiement.statut_id,
         methode_paiement: paiement.methode_paiement,
         statut: paiement.statut,
-        date_paiement: paiement.date_paiement.split('T')[0],
+        date_paiement: paiement.date_paiement ? paiement.date_paiement.split('T')[0] : new Date().toISOString().split('T')[0],
         reference: paiement.reference || '',
         notes: paiement.notes || ''
       });
@@ -45,7 +53,11 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
       setFormData({
         patient_id: 0,
         consultation_id: undefined,
+        abonnement_id: 0,
+        tenant_id: 0,
         montant: 0,
+        methode_id: methodes[0]?.methode_id || 0,
+        statut_id: statuts[0]?.statut_id || 0,
         methode_paiement: methodes[0]?.nom || '',
         statut: statuts[0]?.nom || '',
         date_paiement: new Date().toISOString().split('T')[0],
@@ -74,7 +86,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>

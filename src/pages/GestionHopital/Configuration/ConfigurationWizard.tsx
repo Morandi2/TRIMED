@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from "react-router-dom";
 import { Building2, Users, Stethoscope, Check } from 'lucide-react';
 import { useTenant } from '../../../context/TenantContext';
 import { HospitalInfoStep } from './components/HospitalInfoStep';
 import { BranchConfigStep } from './components/BranchConfigStep';
 import { ServicesConfigStep } from './components/ServicesConfigStep';
 import { HospitalConfig } from './types/ConfigTypes';
+import { useAuth } from '../../../context/AuthContext';
 
 const steps = [
   { id: 1, title: 'Informations Hôpital', icon: Building2, description: 'Informations de base' },
@@ -15,6 +16,7 @@ const steps = [
 
 export const ConfigurationWizard: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { setTenantConfig } = useTenant();
   const [currentStep, setCurrentStep] = useState(1);
   const [config, setConfig] = useState<Partial<HospitalConfig>>({
@@ -42,7 +44,7 @@ export const ConfigurationWizard: React.FC = () => {
     try {
       // Sauvegarder config tenant
       const tenantConfig = {
-        tenant_id: 1, // TODO: Récupérer depuis API
+        tenant_id: user?.hopital_id || 1, 
         nom: config.nom || '',
         logo: config.logo,
         couleur_principale: config.couleur_principale || '#0066CC',
@@ -51,17 +53,22 @@ export const ConfigurationWizard: React.FC = () => {
         fuseau_horaire: config.fuseau_horaire || 'America/Port-au-Prince',
         is_configured: true,
       };
-      
+
       setTenantConfig(tenantConfig);
-      
-      // TODO: Envoyer à l'API
-      // await configService.saveConfig(config);
-      
-      alert('Configuration enregistrée avec succès! Redirection vers le dashboard...');
-      navigate('/home');
+
+      // Envoyer à l'API
+      const { hospitalApi } = await import('../../../api/hospitalApi');
+      const result = await hospitalApi.config.saveConfig(config);
+
+      if (result.success) {
+        alert('Configuration enregistrée avec succès! Redirection vers le dashboard...');
+        navigate('/home');
+      } else {
+        alert(`Erreur lors de la sauvegarde: ${result.message}`);
+      }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de la sauvegarde');
+      alert('Erreur lors de la sauvegarde. Veuillez réessayer.');
     }
   };
 
@@ -71,7 +78,7 @@ export const ConfigurationWizard: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            ⚙️ Configuration Initiale
+            Configuration Initiale
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Configurez votre hôpital en quelques étapes simples
@@ -90,20 +97,18 @@ export const ConfigurationWizard: React.FC = () => {
                 <React.Fragment key={step.id}>
                   <div className="flex flex-col items-center flex-1">
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                        isCompleted
+                      className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${isCompleted
                           ? 'bg-green-500 text-white'
                           : isActive
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
-                      }`}
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
+                        }`}
                     >
                       {isCompleted ? <Check className="w-6 h-6" /> : <StepIcon className="w-6 h-6" />}
                     </div>
                     <p
-                      className={`text-sm font-medium ${
-                        isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
-                      }`}
+                      className={`text-sm font-medium ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
+                        }`}
                     >
                       {step.title}
                     </p>
@@ -111,9 +116,8 @@ export const ConfigurationWizard: React.FC = () => {
                   </div>
                   {index < steps.length - 1 && (
                     <div
-                      className={`flex-1 h-1 mx-4 ${
-                        isCompleted ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
-                      }`}
+                      className={`flex-1 h-1 mx-4 ${isCompleted ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
+                        }`}
                     />
                   )}
                 </React.Fragment>
@@ -159,3 +163,5 @@ export const ConfigurationWizard: React.FC = () => {
     </div>
   );
 };
+
+export default ConfigurationWizard;

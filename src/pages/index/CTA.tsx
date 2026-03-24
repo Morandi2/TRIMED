@@ -8,7 +8,7 @@ const CTA = () => {
         <div className="cta-content text-center">
           <h2 className="text-4xl font-bold mb-4">Prêt à transformer votre hôpital ?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-            Rejoignez les établissements de santé haïtiens qui améliorent déjà leurs services avec TRIMED
+            Rejoignez les établissements de santé haïtiens qui améliorent déjà leurs services avec TRIMEDH
           </p>
           <div className="cta-actions flex flex-col sm:flex-row gap-4 justify-center">
             <button className="btn-primary bg-white text-emerald-600 px-8 py-4 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center gap-2 justify-center">

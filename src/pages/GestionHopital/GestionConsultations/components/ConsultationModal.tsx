@@ -65,47 +65,45 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  
-  const handleSave = (formData: ConsultationFormData, isModifying: boolean) => {
-  try {
-    let result;
-    if (isModifying && consultationId) {
-      result = consultationService.modifierConsultation(consultationId, formData);
-    } else {
-      // ✅ Koreksyon: Pase tenantId kòm yon paramèt separe
-      result = consultationService.creerConsultation(formData, tenantId);
-    }
 
-    if (result.success) {
-      if (result.data) {
-        onSave(result.data);
-      } else if (consultationId) {
-        const updatedConsultation = consultationService.obtenirConsultation(consultationId);
-        if (updatedConsultation) {
-          onSave(updatedConsultation);
-        }
+  const handleSave = async (formData: ConsultationFormData, isModifying: boolean) => {
+    try {
+      let result;
+      if (isModifying && consultationId) {
+        result = await consultationService.modifierConsultation(consultationId, formData);
+      } else {
+        result = await consultationService.creerConsultation(formData, tenantId);
       }
-      onClose();
-    } else {
-      console.error('Erreurs de validation:', result.errors);
-      // ✅ Afiche erè a pou itilizatè a
-      alert('Erreurs: ' + (result.errors?.join(', ') || 'Erreur inconnue'));
+
+      if (result.success) {
+        if (result.data) {
+          onSave(result.data);
+        } else if (consultationId) {
+          const updatedConsultation = await consultationService.obtenirConsultation(consultationId);
+          if (updatedConsultation) {
+            onSave(updatedConsultation);
+          }
+        }
+        onClose();
+      } else {
+        console.error('Erreurs de validation:', result.errors);
+        alert('Erreurs: ' + (result.errors?.join(', ') || 'Erreur inconnue'));
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la sauvegarde');
     }
-  } catch (error) {
-    console.error('Erreur:', error);
-    alert('Erreur lors de la sauvegarde');
-  }
-};
+  };
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center animate-fadeIn">
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300" 
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
       ></div>
-      
-      <div 
+
+      <div
         className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl transform transition-all duration-300 scale-100 animate-slideUp z-[100000]"
       >
         <ConsultationProgressForm

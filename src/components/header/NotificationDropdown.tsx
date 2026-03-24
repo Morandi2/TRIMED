@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,9 +26,8 @@ export default function NotificationDropdown() {
         onClick={handleClick}
       >
         <span
-          className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 ${
-            !notifying ? "hidden" : "flex"
-          }`}
+          className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 ${!notifying ? "hidden" : "flex"
+            }`}
         >
           <span className="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping"></span>
         </span>

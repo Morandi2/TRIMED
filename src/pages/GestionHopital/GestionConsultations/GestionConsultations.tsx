@@ -4,26 +4,27 @@ import { ConsultationModal } from './components/ConsultationModal';
 import { ConsultationPrintPage } from './components/ConsultationPrintPage';
 import { ConsultationStats } from './components/ConsultationStats';
 
-const GestionConsultations: React.FC = () => {
+interface GestionConsultationsProps {
+  tenantId: number;
+  hopitalNom?: string;
+}
+
+const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, hopitalNom }) => {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const tenantConfig = {
-    tenant_id: 1,
-    nom: "Hôpital Général de Port-au-Prince",
-    adresse: "Port-au-Prince, Haïti",
-    telephone: "+509 2222-3333",
-    email: "contact@hopital.ht"
-  };
-
   useEffect(() => {
-    chargerConsultations();
-  }, []);
+    const init = async () => {
+      await consultationService.loadCache(tenantId);
+      await chargerConsultations();
+    };
+    init();
+  }, [tenantId]);
 
-  const chargerConsultations = () => {
-    const consultationsData = consultationService.obtenirConsultationsParTenant(tenantConfig.tenant_id);
+  const chargerConsultations = async () => {
+    const consultationsData = await consultationService.obtenirConsultationsParTenant(tenantId);
     setConsultations(consultationsData);
   };
 
@@ -48,27 +49,27 @@ const GestionConsultations: React.FC = () => {
   const [showPrintPage, setShowPrintPage] = useState(false);
   const [printConsultation, setPrintConsultation] = useState<Consultation | null>(null);
 
-  const handleVoirConsultation = (consultationId: number) => {
-    const consultation = consultationService.obtenirConsultation(consultationId);
+  const handleVoirConsultation = async (consultationId: number) => {
+    const consultation = await consultationService.obtenirConsultation(consultationId);
     if (consultation) {
       setSelectedConsultation(consultation);
       setModalType('view');
     }
   };
 
-  const handleSupprimerConsultation = (consultationId: number) => {
-    const consultation = consultationService.obtenirConsultation(consultationId);
+  const handleSupprimerConsultation = async (consultationId: number) => {
+    const consultation = await consultationService.obtenirConsultation(consultationId);
     if (consultation) {
       setSelectedConsultation(consultation);
       setModalType('delete');
     }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedConsultation) {
-      const success = consultationService.supprimerConsultation(selectedConsultation.consultation_id);
+      const success = await consultationService.supprimerConsultation(selectedConsultation.consultation_id);
       if (success) {
-        chargerConsultations();
+        await chargerConsultations();
         setSuccessModal({
           isOpen: true,
           title: 'Suppression réussie',
@@ -98,8 +99,8 @@ const GestionConsultations: React.FC = () => {
     setShowPrintPage(true);
   };
 
-  const handleSaveConsultation = (consultation: Consultation) => {
-    chargerConsultations();
+  const handleSaveConsultation = async () => {
+    await chargerConsultations();
     setSuccessModal({
       isOpen: true,
       title: 'Opération réussie',
@@ -128,7 +129,7 @@ const GestionConsultations: React.FC = () => {
                   Gestion des Consultations
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  {tenantConfig.nom}
+                  {hopitalNom || "Mon Hôpital"}
                 </p>
               </div>
               <button
@@ -138,7 +139,7 @@ const GestionConsultations: React.FC = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Nouvelle consultation
+                Enregistrer une Consultation
               </button>
             </div>
 
@@ -268,7 +269,7 @@ const GestionConsultations: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveConsultation}
         consultationId={selectedConsultationId}
-        tenantId={tenantConfig.tenant_id}
+        tenantId={tenantId}
       />
 
       {/* Modal de visualisation */}
@@ -417,7 +418,7 @@ const GestionConsultations: React.FC = () => {
       {showPrintPage && printConsultation && (
         <ConsultationPrintPage
           consultation={printConsultation}
-          hopitalNom={tenantConfig.nom}
+          hopitalNom={hopitalNom || ""}
           onClose={() => {
             setShowPrintPage(false);
             setPrintConsultation(null);

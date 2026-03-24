@@ -46,27 +46,31 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
   };
 
   useEffect(() => {
-    if (consultationId) {
-      setIsModifying(true);
-      const consultation = consultationService.obtenirConsultation(consultationId);
-      if (consultation) {
-        setFormData({
-          consultation: {
-            patient_id: consultation.patient_id,
-            medecin_id: consultation.medecin_id,
-            rendez_vous_id: consultation.rendez_vous_id,
-            date_consultation: consultation.date_consultation.replace('T', 'T').slice(0, 16),
-            motif: consultation.motif,
-            diagnostic_principal: consultation.diagnostic_principal || '',
-            notes: consultation.notes || ''
-          }
-        });
-        setSelectedPatientName(consultationService.obtenirNomPatient(consultation.patient_id));
-        setSelectedMedecinName(consultationService.obtenirNomMedecin(consultation.medecin_id));
+    const loadConsultationData = async () => {
+      if (consultationId) {
+        setIsModifying(true);
+        const consultation = await consultationService.obtenirConsultation(consultationId);
+        if (consultation) {
+          setFormData({
+            consultation: {
+              patient_id: consultation.patient_id,
+              medecin_id: consultation.medecin_id,
+              rendez_vous_id: consultation.rendez_vous_id,
+              date_consultation: consultation.date_consultation.replace('T', 'T').slice(0, 16),
+              motif: consultation.motif,
+              diagnostic_principal: consultation.diagnostic_principal || '',
+              notes: consultation.notes || ''
+            }
+          });
+          setSelectedPatientName(consultationService.obtenirNomPatient(consultation.patient_id));
+          setSelectedMedecinName(consultationService.obtenirNomMedecin(consultation.medecin_id));
+        }
+      } else {
+        setIsModifying(false);
       }
-    } else {
-      setIsModifying(false);
-    }
+    };
+    
+    loadConsultationData();
   }, [consultationId]);
 
   const totalSteps = 3;
@@ -184,7 +188,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
       <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {isModifying ? 'Modifier Consultation' : 'Nouvelle Consultation'} - Étape {currentStep}/{totalSteps}
+            {isModifying ? 'Modifier la Consultation' : 'Enregistrer une Consultation'} - Étape {currentStep}/{totalSteps}
           </h2>
           <button
             onClick={onClose}
