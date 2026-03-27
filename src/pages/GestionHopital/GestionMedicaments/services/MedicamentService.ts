@@ -21,26 +21,33 @@ export class MedicamentService {
   }
 
   // CRUD operations pou medicaments
-  public async creerMedicament(data: MedicamentFormData): Promise<{ success: boolean; data?: any; errors?: string[] }> {
+  public async creerMedicament(data: MedicamentFormData, tenantId: number): Promise<{ success: boolean; data?: any; errors?: string[] }> {
     try {
-      const response = await hospitalApi.medicaments.create(data as unknown as Medicament);
+      const payload = {
+        ...data,
+        tenant: tenantId
+      };
+      const response = await hospitalApi.medicaments.create(payload as unknown as Medicament);
       return {
         success: response.success,
-        data: response.data,
-        errors: response.success ? undefined : [response.message || 'Erreur inconnue']
+        data: (response as any).data,
+        errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
       };
     } catch (error: any) {
-      return { success: false, errors: [error.message] };
+      console.error("DEBUG CREATION MEDICAMENT ERROR:", error.response?.data);
+      const errorMsg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+      return { success: false, errors: [errorMsg] };
     }
   }
 
-  public async modifierMedicament(id: number, data: MedicamentFormData): Promise<{ success: boolean; data?: any; errors?: string[] }> {
+  public async modifierMedicament(id: number, data: MedicamentFormData, tenantId: number): Promise<{ success: boolean; data?: any; errors?: string[] }> {
     try {
-      const response = await hospitalApi.medicaments.update(id, data as Partial<Medicament>);
+      const payload = { ...data, tenant: tenantId };
+      const response = await hospitalApi.medicaments.update(id, payload as Partial<Medicament>);
       return {
         success: response.success,
-        data: response.data,
-        errors: response.success ? undefined : [response.message || 'Erreur inconnue']
+        data: (response as any).data,
+        errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
       };
     } catch (error: any) {
       return { success: false, errors: [error.message] };
@@ -105,8 +112,8 @@ export class MedicamentService {
       const response = await hospitalApi.medicaments.updateStock(data.medicament_id, payload);
       return {
         success: response.success,
-        data: response.data,
-        errors: response.success ? undefined : [response.message || 'Erreur inconnue']
+        data: (response as any).data,
+        errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
       };
     } catch (error: any) {
       return { success: false, errors: [error.message] };
@@ -131,7 +138,7 @@ export class MedicamentService {
     const success = response.success === true;
     return {
       success,
-      data: response.data,
+        data: (response as any).data,
       errors: success ? undefined : [response.message || 'Erreur inconnue']
     };
   }

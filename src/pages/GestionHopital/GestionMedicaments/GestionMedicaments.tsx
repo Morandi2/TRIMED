@@ -607,7 +607,7 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
               tenantId={tenantId}
               onSave={async (formData, isModifying) => {
                 if (isModifying && selectedMedicament) {
-                  const result = await medicamentService.modifierMedicament(selectedMedicament.medicament_id, formData);
+                  const result = await medicamentService.modifierMedicament(selectedMedicament.medicament_id, formData, tenantId);
                   if (result.success) {
                     setNotification({
                       isOpen: true,
@@ -625,7 +625,7 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
                     });
                   }
                 } else {
-                  const result = await medicamentService.creerMedicament(formData);
+                  const result = await medicamentService.creerMedicament(formData, tenantId);
                   if (result.success) {
                     setNotification({
                       isOpen: true,

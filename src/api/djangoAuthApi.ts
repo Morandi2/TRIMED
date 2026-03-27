@@ -1,641 +1,339 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from './apiConfig';
 import {
   InscriptionData,
   ConnexionData,
-  AuthUser,
   ApiResponse,
   ConnexionResponse,
-  InscriptionResponse
+  InscriptionResponse,
+  AuthUser
 } from './types/auth.types';
 
-// Helper to map backend user data to frontend AuthUser type
-function mapUser(u: any): AuthUser {
-  // Extraction robuste de l'ID hôpital
-  let hId = null;
-  if (u.hopital_detail && u.hopital_detail.id) {
-    hId = u.hopital_detail.id;
-  } else if (u.hopital && typeof u.hopital === 'object') {
-    hId = u.hopital.id;
-  } else if (u.hopital) {
-    hId = u.hopital;
-  }
-
-  return {
-    utilisateur_id: u.utilisateur_id || u.id,
-    nom_complet: u.nom_complet || `${u.nom || u.first_name || ''} ${u.prenom || u.last_name || ''}`.trim() || u.email,
-    email: u.email,
-    role: u.role,
-    telephone: u.telephone,
-    photo: u.photo,
-    hopital_id: hId,
-    hopital_nom: u.hopital_detail ? u.hopital_detail.nom : (u.hopital && typeof u.hopital === 'object' ? u.hopital.nom : null)
-  };
-}
-
-// API pour l'authentification avec Django REST Framework
+/**
+ * API pour l'authentification Django
+ */
 export const djangoAuthApi = {
   /**
-   * Connexion utilisateur - Django JWT
+   * Connexion (Login)
    */
-  async connexion(data: ConnexionData): Promise<ApiResponse<ConnexionResponse>> {
+  connexion: async function (data: ConnexionData): Promise<ApiResponse<ConnexionResponse>> {
     try {
-      console.log('Tentative de connexion:', data.email);
+      console.log('🔍 Tentative de connexion Django:', data.email);
+      const response = await apiClient.post('/comptes/login/', data);
 
-      const response = await apiClient.post('/comptes/login/', {
-        email: data.email,
-        username: data.email, // Django SimpleJWT parfois exige username
-        password: data.password
-      });
+      console.log('📦 Data reçue du backend (KEYS):', Object.keys(response.data));
+      const respData = response.data;
+      if (respData.user) console.log('👤 User KEYS:', Object.keys(respData.user));
+      if (respData.tenant) console.log('🏥 Tenant KEYS:', Object.keys(respData.tenant));
+      if (respData.user && respData.user.hopital) console.log('🏥 User.hopital structure:', respData.user.hopital);
+      const access = respData.access || respData.token;
+      const refresh = respData.refresh;
 
-      const { access, refresh, user: responseUser } = response.data;
-      let user = responseUser;
+      // Mapper l'utilisateur avec la nouvelle logique centralisée
+      const authUser = this.mapUserResponse(respData.user || respData, respData.tenant);
 
-      // Stocker les tokens JWT d'abord pour que getProfile puisse les utiliser
-      localStorage.setItem('access_token', access);
-      localStorage.setItem('refresh_token', refresh);
+      // Stocker les tokens
+      if (access) localStorage.setItem('access_token', access);
+      if (refresh) localStorage.setItem('refresh_token', refresh);
 
-      if (!user || !user.id || user.hopital === undefined) {
-        console.warn('Données utilisateur incomplètes dans la réponse de login, récupération forcée du profil...');
-        const profileRes = await this.getProfile();
-        if (profileRes.success) {
-          user = profileRes.data;
-        }
+      localStorage.setItem('user_data', JSON.stringify(authUser));
+      if (respData.tenant || (respData.user && respData.user.hopital)) {
+        localStorage.setItem('tenant_data', JSON.stringify(respData.tenant || respData.user.hopital));
       }
 
-      if (!user) {
-        throw new Error('Impossible de récupérer les données utilisateur après la connexion.');
-      }
-
-      localStorage.setItem('user_data', JSON.stringify(user));
-
-      console.log('Connexion réussie pou:', user.email);
+      console.log('✅ Connexion Django réussie, user:', authUser);
 
       return {
         success: true,
-        message: `Connexion réussie! Bienvenue ${user.nom || user.first_name || ''}`,
+        message: 'Connexion réussie',
         data: {
-          user: mapUser(user),
+          user: authUser,
           token: access,
-          redirectTo: this.getRedirectPath(user.role),
-          tenant: user.hopital
+          redirectTo: this.getRedirectionPath(authUser.role),
+          tenant: respData.tenant || (respData.user && respData.user.hopital)
         }
       };
-
     } catch (error: any) {
-      console.error('Erreur de connexion (détails):', error.response?.data || error.message);
+      console.error('❌ Erreur connexion Django:', error.response?.data || error.message);
 
-      let errorMessage = 'Erreur lors de la connexion';
+      let message = 'Échec de la connexion';
+      const errorData = error.response?.data;
 
-      if (error.response?.status === 401) {
-        errorMessage = 'Email ou mot de passe incorrect';
-      } else if (error.response?.status === 400) {
-        const details = error.response.data;
-        console.error('[djangoAuthApi] Erreur 400 login (champs):', details);
-        if (typeof details === 'object' && details !== null) {
-          const messages = Object.entries(details)
-            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs[0] : msgs}`)
-            .join(' | ');
-          errorMessage = messages || details.detail || 'Données de connexion invalides';
-        } else {
-          errorMessage = 'Données de connexion invalides';
+      if (errorData) {
+        if (errorData.detail) message = errorData.detail;
+        else if (errorData.error) message = errorData.error;
+        else if (errorData.non_field_errors) message = errorData.non_field_errors[0];
+        else if (typeof errorData === 'object') {
+          const firstKey = Object.keys(errorData)[0];
+          if (Array.isArray(errorData[firstKey])) {
+            message = `${firstKey}: ${errorData[firstKey][0]}`;
+          }
         }
-      } else if (error.code === 'ERR_NETWORK') {
-        errorMessage = 'Impossible de se connecter au serveur. Vérifiez votre connexion internet.';
       }
 
       return {
         success: false,
-        message: errorMessage,
-        error: error.response?.data || error.message
+        message,
+        error: errorData
       };
     }
   },
 
   /**
-   * Inscription utilisateur - Django
+   * Inscription d'un Hôpital (Propriétaire)
    */
-  async inscription(data: InscriptionData): Promise<ApiResponse<InscriptionResponse>> {
+  inscription: async function (data: InscriptionData): Promise<ApiResponse<InscriptionResponse>> {
     try {
-      console.log('Début de l\'inscription pour:', data.email);
-
-      const prenom = data.prenomAdmin || data.directeur?.split(' ')[0] || 'Nouvel';
-      const nom = data.nomAdmin || data.directeur?.split(' ')[1] || 'Utilisateur';
-      const userEmail = data.adminEmail || data.email;
-      const nomComplet = `${prenom} ${nom}`.trim();
+      console.log('🏥 Inscription hôpital Django:', data.nomHopital);
 
       const payload = {
-        email: userEmail,
+        admin_email: data.adminEmail,
         password: data.password,
-        confirm_password: data.password,
-        nom: nom,
-        prenom: prenom,
-        nom_complet: nomComplet,
-        first_name: prenom,
-        last_name: nom,
-        role: 'proprietaire-hopital',
-        is_active: false, // Kont lan dwe inaktif jiskaske verifikasyon fini
-        hopital_data: {
-          nom: data.nomHopital,
-          adresse: data.adresseLigne1 || data.adresse || '',
-          telephone: data.telephone,
-          email_professionnel: data.email,
-          directeur: nomComplet || "Non défini",
-          nombre_de_lits: data.nombreLits ? parseInt(data.nombreLits) : 1,
-          numero_enregistrement: data.numeroEnregistrement || "NON-DEFINI",
-          statut: "actif",
-          type_abonnement: (data.planAbonnement || 'basic').toLowerCase(),
-          statut_verification_document: "en_attente"
-        }
+        prenom_admin: data.prenomAdmin,
+        nom_admin: data.nomAdmin,
+        admin_telephone: data.adminTelephone,
+        nom_hopital: data.nomHopital,
+        raison_sociale: data.raisonSociale,
+        numero_enregistrement: data.numeroEnregistrement,
+        nif: data.nif,
+        type_etablissement: data.typeEtablissement,
+        site_web: data.siteWeb,
+        description: data.description,
+        pays: data.pays,
+        province: data.province,
+        ville: data.ville,
+        adresse_ligne1: data.adresseLigne1,
+        adresse_ligne2: data.adresseLigne2,
+        code_postal: data.codePostal,
+        telephone: data.telephone,
+        telephone_urgence: data.telephoneUrgence,
+        email_hospital: data.email,
+        email_support: data.emailSupport,
+        nombre_lits: data.nombreLits,
+        urgence_disponible: data.urgenceDisponible,
+        laboratoire_disponible: data.laboratoireDisponible,
+        pharmacie_disponible: data.pharmacieDisponible,
+        radiologie_disponible: data.radiologieDisponible,
+        heure_ouverture: data.heureOuverture,
+        heure_fermeture: data.heureFermeture,
+        plan_abonnement: data.planAbonnement,
+        cycle_facturation: data.cycleFacturation
       };
-
-      console.log('[djangoAuthApi] Payload inscription:', JSON.stringify(payload, null, 2));
 
       const response = await apiClient.post('/comptes/inscription/', payload);
 
-      console.log('[djangoAuthApi] Réponse inscription brute:', JSON.stringify(response.data, null, 2));
+      console.log(' Inscription réussie');
 
-      const access = response.data.access || response.data.token;
-      const refresh = response.data.refresh;
-      // Backend retounen "utilisateur" pa "user"
-      const user = response.data.utilisateur || response.data.user || response.data;
-
-      // Stocker les tokens JWT
-      if (access) localStorage.setItem('access_token', access);
-      if (refresh) localStorage.setItem('refresh_token', refresh);
-      localStorage.setItem('user_data', JSON.stringify(user));
-
-      console.log('Inscription terminée avec succès!');
+      const respData = response.data;
+      const authUser = this.mapUserResponse(respData.user || respData, respData.tenant);
 
       return {
         success: true,
-        message: `Félicitations! L'hôpital "${data.nomHopital}" a été créé avec succès.`,
+        message: 'Inscription réussie. Votre compte est en attente de vérification.',
         data: {
-          user: user ? mapUser(user) : null,
-          tenant: user?.hopital_detail || null,
-          token: access,
-          redirectTo: '/home'
+          user: authUser,
+          token: respData.access || respData.token,
+          redirectTo: this.getRedirectionPath(authUser.role),
+          tenant: respData.tenant || (respData.user && respData.user.hopital)
         }
       };
-
     } catch (error: any) {
-      console.error('Erreur lors de l\'inscription:', error);
-
-      let errorMessage = 'Erreur lors de la création du compte';
-
-      if (error.response?.status === 500) {
-        // Backend kreye done yo men crash pandan response serialization
-        // Donk kont lan te kreye an reyalite
-        console.warn('[djangoAuthApi] Erreur 500 — le backend a probablement créé le compte mais a crashé pendant la réponse.');
-        return {
-          success: true,
-          message: `L'hôpital "${data.nomHopital}" a été créé. Le compte est en attente de vérification. Vous pouvez vous connecter une fois qu'il sera activé.`,
-          data: {
-            user: null,
-            tenant: null,
-            token: null,
-            redirectTo: '/signin'
-          }
-        };
-      } else if (error.response?.status === 400) {
-        const details = error.response.data;
-        console.error('[djangoAuthApi] Erreur 400 Inscription (Détails):', details);
-        
-        if (details.email) {
-          errorMessage = 'Cet email est déjà utilisé';
-        } else if (details.password) {
-          errorMessage = 'Mot de passe trop faible';
-        } else {
-          errorMessage = Object.entries(details)
-            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
-            .join(' | ') || details.detail || 'Données d\'inscription invalides';
-        }
-      } else if (error.code === 'ERR_NETWORK') {
-        errorMessage = 'Impossible de se connecter au serveur. Vérifiez votre connexion internet.';
-      }
-
+      console.error(' Erreur inscription Django:', error.response?.data || error.message);
       return {
         success: false,
-        message: errorMessage,
-        error: error.message
+        message: error.response?.data?.detail || 'Une erreur est survenue lors de l\'inscription',
+        error: error.response?.data
       };
     }
   },
 
   /**
-   * Déconnexion - Django
+   * Créer un utilisateur (Staff)
    */
-  async deconnexion(): Promise<ApiResponse> {
-    try {
-      console.log('Déconnexion en cours...');
-
-      const refreshToken = localStorage.getItem('refresh_token');
-
-      if (refreshToken) {
-        try {
-          await apiClient.post('/comptes/logout/', {
-            refresh: refreshToken
-          });
-          console.log('Session fermée côté serveur');
-        } catch (error) {
-          console.warn('Impossible de fermer la session côté serveur:', error);
-        }
-      }
-
-      // Nettoyer le localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_data');
-
-      console.log('localStorage nettoyé');
-
-      return {
-        success: true,
-        message: 'Déconnexion réussie. À bientôt!'
-      };
-    } catch (error: any) {
-      console.error('Erreur lors de la déconnexion:', error);
-
-      // Même en cas d'erreur, nettoyer le localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_data');
-
-      return {
-        success: false,
-        message: 'Erreur lors de la déconnexion',
-        error: error.message
-      };
-    }
-  },
-
-  /**
-   * Vérifier si l'utilisateur est connecté
-   */
-  verifierSession(): { user: AuthUser | null; isValid: boolean; message: string } {
-    try {
-      const userData = localStorage.getItem('user_data');
-      const accessToken = localStorage.getItem('access_token');
-
-      if (!userData || !accessToken) {
-        return {
-          user: null,
-          isValid: false,
-          message: 'Aucune session active'
-        };
-      }
-
-      // Vérifier si le token JWT est expiré
-      try {
-        const parts = accessToken.split('.');
-        if (parts.length !== 3) {
-          throw new Error('Token format invalide');
-        }
-
-        const tokenPayload = JSON.parse(atob(parts[1]));
-        const currentTime = Date.now() / 1000;
-
-        if (tokenPayload.exp < currentTime) {
-          console.log('Token expiré');
-          return {
-            user: null,
-            isValid: false,
-            message: 'Session expirée'
-          };
-        }
-
-        const user = JSON.parse(userData);
-        return {
-          user: mapUser(user),
-          isValid: true,
-          message: 'Session valide'
-        };
-
-      } catch (tokenError) {
-        console.error('Token invalide:', tokenError);
-        this.deconnexion();
-        return {
-          user: null,
-          isValid: false,
-          message: 'Token invalide'
-        };
-      }
-
-    } catch (error) {
-      console.error('Erreur vérification session:', error);
-      return {
-        user: null,
-        isValid: false,
-        message: 'Erreur de vérification'
-      };
-    }
-  },
-
-  /**
-   * Vérifier la validité du token JWT avec le backend
-   */
-  async verifyToken(token?: string): Promise<ApiResponse> {
-    try {
-      const accessToken = token || localStorage.getItem('access_token');
-      if (!accessToken) {
-        return { success: false, message: 'Aucun token fourni' };
-      }
-      const response = await apiClient.post('/comptes/token/verify/', { token: accessToken });
-      return { success: true, message: 'Token valide', data: response.data };
-    } catch (error: any) {
-      console.error('Erreur vérification token:', error);
-      return { success: false, message: 'Token invalide ou expiré', error: error.message };
-    }
-  },
-
-  /**
-   * Rafraîchir le token JWT
-   */
-  async refreshToken(): Promise<ApiResponse<{ token: string }>> {
-    try {
-      const refreshToken = localStorage.getItem('refresh_token');
-
-      if (!refreshToken) {
-        return {
-          success: false,
-          message: 'Aucun refresh token disponible'
-        };
-      }
-
-      const response = await apiClient.post('/comptes/token/refresh/', {
-        refresh: refreshToken
-      });
-
-      const { access } = response.data;
-
-      // Mettre à jour le token
-      localStorage.setItem('access_token', access);
-
-      return {
-        success: true,
-        message: 'Token rafraîchi',
-        data: { token: access }
-      };
-
-    } catch (error: any) {
-      console.error('Erreur rafraîchissement token:', error);
-
-      // Si le refresh token est expiré, déconnecter
-      if (error.response?.status === 401) {
-        this.deconnexion();
-      }
-
-      return {
-        success: false,
-        message: 'Erreur lors du rafraîchissement du token',
-        error: error.message
-      };
-    }
-  },
-
-  /**
-   * Récupérer le profil utilisateur
-   */
-  async getProfile(): Promise<ApiResponse> {
-    try {
-      const response = await apiClient.get('/comptes/utilisateurs/profile/');
-
-      // Mettre à jour les données utilisateur
-      localStorage.setItem('user_data', JSON.stringify(response.data));
-
-      return {
-        success: true,
-        message: 'Profil récupéré',
-        data: response.data
-      };
-    } catch (error: any) {
-      console.error('Erreur récupération profil:', error);
-      return {
-        success: false,
-        message: 'Erreur lors de la récupération du profil',
-        error: error.message
-      };
-    }
-  },
-
-  /**
-   * Mettre à jour le profil utilisateur
-   */
-  async updateProfile(data: any): Promise<ApiResponse> {
-    try {
-      const response = await apiClient.put('/comptes/utilisateurs/update_profile/', data);
-
-      // Mettre à jour les données utilisateur
-      localStorage.setItem('user_data', JSON.stringify(response.data));
-
-      return {
-        success: true,
-        message: 'Profil mis à jour avec succès',
-        data: response.data
-      };
-    } catch (error: any) {
-      console.error('Erreur mise à jour profil:', error);
-
-      let errorMessage = 'Erreur lors de la mise à jour du profil';
-
-      if (error.response?.status === 400) {
-        const details = error.response.data;
-        if (details.email) {
-          errorMessage = 'Email invalide ou déjà utilisé';
-        } else if (details.telephone) {
-          errorMessage = 'Numéro de téléphone invalide';
-        }
-      }
-
-      return {
-        success: false,
-        message: errorMessage,
-        error: error.message
-      };
-    }
-  },
-
-  /**
-   * Récupérer tous les utilisateurs de l'hôpital actuel
-   */
-  async getUtilisateurs(): Promise<ApiResponse<any[]>> {
-    try {
-      const response = await apiClient.get('/comptes/utilisateurs/');
-      return {
-        success: true,
-        message: 'Utilisateurs récupérés avec succès',
-        data: response.data
-      };
-    } catch (error: any) {
-      console.error('Erreur récupération utilisateurs:', error);
-      return {
-        success: false,
-        message: 'Erreur lors de la récupération des utilisateurs',
-        error: error.message
-      };
-    }
-  },
-
-  /**
-   * Créer un nouvel utilisateur (par un administrateur)
-   * Essaie d'abord l'endpoint d'inscription qui utilise create_user() pour hasher les mots de passe
-   */
-  async creerUtilisateur(data: any): Promise<ApiResponse> {
-    // Essayer d'abord l'endpoint dédié à la création par admin (s'il existe)
-    // puis fallback vers l'endpoint CRUD standard
+  creerUtilisateur: async function (data: any): Promise<ApiResponse<any>> {
     const endpointsToTry = [
       '/comptes/creer-utilisateur/',
-      '/comptes/utilisateurs/creer/',
-      '/comptes/utilisateurs/',
+      '/comptes/utilisateurs/register/',
+      '/comptes/utilisateurs/'
     ];
 
-    let lastError: any = null;
+    let lastError = null;
 
     for (const endpoint of endpointsToTry) {
       try {
+        console.log(`👤 Tentative de création utilisateur sur: ${endpoint}`);
         const response = await apiClient.post(endpoint, data);
-        console.log(`[djangoAuthApi] Utilisateur créé via ${endpoint}`, response.data);
         return {
           success: true,
           message: 'Utilisateur créé avec succès',
           data: response.data
         };
       } catch (error: any) {
-        // Si 404 (endpoint n'existe pas), essayer le suivant
-        if (error.response?.status === 404) {
-          console.warn(`[djangoAuthApi] Endpoint ${endpoint} non trouvé, essai suivant...`);
-          lastError = error;
+        lastError = error;
+        if (error.response?.status === 404 || error.response?.status === 405) {
           continue;
         }
-        // Toute autre erreur (400, 403, 500...) est une vraie erreur
-        console.error(`[djangoAuthApi] Erreur création utilisateur via ${endpoint}:`, error.response?.data);
-        let errorMessage = "Erreur lors de la création de l'utilisateur";
-        if (error.response?.status === 400) {
-          const details = error.response.data;
-          console.error('[djangoAuthApi] Erreur 400 (Détails):', details);
-          if (details.email) {
-            errorMessage = 'Cet email est déjà utilisé';
-          } else {
-            errorMessage = Object.entries(details)
-              .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
-              .join(' | ') || errorMessage;
-          }
-        }
-        return {
-          success: false,
-          message: errorMessage,
-          error: error.response?.data || error.message
-        };
+        break;
       }
     }
 
-    // Tous les endpoints ont échoué avec 404
     return {
       success: false,
-      message: "Aucun endpoint de création disponible. Vérifiez la configuration du backend.",
-      error: lastError?.message
+      message: lastError?.response?.data?.detail || lastError?.response?.data?.error || 'Impossible de créer l\'utilisateur',
+      error: lastError?.response?.data
     };
   },
 
   /**
-   * Modifier un utilisateur existant
+   * Récupérer le profil
    */
-  async updateUtilisateur(id: number, data: any): Promise<ApiResponse> {
+  getProfile: async function (): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/comptes/utilisateurs/profile/');
+      return { success: true, message: 'Profil récupéré avec succès', data: response.data };
+    } catch (error: any) {
+      return { success: false, message: 'Erreur lors de la récupération du profil', error: error.response?.data };
+    }
+  },
+
+  /**
+   * Liste des utilisateurs
+   */
+  getUtilisateurs: async function (): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await apiClient.get('/comptes/utilisateurs/');
+      return { success: true, message: 'Utilisateurs récupérés avec succès', data: response.data };
+    } catch (error: any) {
+      return { success: false, message: 'Erreur lors de la récupération des utilisateurs', error: error.response?.data };
+    }
+  },
+
+  /**
+   * Update utilisateur
+   */
+  updateUtilisateur: async function (id: number, data: any): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.patch(`/comptes/utilisateurs/${id}/`, data);
-      return {
-        success: true,
-        message: 'Utilisateur mis à jour avec succès',
-        data: response.data
-      };
+      return { success: true, message: 'Utilisateur mis à jour', data: response.data };
     } catch (error: any) {
-      console.error('Erreur modification utilisateur:', error);
-      let errorMessage = 'Erreur lors de la modification de l\'utilisateur';
-      
-      if (error.response?.status === 400) {
-        const details = error.response.data;
-        console.error('[djangoAuthApi] Erreur 400 (Détails):', details);
-        errorMessage = Object.entries(details)
-          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
-          .join(' | ') || errorMessage;
-      }
-
-      return {
-        success: false,
-        message: errorMessage,
-        error: error.response?.data || error.message
-      };
+      return { success: false, message: 'Erreur mise à jour', error: error.response?.data };
     }
   },
 
   /**
-   * Supprimer un utilisateur
+   * Delete utilisateur
    */
-  async deleteUtilisateur(id: number): Promise<ApiResponse> {
+  deleteUtilisateur: async function (id: number): Promise<ApiResponse<any>> {
     try {
       await apiClient.delete(`/comptes/utilisateurs/${id}/`);
-      return {
-        success: true,
-        message: 'Utilisateur supprimé avec succès'
-      };
+      return { success: true, message: 'Utilisateur supprimé' };
     } catch (error: any) {
-      console.error('Erreur suppression utilisateur:', error);
-      return {
-        success: false,
-        message: 'Erreur lors de la suppression de l\'utilisateur',
-        error: error.message
-      };
+      return { success: false, message: 'Erreur suppression', error: error.response?.data };
     }
   },
 
   /**
-   * Changer le mot de passe d'un utilisateur par l'admin
+   * Rafraîchir le token
    */
-  async changePassword(id: number, data: { new_password?: string; password?: string }): Promise<ApiResponse> {
+  refreshToken: async function (): Promise<ApiResponse<{ access: string }>> {
     try {
-      const response = await apiClient.post(`/comptes/utilisateurs/${id}/change_password/`, data);
-      return {
-        success: true,
-        message: 'Mot de passe modifié avec succès',
-        data: response.data
-      };
+      const refresh = localStorage.getItem('refresh_token');
+      if (!refresh) throw new Error('No refresh token');
+      const response = await apiClient.post('/comptes/token/refresh/', { refresh });
+      localStorage.setItem('access_token', response.data.access);
+      return { success: true, message: 'Token rafraîchi avec succès', data: response.data };
     } catch (error: any) {
-      console.error('Erreur changement mot de passe:', error);
-      return {
-        success: false,
-        message: 'Erreur lors du changement de mot de passe',
-        error: error.message
-      };
+      return { success: false, message: 'Session expirée' };
     }
   },
 
   /**
-   * Activer ou désactiver un utilisateur
+   * Déconnexion
    */
-  async toggleActive(id: number): Promise<ApiResponse> {
+  deconnexion: async function (): Promise<void> {
     try {
-      const response = await apiClient.post(`/comptes/utilisateurs/${id}/toggle_active/`);
-      return {
-        success: true,
-        message: 'Statut de l\'utilisateur modifié avec succès',
-        data: response.data
-      };
-    } catch (error: any) {
-      console.error('Erreur toggle actif:', error);
-      return {
-        success: false,
-        message: 'Erreur lors de la modification du statut',
-        error: error.message
-      };
+      await apiClient.post('/comptes/logout/');
+    } catch (error) {
+      console.warn('Erreur logout API');
     }
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('tenant_data');
   },
 
   /**
-   * Déterminer la page de redirection selon le rôle
+   * Vérifier la session
    */
-  getRedirectPath(role: string): string {
-    // Tous les rôles sont redirigés vers /home
-    // Le composant RoleBasedHome se changera de rendre le bon composant de dashboard
-    return '/home';
+  verifierSession: function (): { isValid: boolean; user: AuthUser | null } {
+    const token = localStorage.getItem('access_token');
+    const userData = localStorage.getItem('user_data');
+    if (!token || !userData) return { isValid: false, user: null };
+    try {
+      const user = JSON.parse(userData);
+      return { isValid: true, user };
+    } catch (e) {
+      return { isValid: false, user: null };
+    }
+  },
+
+  mapUserResponse: function (user: any, tenant: any = null): AuthUser {
+    console.log('🗺️ Mapping user/tenant:', { user, tenant });
+    if (user) {
+      console.log('👤 User keys:', Object.keys(user));
+      if (user.hopital) console.log('🏥 user.hopital type:', typeof user.hopital, user.hopital);
+      if (user.hopital_detail) console.log('🏥 user.hopital_detail:', user.hopital_detail);
+    }
+
+    // Essayer de trouver le tenant (hôpital) dans plusieurs endroits possibles
+    const activeTenant = tenant ||
+      (user && user.hopital_detail) ||
+      (user && user.hopital) ||
+      (user && user.tenant);
+
+    // Extraction robuste de l'ID de l'hôpital
+    let hopital_id = 0;
+    if (activeTenant && typeof activeTenant === 'object') {
+      hopital_id = activeTenant.id || activeTenant.hopital_id || activeTenant.tenant_id || activeTenant.pk || 0;
+    } else if (activeTenant) {
+      hopital_id = Number(activeTenant);
+    }
+
+    // Si toujours 0, chercher dans les champs directs de l'utilisateur
+    if (!hopital_id && user) {
+      hopital_id = user.hopital_id || user.hospital_id || user.tenant_id || user.hopital || user.hospital || 0;
+    }
+
+    // Extraction du nom de l'hôpital
+    let hopital_nom = '';
+    if (activeTenant && typeof activeTenant === 'object') {
+      hopital_nom = activeTenant.nom || activeTenant.hopital_nom || activeTenant.tenant_nom || '';
+    } else {
+      hopital_nom = user?.hopital_nom || user?.hospital_nom || '';
+    }
+
+    console.log('📍 Mapped IDs:', { user_id: user?.id || user?.pk, hopital_id });
+
+    return {
+      utilisateur_id: user?.id || user?.utilisateur_id || user?.pk || 0,
+      nom_complet: user?.nom_complet || `${user?.prenom || user?.first_name || ''} ${user?.nom || user?.last_name || ''}`.trim() || user?.email || 'Utilisateur',
+      email: user?.email || '',
+      role: user?.role || 'personnel',
+      hopital_id: Number(hopital_id) || 0,
+      hopital_nom
+    };
+  },
+
+  /**
+   * Helper redirection
+   */
+  getRedirectionPath: function (role: string): string {
+    switch (role) {
+      case 'admin-systeme': return '/admin/dashboard';
+      case 'proprietaire-hopital': return '/Home';
+      case 'medecin': return '/home';
+      case 'infirmier': return '/home';
+      case 'secretaire': return '/home';
+      default: return '/home';
+    }
   }
 };

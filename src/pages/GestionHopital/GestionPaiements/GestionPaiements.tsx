@@ -54,11 +54,15 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
     setStatuts(paiementService.obtenirStatutsPaiement());
   }, [tenantId]);
 
-  const loadData = () => {
-    const data = paiementService.obtenirTousPaiements(tenantId);
-    const statistics = paiementService.obtenirStatistiques(tenantId);
-    setPaiements(data);
-    setStats(statistics);
+  const loadData = async () => {
+    try {
+      const data = await paiementService.obtenirTousPaiements(tenantId);
+      const statistics = await paiementService.obtenirStatistiques(tenantId);
+      setPaiements(data);
+      setStats(statistics);
+    } catch (error) {
+      console.error('Erreur chargement données paiements:', error);
+    }
   };
 
   const handleSave = (formData: PaiementFormData) => {

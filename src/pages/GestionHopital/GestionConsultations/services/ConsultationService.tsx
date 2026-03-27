@@ -35,7 +35,17 @@ export const consultationService = {
       } else if (rawData.data && Array.isArray(rawData.data)) {
         rawData = rawData.data;
       }
-      return Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+      const arrData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+      return arrData.map((c: any) => ({
+        ...c,
+        consultation_id: c.consultation_id || c.id,
+        patient_id: typeof c.patient === 'object' ? c.patient?.id || c.patient?.patient_id : (c.patient_id || c.patient),
+        medecin_id: typeof c.medecin === 'object' ? c.medecin?.id || c.medecin?.medecin_id : (c.medecin_id || c.medecin),
+        patient_nom: c.patient_nom || (typeof c.patient === 'object' ? (`${c.patient?.prenom || ''} ${c.patient?.nom || ''}`.trim() || c.patient?.nom_complet) : undefined),
+        medecin_nom: c.medecin_nom || (typeof c.medecin === 'object' ? (`Dr. ${c.medecin?.prenom || ''} ${c.medecin?.nom || ''}`.trim() || c.medecin?.nom_complet) : undefined),
+        tenant_id: c.tenant_id || c.tenant || c.hopital,
+        rendez_vous_id: typeof c.rendez_vous === 'object' ? c.rendez_vous?.id : (c.rendez_vous_id || c.rendez_vous)
+      }));
     }
     return [];
   },
@@ -43,8 +53,18 @@ export const consultationService = {
   // Obtenir une consultation par ID
   obtenirConsultation: async (id: number) => {
     const response = await hospitalApi.consultations.getById(id);
-    if (response.success) {
-      return response.data;
+    if (response.success && response.data) {
+      const c = response.data;
+      return {
+        ...c,
+        consultation_id: c.consultation_id || c.id,
+        patient_id: typeof c.patient === 'object' ? c.patient?.id || c.patient?.patient_id : (c.patient_id || c.patient),
+        medecin_id: typeof c.medecin === 'object' ? c.medecin?.id || c.medecin?.medecin_id : (c.medecin_id || c.medecin),
+        patient_nom: c.patient_nom || (typeof c.patient === 'object' ? (`${c.patient?.prenom || ''} ${c.patient?.nom || ''}`.trim() || c.patient?.nom_complet) : undefined),
+        medecin_nom: c.medecin_nom || (typeof c.medecin === 'object' ? (`Dr. ${c.medecin?.prenom || ''} ${c.medecin?.nom || ''}`.trim() || c.medecin?.nom_complet) : undefined),
+        tenant_id: c.tenant_id || c.tenant || c.hopital,
+        rendez_vous_id: typeof c.rendez_vous === 'object' ? c.rendez_vous?.id : (c.rendez_vous_id || c.rendez_vous)
+      };
     }
     return null;
   },
@@ -52,24 +72,36 @@ export const consultationService = {
   // Créer une consultation
   creerConsultation: async (formData: ConsultationFormData, tenantId: number) => {
     const payload = {
+      hopital: tenantId,
+      tenant_id: tenantId,
       ...formData.consultation,
-      tenant: tenantId
+      patient: formData.consultation.patient_id,
+      medecin: formData.consultation.medecin_id,
+      ...(formData.consultation.rendez_vous_id && { rendez_vous: formData.consultation.rendez_vous_id })
     };
     const response = await hospitalApi.consultations.create(payload as any);
     return {
       success: response.success,
       data: response.data,
-      errors: response.success ? undefined : [response.message]
+      errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
     };
   },
 
   // Modifier une consultation
-  modifierConsultation: async (consultationId: number, formData: ConsultationFormData) => {
-    const response = await (hospitalApi.consultations as any).update(consultationId, formData.consultation);
+  modifierConsultation: async (consultationId: number, formData: ConsultationFormData, tenantId: number) => {
+    const payload = {
+      hopital: tenantId,
+      tenant_id: tenantId,
+      ...formData.consultation,
+      patient: formData.consultation.patient_id,
+      medecin: formData.consultation.medecin_id,
+      ...(formData.consultation.rendez_vous_id && { rendez_vous: formData.consultation.rendez_vous_id })
+    };
+    const response = await (hospitalApi.consultations as any).update(consultationId, payload);
     return {
       success: response.success,
       data: response.data,
-      errors: response.success ? undefined : [response.message]
+      errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
     };
   },
 
@@ -85,7 +117,7 @@ export const consultationService = {
     return {
       success: response.success,
       data: response.data,
-      errors: response.success ? undefined : [response.message]
+      errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
     };
   },
 
@@ -95,7 +127,7 @@ export const consultationService = {
     return {
       success: response.success,
       data: response.data,
-      errors: response.success ? undefined : [response.message]
+      errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
     };
   },
 
@@ -123,7 +155,7 @@ export const consultationService = {
     return {
       success: response.success,
       message: response.message,
-      errors: response.success ? undefined : [response.message]
+      errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
     };
   },
 

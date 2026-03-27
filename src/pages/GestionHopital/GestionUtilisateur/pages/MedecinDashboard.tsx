@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from "react-router-dom";
 import { UserRound, Stethoscope, Asterisk, CalendarPlus2, Calendar } from 'lucide-react';
+import { useAuth } from '../../../../context/AuthContext';
 
 export const MedecinDashboard: React.FC = () => {
+  const { user } = useAuth();
+  const nomMedecin = user?.nom_complet || user?.email || "";
   const modules = [
     { name: 'Mes Patients', path: '/patient', icon: <UserRound className="w-8 h-8" />, color: 'bg-blue-500' },
     { name: 'Mes Consultations', path: '/consultation', icon: <Stethoscope className="w-8 h-8" />, color: 'bg-green-500' },
@@ -14,7 +17,7 @@ export const MedecinDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Bienvenue Dr.</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Bienvenue Dr. {nomMedecin}</h2>
         <p className="text-gray-600 dark:text-gray-400">Consultez vos patients et gérez vos prescriptions</p>
       </div>
 

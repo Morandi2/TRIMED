@@ -1,0 +1,395 @@
+{
+  "tenants": [
+    {
+      "tenant_id": 1,
+      "nom": "Hôpital Central de Paris",
+      "adresse": "123 Avenue des Champs-Élysées, Paris",
+      "telephone": "01 23 45 67 89",
+      "email_professionnel": "admin@hopital-paris.fr",
+      "directeur": "Dr. Marie Dupont",
+      "nombre_de_lits": 150,
+      "numero_enregistrement": "HOS-2024-001",
+      "documents_justificatifs": null,
+      "statut_verification_document": "verifie",
+      "verifie_par": null,
+      "date_verification": "2024-01-15T10:30:00Z",
+      "statut": "actif",
+      "type_abonnement": "premium",
+      "cree_le": "2024-01-10T09:00:00Z",
+      "cree_par_utilisateur_id": 1,
+      "proprietaire_utilisateur_id": 1,
+      "nom_schema_base_de_donnees": "hopital_paris_db",
+      "id": "c8b6"
+    },
+    {
+      "tenant_id": 2,
+      "nom": "Clinique Saint-Louis",
+      "adresse": "45 Rue de la Paix, Lyon",
+      "telephone": "04 78 12 34 56",
+      "email_professionnel": "admin@clinique-lyon.fr",
+      "directeur": "Dr. Jean Martin",
+      "nombre_de_lits": 80,
+      "numero_enregistrement": "HOS-2024-002",
+      "documents_justificatifs": null,
+      "statut_verification_document": "en_attente",
+      "verifie_par": null,
+      "date_verification": null,
+      "statut": "actif",
+      "type_abonnement": "standard",
+      "cree_le": "2024-01-12T14:20:00Z",
+      "cree_par_utilisateur_id": 2,
+      "proprietaire_utilisateur_id": 2,
+      "nom_schema_base_de_donnees": "clinique_lyon_db",
+      "id": "5e7e"
+    },
+    {
+      "tenant_id": 3,
+      "nom": "Hôpital Régional de Marseille",
+      "adresse": "78 Boulevard du Port, Marseille",
+      "telephone": "04 91 23 45 67",
+      "email_professionnel": "directeur@hopital-marseille.fr",
+      "directeur": "Dr. Sophie Bernard",
+      "nombre_de_lits": 200,
+      "numero_enregistrement": "HOS-2024-003",
+      "documents_justificatifs": null,
+      "statut_verification_document": "verifie",
+      "verifie_par": 1,
+      "date_verification": "2024-01-14T11:45:00Z",
+      "statut": "actif",
+      "type_abonnement": "basic",
+      "cree_le": "2024-01-13T10:15:00Z",
+      "cree_par_utilisateur_id": 3,
+      "proprietaire_utilisateur_id": 3,
+      "nom_schema_base_de_donnees": "hopital_marseille_db",
+      "id": "44ce"
+    },
+    {
+      "id": "b116",
+      "nom": "Hopital Adventiste de diquine",
+      "adresse": "Waney 93",
+      "telephone": "3398952969462972",
+      "email_professionnel": "admin@gmail.com",
+      "directeur": "Dr Morandi",
+      "nombre_de_lits": 60,
+      "numero_enregistrement": "HOS-773837-3837",
+      "type_abonnement": "basic",
+      "email_admin": "admin@gmail.com",
+      "password_admin": "bwaKale20",
+      "nom_complet_admin": "Dr Morandi"
+    },
+    {
+      "id": "1ee1",
+      "nom": "Hopital Trimed",
+      "adresse": "Waney 93",
+      "telephone": "49934802080",
+      "email_professionnel": "admin@gmil.com",
+      "directeur": "Dr Ruth",
+      "nombre_de_lits": 200,
+      "numero_enregistrement": "HOS-wewriih3838_324",
+      "type_abonnement": "basic",
+      "email_admin": "admin@gmil.com",
+      "password_admin": "bwaKale",
+      "nom_complet_admin": "Dr Ruth"
+    },
+    {
+      "id": "2e98",
+      "nom": "Hôpital de Test TRIMED",
+      "adresse": "123 Rue de la Santé, 75000 Paris",
+      "telephone": "01 23 45 67 89",
+      "email_professionnel": "test@hopital-trimed.fr",
+      "directeur": "Dr. Jean Test",
+      "nombre_de_lits": 150,
+      "numero_enregistrement": "HOS-TEST-2024",
+      "type_abonnement": "standard",
+      "statut": "actif",
+      "statut_verification_document": "en_attente",
+      "nom_schema_base_de_donnees": "tenant_h_pital_de_test_trimed"
+    },
+    {
+      "id": "9f48",
+      "nom": "Hôpital de Test TRIMED",
+      "adresse": "123 Rue de la Santé, 75000 Paris",
+      "telephone": "01 23 45 67 89",
+      "email_professionnel": "test@hopital-trimed.fr",
+      "directeur": "Dr. Jean Test",
+      "nombre_de_lits": 150,
+      "numero_enregistrement": "HOS-TEST-2024",
+      "type_abonnement": "standard",
+      "statut": "actif",
+      "statut_verification_document": "en_attente",
+      "nom_schema_base_de_donnees": "tenant_h_pital_de_test_trimed"
+    },
+    {
+      "id": "b13b",
+      "nom": "Hôpital de Test TRIMED",
+      "adresse": "123 Rue de la Santé, 75000 Paris",
+      "telephone": "01 23 45 67 89",
+      "email_professionnel": "test@hopital-trimed.fr",
+      "directeur": "Dr. Jean Testiii",
+      "nombre_de_lits": 150,
+      "numero_enregistrement": "HOS-TEST-2024",
+      "type_abonnement": "basic",
+      "statut": "actif",
+      "statut_verification_document": "en_attente",
+      "nom_schema_base_de_donnees": "tenant_h_pital_de_test_trimed"
+    },
+    {
+      "id": "0096",
+      "nom": "Hôpital BwaKale",
+      "adresse": "123 Rue de la Santé, 75000 Paris",
+      "telephone": "01 23 45 67 89",
+      "email_professionnel": "test@hopital-trimed.fr",
+      "directeur": "Dr. Jean Test",
+      "nombre_de_lits": 150,
+      "numero_enregistrement": "HOS-TEST-2024",
+      "type_abonnement": "standard",
+      "statut": "actif",
+      "statut_verification_document": "en_attente",
+      "nom_schema_base_de_donnees": "tenant_h_pital_bwakale"
+    },
+    {
+      "id": "d7fa",
+      "nom": "Grenn nan Mouda",
+      "adresse": "123 Rue de la Santé, 75000 Paris",
+      "telephone": "01 23 45 67 89",
+      "email_professionnel": "test@hopital.boo",
+      "directeur": "Dr. Jean Test",
+      "nombre_de_lits": 150,
+      "numero_enregistrement": "HOS-TEST-2024",
+      "type_abonnement": "standard",
+      "statut": "actif",
+      "statut_verification_document": "en_attente",
+      "nom_schema_base_de_donnees": "tenant_grenn_nan_mouda_1765574671098"
+    },
+    {
+      "id": "29a1",
+      "nom": "Hôpital JCC de Carrefour",
+      "adresse": "123 Mon repos 42,Carrefour",
+      "telephone": "40 302628882",
+      "email_professionnel": "test@hopital-trimed.com",
+      "directeur": "Dr. Bryan",
+      "nombre_de_lits": 30,
+      "numero_enregistrement": "HOS-TEST-2024",
+      "type_abonnement": "standard",
+      "statut": "actif",
+      "statut_verification_document": "en_attente",
+      "nom_schema_base_de_donnees": "tenant_h_pital_jcc_de_carrefour_1769019163288"
+    },
+    {
+      "id": "3775",
+      "nom": "Hopital JCC de Carrefour",
+      "adresse": "Mon Repos 42, Carrefour",
+      "telephone": "01 341332400",
+      "email_professionnel": "morandigital@gmail.com",
+      "directeur": "Dr. Job",
+      "nombre_de_lits": 15,
+      "numero_enregistrement": "H0S-fkjf-fgrg",
+      "type_abonnement": "basic",
+      "statut": "actif",
+      "statut_verification_document": "en_attente",
+      "nom_schema_base_de_donnees": "tenant_hopital_jcc_de_carrefour_1769019416931"
+    },
+    {
+      "id": "81a5",
+      "nom": "Hôpital de Test TRIMED",
+      "adresse": "123 Rue de la Santé, 75000 Paris",
+      "telephone": "01 23 45 67 89",
+      "email_professionnel": "test@hopital-trimed.frr",
+      "directeur": "Dr. Jean Test",
+      "nombre_de_lits": 150,
+      "numero_enregistrement": "HOS-TEST-2024",
+      "type_abonnement": "standard",
+      "statut": "actif",
+      "statut_verification_document": "en_attente",
+      "nom_schema_base_de_donnees": "tenant_h_pital_de_test_trimed_1769019584362"
+    }
+  ],
+  "utilisateurs": [
+    {
+      "utilisateur_id": 1,
+      "nom_complet": "Dr. Marie Dupont",
+      "email": "admin@hopital-paris.fr",
+      "mot_de_passe": "$2a$10$N9qo8uLOickgx2ZMRZoMy.MrYv7ZtQ6I8q8.8l5q9Qz1pE2JQ5XW6",
+      "role": "proprietaire-hopital",
+      "hopital_id": 1,
+      "cree_le": "2024-01-10T09:00:00Z",
+      "id": "b96c"
+    },
+    {
+      "utilisateur_id": 2,
+      "nom_complet": "Dr. Jean Martin",
+      "email": "admin@clinique-lyon.fr",
+      "mot_de_passe": "$2a$10$N9qo8uLOickgx2ZMRZoMy.MrYv7ZtQ6I8q8.8l5q9Qz1pE2JQ5XW6",
+      "role": "proprietaire-hopital",
+      "hopital_id": 2,
+      "cree_le": "2024-01-12T14:20:00Z",
+      "id": "599a"
+    },
+    {
+      "utilisateur_id": 3,
+      "nom_complet": "Dr. Sophie Bernard",
+      "email": "directeur@hopital-marseille.fr",
+      "mot_de_passe": "$2a$10$N9qo8uLOickgx2ZMRZoMy.MrYv7ZtQ6I8q8.8l5q9Qz1pE2JQ5XW6",
+      "role": "proprietaire-hopital",
+      "hopital_id": 3,
+      "cree_le": "2024-01-13T10:15:00Z",
+      "id": "4944"
+    },
+    {
+      "utilisateur_id": 4,
+      "nom_complet": "Admin Système",
+      "email": "admin@trimed.fr",
+      "mot_de_passe": "$2a$10$N9qo8uLOickgx2ZMRZoMy.MrYv7ZtQ6I8q8.8l5q9Qz1pE2JQ5XW6",
+      "hopital_id": null,
+      "cree_le": "2024-01-01T00:00:00Z",
+      "id": "70a7"
+    },
+    {
+      "utilisateur_id": 5,
+      "nom_complet": "Infirmière en Chef",
+      "email": "infirmiere@hopital-paris.fr",
+      "mot_de_passe": "$2a$10$N9qo8uLOickgx2ZMRZoMy.MrYv7ZtQ6I8q8.8l5q9Qz1pE2JQ5XW6",
+      "role": "personnel",
+      "hopital_id": 1,
+      "cree_le": "2024-01-11T08:30:00Z",
+      "id": "cd69"
+    },
+    {
+      "id": "b6bd",
+      "nom_complet": "Dr. Jean Test",
+      "email": "test@hopital-trimed.fr",
+      "mot_de_passe": "Test123!",
+      "role": "proprietaire-hopital"
+    },
+    {
+      "id": "810e",
+      "nom_complet": "Dr. Jean Test",
+      "email": "test@hopital-trimed.fr",
+      "mot_de_passe": "Test123!",
+      "role": "proprietaire-hopital"
+    },
+    {
+      "id": "17c6",
+      "nom_complet": "Dr. Jean Testiii",
+      "email": "test@hopital-trimed.fr",
+      "mot_de_passe": "bwaKale22",
+      "role": "proprietaire-hopital"
+    },
+    {
+      "id": "c545",
+      "nom_complet": "Dr. Jean Test",
+      "email": "test@hopital-trimed.fr",
+      "mot_de_passe": "bwaKale20$",
+      "role": "proprietaire-hopital"
+    },
+    {
+      "id": "b765",
+      "nom_complet": "Dr. Jean Test",
+      "email": "test@hopital.boo",
+      "mot_de_passe": "Test123!",
+      "role": "proprietaire-hopital"
+    },
+    {
+      "id": "4703",
+      "nom_complet": "Dr. Bryan",
+      "email": "test@hopital-trimed.com",
+      "mot_de_passe": "Test123!",
+      "role": "proprietaire-hopital"
+    },
+    {
+      "id": "1e37",
+      "nom_complet": "Dr. Job",
+      "email": "morandigital@gmail.com",
+      "mot_de_passe": "bwaKale20$",
+      "role": "proprietaire-hopital"
+    },
+    {
+      "id": "ca8f",
+      "nom_complet": "Dr. Jean Test",
+      "email": "test@hopital-trimed.frr",
+      "mot_de_passe": "Test123!",
+      "role": "proprietaire-hopital"
+    }
+  ],
+  "sessions": [
+    {
+      "session_id": 1,
+      "utilisateur_id": 1,
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5AaG9waXRhbC1wYXJpcy5mciIsInJvbGUiOiJwcm9wcmlldGFpcmUtaG9waXRhbCIsImhvcGl0YWxJZCI6MSwiZXhwIjoxNzA1Njg0MDAwLCJpYXQiOjE3MDU1OTc2MDB9.3JpX7V8q2Lk5mN1oP9qR8sT3vW2yZ5x6A7B8c9D0eF1g",
+      "date_expiration": "2024-01-20T12:00:00Z",
+      "date_creation": "2024-01-19T12:00:00Z",
+      "actif": true,
+      "id": "6af3"
+    },
+    {
+      "id": "d785",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC5ib28iLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU1NzQ4MDQ0MDgsImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-12T21:26:44.409Z",
+      "date_expiration": "2025-12-13T21:26:44.409Z",
+      "actif": true
+    },
+    {
+      "id": "a316",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC10cmltZWQuZnIiLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU1NzQ4MjY3MzgsImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-12T21:27:06.738Z",
+      "date_expiration": "2025-12-13T21:27:06.738Z",
+      "actif": true
+    },
+    {
+      "id": "d989",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC5ib28iLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU1NzYxOTg5NzIsImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-12T21:49:58.973Z",
+      "date_expiration": "2025-12-13T21:49:58.973Z",
+      "actif": true
+    },
+    {
+      "id": "0fc6",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC5ib28iLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU1NzYyMjU4NzYsImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-12T21:50:25.877Z",
+      "date_expiration": "2025-12-13T21:50:25.877Z",
+      "actif": true
+    },
+    {
+      "id": "83f8",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC5ib28iLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU1NzYyNTcxNTQsImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-12T21:50:57.154Z",
+      "date_expiration": "2025-12-13T21:50:57.154Z",
+      "actif": true
+    },
+    {
+      "id": "cbeb",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC5ib28iLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU2NDg4NTUxMzgsImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-13T18:00:55.139Z",
+      "date_expiration": "2025-12-14T18:00:55.139Z",
+      "actif": true
+    },
+    {
+      "id": "c07d",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC5ib28iLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU2NDk0NTIxNjgsImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-13T18:10:52.169Z",
+      "date_expiration": "2025-12-14T18:10:52.169Z",
+      "actif": true
+    },
+    {
+      "id": "3f35",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC5ib28iLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU2NTgwOTM0ODcsImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-13T20:34:53.488Z",
+      "date_expiration": "2025-12-14T20:34:53.488Z",
+      "actif": true
+    },
+    {
+      "id": "f99b",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC5ib28iLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU2NTgxMzg0NjcsImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-13T20:35:38.468Z",
+      "date_expiration": "2025-12-14T20:35:38.468Z",
+      "actif": true
+    },
+    {
+      "id": "75cb",
+      "token": "eyJlbWFpbCI6InRlc3RAaG9waXRhbC5ib28iLCJyb2xlIjoicHJvcHJpZXRhaXJlLWhvcGl0YWwiLCJ0aW1lc3RhbXAiOjE3NjU4MzMzNDg1MTksImV4cGlyZXNJbiI6ODY0MDAwMDB9",
+      "date_creation": "2025-12-15T21:15:48.520Z",
+      "date_expiration": "2025-12-16T21:15:48.521Z",
+      "actif": true
+    }
+  ]
+}

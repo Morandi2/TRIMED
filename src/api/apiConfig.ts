@@ -10,7 +10,10 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // Augmenté à 30 secondes pour les cold starts de Render
+  timeout: 30000,
+  withCredentials: true, // Requis si on veut que Django lise les cookies de session/CSRF
+  xsrfCookieName: 'csrftoken',
+  xsrfHeaderName: 'X-CSRFToken',
 });
 
 // Lojik retry senp pou jere echèk rezo oswa cold starts

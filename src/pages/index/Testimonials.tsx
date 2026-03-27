@@ -1,63 +1,63 @@
-// components/Testimonials.js
-import React from 'react';
+import { Star } from 'lucide-react';
 
 const Testimonials = () => {
   const testimonials = [
     {
-      avatar: 'user-md',
+      initials: 'JL',
+      color: 'bg-blue-100 text-blue-600',
       name: 'Dr. Jean-Louis',
       position: 'Hôpital Universitaire de la Paix',
-      rating: 5,
-      text: '"TRIMEDH a révolutionné notre façon de travailler. La gestion des patients est maintenant fluide et nous pouvons concentrer notre énergie sur les soins plutôt que sur l\'administration."'
+      text: '"TRIMEDH a complètement révolutionné notre façon de travailler. La gestion des dossiers patients est maintenant ultra fluide et nous pouvons concentrer notre énergie sur les soins, pas sur la paperasse."'
     },
     {
-      avatar: 'user-nurse',
+      initials: 'MP',
+      color: 'bg-emerald-100 text-emerald-600',
       name: 'Marie L. Pierre',
       position: 'Directrice, Clinique Saint-François',
-      rating: 5,
-      text: '"Depuis l\'implémentation de TRIMEDH, nous avons réduit nos temps d\'attente de 60%. Les patients adorent pouvoir prendre rendez-vous via l\'application mobile."'
+      text: '"Depuis l\'implémentation de la plateforme, nous avons réduit nos temps d\'attente de près de 60%. Nos patients adorent pouvoir interagir via les rappels automatisés."'
     },
     {
-      avatar: 'clipboard-list',
+      initials: 'MA',
+      color: 'bg-indigo-100 text-indigo-600',
       name: 'Dr. Marc Antoine',
-      position: 'Pharmacien, Hôpital Général',
-      rating: 5,
-      text: '"Le module de gestion de pharmacie nous a sauvé de nombreuses ruptures de stock. Les alertes automatiques nous permettent de commander à temps."'
+      position: 'Pharmacien en Chef',
+      text: '"Le module pharmacie nous a sauvé de nombreuses ruptures de stock critiques. Les alertes automatiques et l\'inventaire centralisé nous permettent de prévoir à l\'avance."'
     }
   ];
 
   return (
-    <section id="temoignages" className="testimonials-section bg-gray-50 py-20">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="section-header text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Ils nous font confiance</h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Découvrez ce que les professionnels de santé haïtiens disent de TRIMEDH
+    <section id="temoignages" className="py-24 bg-slate-50 relative" data-aos="fade-up">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16 max-w-3xl mx-auto">
+          <h2 className="text-sm font-bold text-blue-600 tracking-widest uppercase mb-3">
+            Témoignages
+          </h2>
+          <h3 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-6 tracking-tight">
+            Ils nous font confiance
+          </h3>
+          <p className="text-lg text-slate-600">
+            Découvrez comment TRIMEDH aide les leaders de la santé à transformer leurs opérations au quotidien.
           </p>
         </div>
 
-        <div className="testimonials-grid grid grid-cols-1 md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <div key={index} className="testimonial-card bg-white p-8 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all hover:-translate-y-2">
-              <div className="testimonial-header flex items-center gap-4 mb-4">
-                <div className="testimonial-avatar w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white text-lg">
-                  <i className={`fas fa-${testimonial.avatar}`}></i>
-                </div>
-                <div className="testimonial-info">
-                  <h4 className="text-lg font-semibold text-gray-900">{testimonial.name}</h4>
-                  <p className="text-gray-600 text-sm">{testimonial.position}</p>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {testimonials.map((test, idx) => (
+            <div key={idx} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-lg transition-all duration-300">
+              <div className="flex gap-1 mb-6 text-amber-400">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current" />)}
               </div>
-              
-              <div className="testimonial-rating text-amber-400 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <i key={i} className="fas fa-star"></i>
-                ))}
-              </div>
-              
-              <p className="testimonial-text text-gray-600 italic leading-relaxed">
-                {testimonial.text}
+              <p className="text-slate-600 italic mb-8 leading-relaxed text-sm">
+                {test.text}
               </p>
+              <div className="flex items-center gap-4 mt-auto">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${test.color}`}>
+                  {test.initials}
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900">{test.name}</h4>
+                  <p className="text-slate-500 text-xs">{test.position}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>

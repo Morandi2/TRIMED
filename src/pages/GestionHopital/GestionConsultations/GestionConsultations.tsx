@@ -110,9 +110,11 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
   };
 
   const filteredConsultations = consultations.filter(consultation => {
+    const patientName = consultation.patient_nom || consultationService.obtenirNomPatient(consultation.patient_id);
+    const medecinName = consultation.medecin_nom || consultationService.obtenirNomMedecin(consultation.medecin_id);
     const matchesSearch = 
-      consultationService.obtenirNomPatient(consultation.patient_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
-      consultationService.obtenirNomMedecin(consultation.medecin_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      medecinName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       consultation.motif.toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesSearch;
@@ -189,12 +191,12 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
                   <tr key={consultation.consultation_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {consultationService.obtenirNomPatient(consultation.patient_id)}
+                        {consultation.patient_nom || consultationService.obtenirNomPatient(consultation.patient_id)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-white">
-                        {consultationService.obtenirNomMedecin(consultation.medecin_id)}
+                        {consultation.medecin_nom || consultationService.obtenirNomMedecin(consultation.medecin_id)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -303,11 +305,11 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Patient:</label>
-                    <p className="text-gray-900 dark:text-white">{consultationService.obtenirNomPatient(selectedConsultation.patient_id)}</p>
+                    <p className="text-gray-900 dark:text-white">{selectedConsultation.patient_nom || consultationService.obtenirNomPatient(selectedConsultation.patient_id)}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Médecin:</label>
-                    <p className="text-gray-900 dark:text-white">{consultationService.obtenirNomMedecin(selectedConsultation.medecin_id)}</p>
+                    <p className="text-gray-900 dark:text-white">{selectedConsultation.medecin_nom || consultationService.obtenirNomMedecin(selectedConsultation.medecin_id)}</p>
                   </div>
                 </div>
                 <div>

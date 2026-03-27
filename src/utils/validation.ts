@@ -1,0 +1,208 @@
+// Fonctions de validation réutilisables
+
+export const validation = {
+  /**
+   * Validation d'email
+   */
+  validateEmail(email: string): { valid: boolean; message?: string } {
+    if (!email || email.trim() === '') {
+      return { valid: false, message: 'L\'email est requis' };
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(email);
+    
+    return {
+      valid: isValid,
+      message: isValid ? undefined : 'Format d\'email invalide'
+    };
+  },
+
+  /**
+   * Validation de téléphone
+   */
+  validatePhone(phone: string): { valid: boolean; message?: string } {
+    if (!phone || phone.trim() === '') {
+      return { valid: false, message: 'Le téléphone est requis' };
+    }
+    
+    // Supprimer les espaces et caractères spéciaux pour la validation
+    const cleanedPhone = phone.replace(/[\s\-()]/g, '');
+    const phoneRegex = /^[0-9]{10,}$/;
+    const isValid = phoneRegex.test(cleanedPhone);
+    
+    return {
+      valid: isValid,
+      message: isValid ? undefined : 'Format de téléphone invalide (minimum 10 chiffres)'
+    };
+  },
+
+  /**
+   * Validation de mot de passe
+   */
+  validatePassword(password: string): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    if (!password) {
+      errors.push('Le mot de passe est requis');
+      return { valid: false, errors };
+    }
+    
+    if (password.length < 6) {
+      errors.push('Le mot de passe doit contenir au moins 6 caractères');
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Le mot de passe doit contenir au moins une majuscule');
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push('Le mot de passe doit contenir au moins une minuscule');
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push('Le mot de passe doit contenir au moins un chiffre');
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push('Le mot de passe doit contenir au moins un caractère spécial');
+    }
+    
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  },
+
+  /**
+   * Validation de confirmation de mot de passe
+   */
+  validateConfirmPassword(password: string, confirmPassword: string): { valid: boolean; message?: string } {
+    if (!confirmPassword) {
+      return { valid: false, message: 'La confirmation du mot de passe est requise' };
+    }
+    
+    const isValid = password === confirmPassword;
+    
+    return {
+      valid: isValid,
+      message: isValid ? undefined : 'Les mots de passe ne correspondent pas'
+    };
+  },
+
+  /**
+   * Validation de numéro d'enregistrement
+   */
+  validateNumeroEnregistrement(numero: string): { valid: boolean; message?: string } {
+    if (!numero) {
+      return { valid: true }; // Optionnel
+    }
+    
+    const isValid = numero.length >= 5;
+    
+    return {
+      valid: isValid,
+      message: isValid ? undefined : 'Le numéro d\'enregistrement doit contenir au moins 5 caractères'
+    };
+  },
+
+  /**
+   * Validation de nombre de lits
+   */
+  validateNombreLits(nombreLits: string): { valid: boolean; message?: string } {
+    if (!nombreLits || nombreLits.trim() === '') {
+      return { valid: true }; // Optionnel
+    }
+    
+    const nombre = parseInt(nombreLits);
+    const isValid = !isNaN(nombre) && nombre >= 0;
+    
+    return {
+      valid: isValid,
+      message: isValid ? undefined : 'Le nombre de lits doit être un nombre positif'
+    };
+  },
+
+  /**
+   * Validation de champ texte obligatoire
+   */
+  validateRequired(text: string, fieldName: string): { valid: boolean; message?: string } {
+    const isValid = !!text && text.trim() !== '';
+    
+    return {
+      valid: isValid,
+      message: isValid ? undefined : `${fieldName} est requis`
+    };
+  },
+
+  /**
+   * Validation complète pour le formulaire d'inscription
+   */
+  validateInscriptionForm(data: {
+    nomHopital: string;
+    adresse: string;
+    telephone: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    nombreLits?: string;
+    numeroEnregistrement?: string;
+  }): Record<string, string> {
+    const errors: Record<string, string> = {};
+    
+    // Nom de l'hôpital
+    const nomValidation = this.validateRequired(data.nomHopital, 'Le nom de l\'hôpital');
+    if (!nomValidation.valid) errors.nomHopital = nomValidation.message!;
+    
+    // Adresse
+    const adresseValidation = this.validateRequired(data.adresse, 'L\'adresse');
+    if (!adresseValidation.valid) errors.adresse = adresseValidation.message!;
+    
+    // Téléphone
+    const phoneValidation = this.validatePhone(data.telephone);
+    if (!phoneValidation.valid) errors.telephone = phoneValidation.message!;
+    
+    // Email
+    const emailValidation = this.validateEmail(data.email);
+    if (!emailValidation.valid) errors.email = emailValidation.message!;
+    
+    // Mot de passe
+    const passwordValidation = this.validatePassword(data.password);
+    if (!passwordValidation.valid) errors.password = passwordValidation.errors[0];
+    
+    // Confirmation mot de passe
+    const confirmValidation = this.validateConfirmPassword(data.password, data.confirmPassword);
+    if (!confirmValidation.valid) errors.confirmPassword = confirmValidation.message!;
+    
+    // Nombre de lits (optionnel)
+    if (data.nombreLits) {
+      const litsValidation = this.validateNombreLits(data.nombreLits);
+      if (!litsValidation.valid) errors.nombreLits = litsValidation.message!;
+    }
+    
+    // Numéro d'enregistrement (optionnel)
+    if (data.numeroEnregistrement) {
+      const numeroValidation = this.validateNumeroEnregistrement(data.numeroEnregistrement);
+      if (!numeroValidation.valid) errors.numeroEnregistrement = numeroValidation.message!;
+    }
+    
+    return errors;
+  },
+
+  /**
+   * Validation pour le formulaire de connexion
+   */
+  validateConnexionForm(data: {
+    email: string;
+    password: string;
+  }): Record<string, string> {
+    const errors: Record<string, string> = {};
+    
+    // Email
+    const emailValidation = this.validateEmail(data.email);
+    if (!emailValidation.valid) errors.email = emailValidation.message!;
+    
+    // Mot de passe
+    if (!data.password) {
+      errors.password = 'Le mot de passe est requis';
+    }
+    
+    return errors;
+  }
+};

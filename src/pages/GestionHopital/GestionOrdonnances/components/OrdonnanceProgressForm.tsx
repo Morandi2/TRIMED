@@ -69,8 +69,8 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
             }
           });
           setSelectedConsultationName(ordonnanceService.obtenirConsultationInfo(ordonnance.consultation_id));
-          setSelectedPatientName(ordonnanceService.obtenirNomPatient(ordonnance.patient_id));
-          setSelectedMedecinName(ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id));
+          setSelectedPatientName((ordonnance as any).patient_nom || ordonnanceService.obtenirNomPatient(ordonnance.patient_id));
+          setSelectedMedecinName((ordonnance as any).medecin_nom || ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id));
         }
       } else {
         setIsModifying(false);

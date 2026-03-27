@@ -67,10 +67,20 @@ export const medecinService = {
 
   // Créer un médecin
   creerMedecin: async (formData: MedecinFormData, hopitalId: number) => {
+    // Générer un matricule s'il n'est pas fourni
+    const matricule = formData.medecin.numero_matricule_professionnel || `MED-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+    const nif_cin = formData.medecin.numero_identification || `NIF-${Date.now().toString().slice(-6)}`;
+
     const payload = {
       ...formData.medecin,
-      hopital_id: hopitalId
+      numero_matricule_professionnel: matricule,
+      numero_identification: nif_cin,
+      hopital: hopitalId // Le backend attend 'hopital', pas 'hopital_id'
     };
+    
+    // Si l'API utilise aussi hopital_id (pour la transition), on l'ajoute
+    payload.hopital_id = hopitalId;
+
     const response = await hospitalApi.medecins.create(payload);
     return {
       success: response.success,

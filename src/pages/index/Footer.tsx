@@ -1,167 +1,89 @@
-
-// components/Footer.js
 import React from 'react';
+import { ShieldCheck, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer className="footer bg-gray-900 text-white pt-16 pb-8">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="footer bg-slate-50 text-slate-600 pt-20 pb-10 border-t border-slate-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Grille principale du footer */}
-        <div className="footer-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
           
-          {/* Colonne 1 - Logo et description */}
-          <div className="footer-col">
-            <div className="footer-logo flex items-center gap-3 mb-6">
-              <div className="logo-icon w-10 h-10 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-lg flex items-center justify-center text-white text-lg">
-                <i className="fas fa-heartbeat"></i>
+          <div className="lg:col-span-4">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center transform rotate-3 shadow-lg shadow-blue-500/20">
+                <span className="text-white font-bold text-xl">T</span>
               </div>
-              <span className="logo-text text-2xl font-bold">TRIMEDH</span>
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">TRIMEDH</span>
             </div>
-            
-            <p className="footer-description text-gray-400 leading-relaxed mb-6">
-              La plateforme SaaS de gestion hospitalière conçue pour les défis du système de santé haïtien.
+            <p className="text-slate-600 leading-relaxed mb-6 pr-4">
+              La plateforme SaaS de gestion hospitalière conçue par des Haïtiens, pour moderniser le système de santé local.
             </p>
-            
-            {/* Liens sociaux */}
-            <div className="social-links flex gap-3">
-              {[
-                { icon: 'facebook-f', url: '#' },
-                { icon: 'twitter', url: '#' },
-                { icon: 'linkedin-in', url: '#' },
-                { icon: 'instagram', url: '#' }
-              ].map((social, index) => (
-                <a
-                  key={index}
-                  href={social.url}
-                  className="social-link w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition-all duration-300"
-                >
-                  <i className={`fab fa-${social.icon}`}></i>
+            <div className="flex gap-4">
+              {[Facebook, Twitter, Linkedin, Instagram].map((Icon, idx) => (
+                <a key={idx} href="#" className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all transform hover:-translate-y-1">
+                  <Icon className="w-4 h-4" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Colonne 2 - Navigation */}
-          <div className="footer-col">
-            <h4 className="text-lg font-semibold mb-6">Navigation</h4>
-            <ul className="footer-links space-y-3">
-              {[
-                { name: 'Accueil', href: '#accueil' },
-                { name: 'Fonctionnalités', href: '#fonctionnalites' },
-                { name: 'Application Mobile', href: '#mobile' },
-                { name: 'Tarifs', href: '#prix' },
-                { name: 'Témoignages', href: '#temoignages' }
-              ].map((link, index) => (
-                <li key={index}>
-                  <a 
-                    href={link.href}
-                    className="text-gray-400 hover:text-emerald-400 transition-colors duration-300"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
+          <div className="lg:col-span-2">
+            <h4 className="text-slate-900 font-bold mb-6 tracking-wide">Produit</h4>
+            <ul className="space-y-3">
+              <li><a href="/#fonctionnalites" className="hover:text-blue-600 hover:underline transition-colors">Fonctionnalités</a></li>
+              <li><a href="/#mobile" className="hover:text-blue-600 hover:underline transition-colors">App Mobile</a></li>
+              <li><a href="/#prix" className="hover:text-blue-600 hover:underline transition-colors">Tarifs</a></li>
+              <li><a href="/#solutions" className="hover:text-blue-600 hover:underline transition-colors">Solutions</a></li>
             </ul>
           </div>
 
-          {/* Colonne 3 - Légal */}
-          <div className="footer-col">
-            <h4 className="text-lg font-semibold mb-6">Légal</h4>
-            <ul className="footer-links space-y-3">
-              {[
-                { name: 'Politique de confidentialité', href: '#' },
-                { name: 'Conditions d\'utilisation', href: '#' },
-                { name: 'Mentions légales', href: '#' },
-                { name: 'RGPD', href: '#' }
-              ].map((link, index) => (
-                <li key={index}>
-                  <a 
-                    href={link.href}
-                    className="text-gray-400 hover:text-emerald-400 transition-colors duration-300"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
+          <div className="lg:col-span-3">
+            <h4 className="text-slate-900 font-bold mb-6 tracking-wide">Légal & Support</h4>
+            <ul className="space-y-3">
+              <li><Link to="/contact" className="hover:text-blue-600 hover:underline transition-colors">Nous contacter</Link></li>
+              <li><Link to="/politique-de-confidentialite" className="hover:text-blue-600 hover:underline transition-colors">Politique de confidentialité</Link></li>
+              <li><Link to="/conditions-utilisation" className="hover:text-blue-600 hover:underline transition-colors">Conditions d'utilisation</Link></li>
+              <li><Link to="/centre-aide" className="hover:text-blue-600 hover:underline transition-colors">Centre d'aide</Link></li>
             </ul>
           </div>
 
-          {/* Colonne 4 - Contact */}
-          <div className="footer-col">
-            <h4 className="text-lg font-semibold mb-6">Contact</h4>
-            <ul className="footer-contact space-y-4">
-              {[
-                { icon: 'envelope', text: 'info@TRIMEDH.ht' },
-                { icon: 'phone', text: '+509 48 XX-XXXX' },
-                { icon: 'map-marker-alt', text: 'Port-au-Prince, Haïti' },
-                { icon: 'clock', text: 'Support 24/7/365' }
-              ].map((contact, index) => (
-                <li key={index} className="flex items-center gap-3 text-gray-400">
-                  <i className={`fas fa-${contact.icon} text-emerald-400 w-4`}></i>
-                  <span className="text-sm">{contact.text}</span>
-                </li>
-              ))}
+          <div className="lg:col-span-3">
+            <h4 className="text-slate-900 font-bold mb-6 tracking-wide">Contact</h4>
+            <ul className="space-y-4">
+              <li className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-blue-600" />
+                <a href="mailto:trimedht@gmail.com" className="hover:text-blue-600 transition-colors">trimedht@gmail.com</a>
+              </li>
+              <li className="flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-blue-600" />
+                  <a href="tel:+50940302622" className="hover:text-blue-600 transition-colors">+509 4030 2622</a>
+                </div>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="w-5 h-5"></span>
+                  <a href="tel:+50943479901" className="hover:text-blue-600 transition-colors">+509 4347 9901</a>
+                </div>
+              </li>
+              <li className="flex flex-start gap-3 mt-3">
+                <MapPin className="w-5 h-5 text-blue-600 shrink-0" />
+                <span>Port-au-Prince, HT<br/>Haïti</span>
+              </li>
             </ul>
-
-            {/* Newsletter */}
-            <div className="mt-6">
-              <h5 className="text-sm font-semibold text-gray-300 mb-3">
-                Restez informé
-              </h5>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input 
-                  type="email" 
-                  placeholder="Votre email"
-                  className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-                />
-                <button className="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors whitespace-nowrap">
-                  S'abonner
-                </button>
-              </div>
-            </div>
           </div>
 
         </div>
 
-        {/* Séparateur */}
-        <div className="border-t border-gray-800 pt-8">
-          
-          {/* Ligne du bas */}
-          <div className="footer-bottom flex flex-col md:flex-row justify-between items-center gap-4">
-            
-            {/* Copyright */}
-            <div className="text-center md:text-left">
-              <p className="text-gray-400 text-sm">
-                &copy; 2024 TRIMEDH. Tous droits réservés. Fièrement développé en Haïti.
-              </p>
-            </div>
-
-            {/* Liens supplémentaires */}
-            <div className="flex flex-wrap gap-4 justify-center">
-              <a href="#" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">
-                Plan du site
-              </a>
-              <a href="#" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">
-                Accessibilité
-              </a>
-              <a href="#" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors">
-                Équipe
-              </a>
-            </div>
-
+        <div className="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-slate-500">
+            &copy; {new Date().getFullYear()} TRIMEDH. Tous droits réservés.
+          </p>
+          <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <span className="text-xs font-medium text-slate-600">
+              Certifié Sécurité HIPAA / Données Médicales
+            </span>
           </div>
-
-          {/* Badge de certification */}
-          <div className="mt-6 items-center text-center">
-            <div className="inline-flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-full">
-              <i className="fas fa-shield-alt text-emerald-400"></i>
-              <span className="text-xs text-gray-400">
-                Certifié conformité données médicales
-              </span>
-            </div>
-          </div>
-
         </div>
 
       </div>

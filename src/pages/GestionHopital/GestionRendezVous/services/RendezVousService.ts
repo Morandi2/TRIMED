@@ -55,7 +55,7 @@ export class RendezVousService {
   }
 
   // CRUD operations pou rendez-vous
-  public async creerRendezVous(data: RendezVousFormData): Promise<{ success: boolean; data?: any; errors?: string[] }> {
+  public async creerRendezVous(data: RendezVousFormData, tenantId: number): Promise<{ success: boolean; data?: any; errors?: string[] }> {
     try {
       const payload: RendezVous = {
         patient: data.patient_id,
@@ -65,14 +65,15 @@ export class RendezVousService {
         statut: data.statut_id,
         motif: data.motif,
         notes: data.notes,
-        duree: data.duree
+        duree: data.duree,
+        tenant: tenantId // Adajoute tenant ID
       };
 
       const response = await hospitalApi.rendezVous.create(payload);
       return {
         success: response.success,
-        data: response.data,
-        errors: response.success ? undefined : [(typeof response.error === 'object' ? JSON.stringify(response.error) : (response.message || 'Erreur inconnue')) as string]
+        data: (response as any).data,
+        errors: response.success ? undefined : [(response as any).message || 'Erreur inconnue']
       };
     } catch (error: any) {
       return { success: false, errors: [error.message] };
@@ -95,8 +96,8 @@ export class RendezVousService {
       const response = await hospitalApi.rendezVous.update(id, payload);
       return {
         success: response.success,
-        data: response.data,
-        errors: response.success ? undefined : [response.message || 'Erreur inconnue']
+        data: (response as any).data,
+        errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
       };
     } catch (error: any) {
       return { success: false, errors: [error.message] };
@@ -107,7 +108,7 @@ export class RendezVousService {
     const response = await hospitalApi.rendezVous.delete(id);
     return {
       success: response.success,
-      errors: response.success ? undefined : [response.message || 'Erreur inconnue']
+      errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
     };
   }
 
@@ -120,14 +121,41 @@ export class RendezVousService {
       } else if (rawData.data && Array.isArray(rawData.data)) {
         rawData = rawData.data;
       }
-      return Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+      const arrData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+      return arrData.map((rv: any) => ({
+        ...rv,
+        patient_id: typeof rv.patient === 'object' ? rv.patient?.id || rv.patient?.patient_id : (rv.patient_id || rv.patient),
+        medecin_id: typeof rv.medecin === 'object' ? rv.medecin?.id || rv.medecin?.medecin_id : (rv.medecin_id || rv.medecin),
+        patient_nom: rv.patient_nom || (typeof rv.patient === 'object' ? (`${rv.patient?.prenom || ''} ${rv.patient?.nom || ''}`.trim() || rv.patient?.nom_complet) : undefined),
+        medecin_nom: rv.medecin_nom || (typeof rv.medecin === 'object' ? (`Dr. ${rv.medecin?.prenom || ''} ${rv.medecin?.nom || ''}`.trim() || rv.medecin?.nom_complet) : undefined),
+        statut_id: typeof rv.statut === 'object' ? rv.statut?.id || rv.statut?.statut_id : (rv.statut_id || rv.statut),
+        statut_nom: typeof rv.statut === 'object' ? rv.statut?.nom : rv.statut_nom,
+        type_id: typeof rv.type === 'object' ? rv.type?.id || rv.type?.type_id : (rv.type_id || rv.type),
+        type_nom: typeof rv.type === 'object' ? rv.type?.nom : rv.type_nom,
+        id: rv.id || rv.rendez_vous_id || rv.rendezvous_id
+      }));
     }
     return [];
   }
 
   public async obtenirRendezVous(id: number): Promise<any> {
     const response = await hospitalApi.rendezVous.getById(id);
-    return response.success ? response.data : null;
+    if (response.success && response.data) {
+      const rv = response.data;
+      return {
+        ...rv,
+        patient_id: typeof rv.patient === 'object' ? rv.patient?.id || rv.patient?.patient_id : (rv.patient_id || rv.patient),
+        medecin_id: typeof rv.medecin === 'object' ? rv.medecin?.id || rv.medecin?.medecin_id : (rv.medecin_id || rv.medecin),
+        patient_nom: rv.patient_nom || (typeof rv.patient === 'object' ? (`${rv.patient?.prenom || ''} ${rv.patient?.nom || ''}`.trim() || rv.patient?.nom_complet) : undefined),
+        medecin_nom: rv.medecin_nom || (typeof rv.medecin === 'object' ? (`Dr. ${rv.medecin?.prenom || ''} ${rv.medecin?.nom || ''}`.trim() || rv.medecin?.nom_complet) : undefined),
+        statut_id: typeof rv.statut === 'object' ? rv.statut?.id || rv.statut?.statut_id : (rv.statut_id || rv.statut),
+        statut_nom: typeof rv.statut === 'object' ? rv.statut?.nom : rv.statut_nom,
+        type_id: typeof rv.type === 'object' ? rv.type?.id || rv.type?.type_id : (rv.type_id || rv.type),
+        type_nom: typeof rv.type === 'object' ? rv.type?.nom : rv.type_nom,
+        id: rv.id || rv.rendez_vous_id || rv.rendezvous_id
+      };
+    }
+    return null;
   }
 
   // Specialized actions

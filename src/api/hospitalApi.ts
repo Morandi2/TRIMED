@@ -57,6 +57,8 @@ export interface Patient {
 }
 
 export interface RendezVous {
+  tenant?: number;
+  hopital?: number;
  rendez_vous_id?: number;
  patient: number;
  medecin: number;
@@ -179,6 +181,30 @@ export interface MedicamentStatistiques {
  attention_requise: any[];
 }
 
+// Helper pour formater les erreurs API de manière plus verbeuse
+const formatApiError = (error: any, defaultMessage: string) => {
+  console.error(`[API Error] ${defaultMessage}:`, error);
+  
+  let message = error.response?.data?.detail || defaultMessage;
+  
+  // Si on a un dictionnaire d'erreurs (400 Bad Request)
+  if (error.response?.data && typeof error.response.data === 'object' && !error.response.data.detail) {
+    try {
+      message = Object.entries(error.response.data)
+        .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(' ') : JSON.stringify(val)}`)
+        .join(' | ');
+    } catch (e) {
+      console.error('Erreur lors du formatage du message d\'erreur:', e);
+    }
+  }
+  
+  return {
+    success: false,
+    message: message,
+    error: error.response?.data || error.message
+  };
+};
+
 // API pour la gestion hospitalière avec Django
 export const hospitalApi = {
  // ==================== PATIENTS ====================
@@ -248,18 +274,32 @@ export const hospitalApi = {
  };
  } catch (error: any) {
  console.error(' Erreur création patient:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la création du patient',
- error: error.response?.data || error.message
- };
+ return formatApiError(error, "Erreur lors de la création du patient");
  }
  },
 
  // Mettre à jour un patient
  async update(id: number, patientData: Partial<Patient>) {
  try {
- const response = await apiClient.put(`/patients/${id}/`, patientData);
+ let payload: any = patientData;
+ 
+ // Gérer FormData si une photo est présente
+ if (patientData.photo instanceof File) {
+ payload = new FormData();
+ Object.keys(patientData).forEach(key => {
+ if (patientData[key as keyof Patient] !== null && patientData[key as keyof Patient] !== undefined) {
+ if (typeof patientData[key as keyof Patient] === 'object' && !(patientData[key as keyof Patient] instanceof File)) {
+ payload.append(key, JSON.stringify(patientData[key as keyof Patient]));
+ } else {
+ payload.append(key, patientData[key as keyof Patient] as any);
+ }
+ }
+ });
+ }
+
+ const response = await apiClient.patch(`/patients/${id}/`, payload, {
+ headers: patientData.photo instanceof File ? { 'Content-Type': 'multipart/form-data' } : undefined
+ });
  return {
  success: true,
  data: response.data,
@@ -267,9 +307,20 @@ export const hospitalApi = {
  };
  } catch (error: any) {
  console.error(' Erreur mise à jour patient:', error);
+ let errorMessage = error.response?.data?.detail || 'Erreur lors de la mise à jour du patient';
+ 
+ // Render DRF exact field validation errors
+ if (error.response?.data && typeof error.response.data === 'object' && !error.response.data.detail) {
+   try {
+     errorMessage = Object.entries(error.response.data)
+       .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(' ') : JSON.stringify(val)}`)
+       .join('\n');
+   } catch(e) {}
+ }
+ 
  return {
  success: false,
- message: error.response?.data?.detail || 'Erreur lors de la mise à jour du patient',
+ message: errorMessage,
  error: error.response?.data || error.message
  };
  }
@@ -423,7 +474,7 @@ export const hospitalApi = {
  // Mettre à jour un rendez-vous
  async update(id: number, rdvData: Partial<RendezVous>) {
  try {
- const response = await apiClient.put(`/rendez-vous/${id}/`, rdvData);
+ const response = await apiClient.patch(`/rendez-vous/${id}/`, rdvData);
  return {
  success: true,
  data: response.data,
@@ -654,7 +705,7 @@ export const hospitalApi = {
  // Mettre à jour un médecin
  async update(id: number, medecinData: Partial<Medecin>) {
  try {
- const response = await apiClient.put(`/medical/medecins/${id}/`, medecinData);
+ const response = await apiClient.patch(`/medical/medecins/${id}/`, medecinData);
  return {
  success: true,
  data: response.data,
@@ -768,17 +819,17 @@ export const hospitalApi = {
  const response = await apiClient.post('/medical/consultations/', consultationData);
  return { success: true, data: response.data, message: 'Consultation créée avec succès' };
  } catch (error: any) {
- return { success: false, message: 'Erreur création consultation', error: error.response?.data || error.message };
+    return formatApiError(error, 'Erreur création consultation');
  }
  },
 
  // Mettre à jour une consultation
  async update(id: number, consultationData: any) {
  try {
- const response = await apiClient.put(`/medical/consultations/${id}/`, consultationData);
+ const response = await apiClient.patch(`/medical/consultations/${id}/`, consultationData);
  return { success: true, data: response.data, message: 'Consultation mise à jour avec succès' };
  } catch (error: any) {
- return { success: false, message: 'Erreur modification consultation', error: error.message };
+    return formatApiError(error, 'Erreur modification consultation');
  }
  },
 
@@ -1076,7 +1127,7 @@ export const hospitalApi = {
  message: 'Médicament créé avec succès'
  };
  } catch (error: any) {
- return { success: false, message: 'Erreur lors de la création du médicament', error: error.response?.data || error.message };
+    return formatApiError(error, 'Erreur lors de la création du médicament');
  }
  },
 
@@ -1086,7 +1137,7 @@ export const hospitalApi = {
  const response = await apiClient.patch(`/medicaments/${id}/`, medicamentData);
  return { success: true, data: response.data };
  } catch (error: any) {
- return { success: false, message: 'Erreur modification médicament', error: error.message };
+    return formatApiError(error, 'Erreur lors de la modification du médicament');
  }
  },
 
@@ -1228,7 +1279,7 @@ export const hospitalApi = {
  const response = await apiClient.post('/rendez-vous/', rdvData);
  return { success: true, data: response.data };
  } catch (error: any) {
- return { success: false, message: 'Erreur création rdv', error: error.response?.data || error.message };
+    return formatApiError(error, 'Erreur lors de la création du rendez-vous');
  }
  },
 
@@ -1237,7 +1288,7 @@ export const hospitalApi = {
  const response = await apiClient.patch(`/rendez-vous/${id}/`, rdvData);
  return { success: true, data: response.data };
  } catch (error: any) {
- return { success: false, message: 'Erreur modification rdv', error: error.message };
+    return formatApiError(error, 'Erreur lors de la modification du rendez-vous');
  }
  },
 

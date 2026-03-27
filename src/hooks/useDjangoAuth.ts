@@ -30,17 +30,10 @@ export const useDjangoAuth = (): UseAuthReturn => {
         const profileRes = await djangoAuthApi.getProfile();
         if (profileRes.success && profileRes.data) {
           const userData = profileRes.data;
-          const mappedUser = {
-            utilisateur_id: userData.id,
-            nom_complet: `${userData.nom || userData.first_name || ''} ${userData.prenom || userData.last_name || ''}`.trim() || userData.email,
-            email: userData.email,
-            role: userData.role,
-            hopital_id: (userData.hopital && typeof userData.hopital === 'object') ? userData.hopital.id : userData.hopital,
-            hopital_nom: (userData.hopital && typeof userData.hopital === 'object') ? userData.hopital.nom : userData.hopital_nom
-          };
+          const mappedUser = djangoAuthApi.mapUserResponse(userData);
           setUser(mappedUser);
           // Mettre à jour localStorage pour les prochains rechargements
-          localStorage.setItem('user_data', JSON.stringify(userData));
+          localStorage.setItem('user_data', JSON.stringify(mappedUser));
 
           // Synchroniser aussi la configuration du tenant (hôpital) si disponible
           if (userData.hopital && typeof userData.hopital === 'object') {
@@ -72,10 +65,42 @@ export const useDjangoAuth = (): UseAuthReturn => {
       const response = await djangoAuthApi.connexion({ email, password });
 
       if (response.success && response.data) {
-        setUser(response.data.user);
+        let finalUser = response.data.user;
+
+        // Si le login ne retourne pas toutes les informations (par ex. juste 3 clés comme id/email),
+        // on tente de récupérer le profil complet immédiatement
+        try {
+          // On vérifie quelques champs clés qui pourraient manquer (nom_complet est calculé par mapUserResponse, mais s'il s'est rabattu sur l'email, on fetch)
+          const needsProfile = !finalUser.hopital_id || finalUser.role === 'personnel' || finalUser.nom_complet === finalUser.email || finalUser.nom_complet === 'Utilisateur';
+          
+          if (needsProfile) {
+            console.log('Récupération du profil complet après login...');
+            const profileRes = await djangoAuthApi.getProfile();
+            if (profileRes.success && profileRes.data) {
+              finalUser = djangoAuthApi.mapUserResponse(profileRes.data);
+              // Mettre à jour le localStorage avec les nouvelles données
+              localStorage.setItem('user_data', JSON.stringify(finalUser));
+              
+              if (profileRes.data.hopital && typeof profileRes.data.hopital === 'object') {
+                const tenantConfig = {
+                  tenant_id: profileRes.data.hopital.id,
+                  nom: profileRes.data.hopital.nom,
+                  logo: profileRes.data.hopital.logo,
+                  couleur_principale: profileRes.data.hopital.couleur_principale || '#0066CC',
+                  is_configured: true
+                };
+                localStorage.setItem('tenant_config', JSON.stringify(tenantConfig));
+              }
+            }
+          }
+        } catch (profileErr) {
+          console.warn('Erreur lors de la récupération du profil après login:', profileErr);
+        }
+
+        setUser(finalUser);
         
-        // Synchroniser le tenant_config si retourné par le login
-        if (response.data.tenant && typeof response.data.tenant === 'object') {
+        // Synchroniser le tenant_config si retourné par le login (fallback)
+        if (response.data.tenant && typeof response.data.tenant === 'object' && !localStorage.getItem('tenant_config')) {
           const tenantConfig = {
             tenant_id: response.data.tenant.id,
             nom: response.data.tenant.nom,
@@ -86,6 +111,7 @@ export const useDjangoAuth = (): UseAuthReturn => {
           localStorage.setItem('tenant_config', JSON.stringify(tenantConfig));
         }
         
+        // S'assurer de rediriger vers le dashboard approprié si le rôle a été mis à jour
         return {
           success: true,
           message: response.message,
@@ -130,14 +156,7 @@ export const useDjangoAuth = (): UseAuthReturn => {
         const profileResponse = await djangoAuthApi.getProfile();
         if (profileResponse.success && profileResponse.data) {
           const userData = profileResponse.data;
-          setUser({
-            utilisateur_id: userData.id,
-            nom_complet: `${userData.nom} ${userData.prenom}`,
-            email: userData.email,
-            role: userData.role,
-            hopital_id: typeof userData.hopital === 'object' ? userData.hopital?.id : userData.hopital,
-            hopital_nom: typeof userData.hopital === 'object' ? userData.hopital?.nom : userData.hopital_nom
-          });
+          setUser(djangoAuthApi.mapUserResponse(userData));
 
           // Synchroniser aussi la configuration du tenant (hôpital) si disponible
           if (userData.hopital && typeof userData.hopital === 'object') {

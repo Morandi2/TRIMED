@@ -51,9 +51,12 @@ export const PatientTable: React.FC<PatientTableProps> = ({
     }
   };
 
-  const calculateAge = (dateNaissance: string) => {
+  const calculateAge = (dateNaissance?: string) => {
+    if (!dateNaissance) return 'N/A';
     const today = new Date();
     const birthDate = new Date(dateNaissance);
+    if (isNaN(birthDate.getTime())) return 'N/A';
+
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     
@@ -62,6 +65,13 @@ export const PatientTable: React.FC<PatientTableProps> = ({
     }
     
     return age;
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('fr-FR');
   };
 
   return (
@@ -137,7 +147,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
               </TableCell>
               <TableCell className="py-3">
                 <div className="text-gray-600 text-theme-xs dark:text-gray-400">
-                  {new Date(patient.cree_le).toLocaleDateString('fr-FR')}
+                  {formatDate(patient.cree_le || patient.created_at)}
                 </div>
               </TableCell>
               <TableCell className="py-3">

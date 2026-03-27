@@ -45,45 +45,49 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
     const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 
     useEffect(() => {
-        if (patientId) {
-            setIsModifying(true);
-            const patientComplet = patientService.obtenirPatientComplet(patientId);
-            if (patientComplet) {
-                setFormData({
-                    patient: {
-                        nom: patientComplet.patient.nom,
-                        prenom: patientComplet.patient.prenom,
-                        date_naissance: patientComplet.patient.date_naissance,
-                        sexe: patientComplet.patient.sexe,
-                        numero_identification_nationale: patientComplet.patient.numero_identification_nationale || '',
-                        telephone: patientComplet.patient.telephone || '',
-                        email: patientComplet.patient.email || '',
-                        groupe_sanguin: patientComplet.patient.groupe_sanguin || ''
-                    },
-                    adresse: patientComplet.adresse ? {
-                        pays: patientComplet.adresse.pays,
-                        departement: patientComplet.adresse.departement,
-                        ville: patientComplet.adresse.ville,
-                        adresse_ligne1: patientComplet.adresse.adresse_ligne1,
-                        adresse_ligne2: patientComplet.adresse.adresse_ligne2 || '',
-                        code_postal: patientComplet.adresse.code_postal
-                    } : {
-                        pays: 'Haïti',
-                        departement: '',
-                        ville: '',
-                        adresse_ligne1: '',
-                        adresse_ligne2: '',
-                        code_postal: ''
-                    },
-                    contacts: patientComplet.contacts.length > 0 ? patientComplet.contacts : [{ nom: '', telephone: '', relation: '' }],
-                    assurances: patientComplet.assurances.length > 0 ? patientComplet.assurances : [{ nom_assurance: '', numero_police: '', date_expiration: '' }],
-                    allergies: patientComplet.allergies.length > 0 ? patientComplet.allergies : [{ nom_allergie: '', description: '' }],
-                    antecedents: patientComplet.antecedents.length > 0 ? patientComplet.antecedents : [{ type_antecedent: 'maladie', description: '', date_debut: '', date_fin: '' }]
-                });
+        const loadPatientData = async () => {
+            if (patientId) {
+                setIsModifying(true);
+                try {
+                    const patientComplet = await patientService.obtenirPatientComplet(patientId);
+                    if (patientComplet && patientComplet.patient) {
+                        setFormData({
+                            patient: {
+                                nom: patientComplet.patient.nom || '',
+                                prenom: patientComplet.patient.prenom || '',
+                                date_naissance: patientComplet.patient.date_naissance || '',
+                                sexe: patientComplet.patient.sexe || 'M',
+                                numero_identification_nationale: patientComplet.patient.numero_identification_nationale || '',
+                                telephone: patientComplet.patient.telephone || '',
+                                email: patientComplet.patient.email || '',
+                                groupe_sanguin: patientComplet.patient.groupe_sanguin || '',
+                                numero_dossier_medical: patientComplet.patient.numero_dossier_medical || ''
+                            },
+                            adresse: patientComplet.adresse ? {
+                                pays: patientComplet.adresse.pays || 'Haïti',
+                                departement: patientComplet.adresse.departement || '',
+                                ville: patientComplet.adresse.ville || '',
+                                adresse_ligne1: patientComplet.adresse.adresse_ligne1 || '',
+                                adresse_ligne2: patientComplet.adresse.adresse_ligne2 || '',
+                                code_postal: patientComplet.adresse.code_postal || ''
+                            } : {
+                                pays: 'Haïti', departement: '', ville: '', adresse_ligne1: '', adresse_ligne2: '', code_postal: ''
+                            },
+                            contacts: patientComplet.contacts?.length > 0 ? patientComplet.contacts : [{ nom: '', telephone: '', relation: '' }],
+                            assurances: patientComplet.assurances?.length > 0 ? patientComplet.assurances : [{ nom_assurance: '', numero_police: '', date_expiration: '' }],
+                            allergies: patientComplet.allergies?.length > 0 ? patientComplet.allergies : [{ nom_allergie: '', description: '' }],
+                            antecedents: patientComplet.antecedents?.length > 0 ? patientComplet.antecedents : [{ type_antecedent: 'maladie', description: '', date_debut: '', date_fin: '' }]
+                        });
+                    }
+                } catch (error) {
+                    console.error("Erreur de chargement du patient:", error);
+                }
+            } else {
+                setIsModifying(false);
             }
-        } else {
-            setIsModifying(false);
-        }
+        };
+
+        loadPatientData();
     }, [patientId, hopitalId]);
 
     useEffect(() => {

@@ -70,7 +70,7 @@ class UtilisateurService {
           telephone: u.telephone || u.phone || '',
           role_id: this.mapRoleToId(u.role),
           statut_id: u.is_active ? 1 : 2,
-          created_at: u.date_joined || u.created_at || new Date().toISOString(),
+          created_at: u.date_joined || u.created_at || u.created || u.date_creation || new Date().toISOString(),
           updated_at: u.updated_at || new Date().toISOString(),
           tenant_id: (hopitalInfo ? hopitalInfo.id : u.hopital) || 0,
           hopital_nom: hopitalInfo ? hopitalInfo.nom : (this.clean(u.hopital_nom) || (typeof u.hopital === 'string' ? u.hopital : null))
@@ -118,7 +118,6 @@ class UtilisateurService {
     // L'endpoint /comptes/utilisateurs/ (CRUD) peut ne pas hasher le mot de passe correctement
     const apiData = {
       email: data.email,
-      username: data.email,
       nom_complet: data.nom_complet,
       nom: data.nom_complet.split(' ').slice(1).join(' ') || data.nom_complet,
       prenom: data.nom_complet.split(' ')[0] || '',
@@ -126,10 +125,14 @@ class UtilisateurService {
       last_name: data.nom_complet.split(' ').slice(1).join(' ') || data.nom_complet,
       role: this.mapIdToRole(data.role_id),
       password: data.password,
+      mot_de_passe: data.password, // Fallback JSON Server / Custom
       password_confirm: data.password_confirm,
-      confirm_password: data.password_confirm, // Certains sérialiseurs Django utilisent ce nom
+      confirm_password: data.password_confirm,
       is_active: data.statut_id === 1,
-      hopital: tenantId
+      hopital: tenantId,
+      hopital_id: tenantId, // Requis par InscriptionView pour Medecin
+      tenant_id: tenantId,
+      tenant: tenantId
     };
 
     console.log('[UtilisateurService] Envoi création utilisateur:', apiData);

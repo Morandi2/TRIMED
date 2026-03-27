@@ -65,20 +65,20 @@ export interface OrdonnanceFormData {
 
 // Map types from API to our interface if needed
 const mapOrdonnance = (data: any): Ordonnance => ({
-  ordonnance_id: data.ordonnance_id,
-  tenant_id: data.tenant_id || data.tenant,
-  consultation_id: data.consultation_id || data.consultation,
-  patient_id: data.patient_id || data.patient,
-  medecin_id: data.medecin_id || data.medecin,
+  ordonnance_id: data.ordonnance_id || data.id,
+  tenant_id: data.tenant_id || data.tenant || data.hopital,
+  consultation_id: typeof data.consultation === 'object' ? data.consultation?.id : (data.consultation_id || data.consultation),
+  patient_id: typeof data.patient === 'object' ? data.patient?.id || data.patient?.patient_id : (data.patient_id || data.patient),
+  medecin_id: typeof data.medecin === 'object' ? data.medecin?.id || data.medecin?.medecin_id : (data.medecin_id || data.medecin),
   date_ordonnance: data.date_ordonnance,
   recommandations: data.recommandations,
   validite: data.validite,
   prescriptions: data.prescriptions || [],
   created_at: data.created_at,
   updated_at: data.updated_at,
-  patient_nom: data.patient_nom,
+  patient_nom: data.patient_nom || (typeof data.patient === 'object' ? (`${data.patient?.prenom || ''} ${data.patient?.nom || ''}`.trim() || data.patient?.nom_complet) : undefined),
   patient_prenom: data.patient_prenom,
-  medecin_nom: data.medecin_nom,
+  medecin_nom: data.medecin_nom || (typeof data.medecin === 'object' ? (`Dr. ${data.medecin?.prenom || ''} ${data.medecin?.nom || ''}`.trim() || data.medecin?.nom_complet) : undefined),
   medecin_prenom: data.medecin_prenom
 });
 
@@ -121,7 +121,8 @@ export class OrdonnanceService {
       } else if (rawData.data && Array.isArray(rawData.data)) {
         rawData = rawData.data;
       }
-      return Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+      const arrData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+      return arrData.map(mapOrdonnance);
     }
     return [];
   }
@@ -130,6 +131,7 @@ export class OrdonnanceService {
     const response = await hospitalApi.ordonnances.getAll({ tenant: tenantId });
     if (response.success) {
       const data = response.data.results || response.data;
+      console.log("=== DEBUG ORDONNANCES JSON ===", JSON.stringify(data[0] || data));
       return Array.isArray(data) ? data.map(mapOrdonnance) : [];
     }
     return [];
@@ -211,9 +213,10 @@ export class OrdonnanceService {
     const consultation = this._consultations.find(c => c.consultation_id === consultationId);
     if (!consultation) return `Consultation #${consultationId}`;
     
-    const patientNom = this.obtenirNomPatient(consultation.patient_id);
+    const patientNom = (consultation as any).patient_nom || this.obtenirNomPatient(consultation.patient_id);
     const date = new Date(consultation.date_consultation).toLocaleDateString('fr-FR');
-    return `${patientNom} - ${date}`;
+    const motif = consultation.motif ? ` - ${consultation.motif}` : '';
+    return `${patientNom} - ${date}${motif}`;
   }
 }
 

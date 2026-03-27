@@ -70,7 +70,7 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
     try {
       let result;
       if (isModifying && consultationId) {
-        result = await consultationService.modifierConsultation(consultationId, formData);
+        result = await consultationService.modifierConsultation(consultationId, formData, tenantId);
       } else {
         result = await consultationService.creerConsultation(formData, tenantId);
       }

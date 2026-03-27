@@ -1,0 +1,104 @@
+
+> TRIMED@2.0.2 build
+> tsc -b && vite build
+
+src/pages/GestionHopital/FenGestionHopital/FenPaiement.tsx(1307,23): error TS2322: Type 'string' is not assignable to type 'BadgeColor | undefined'.
+src/pages/GestionHopital/GestionAbonnements/services/AbonnementService.ts(17,11): error TS6133: 'invoices' is declared but its value is never read.
+src/pages/GestionHopital/GestionAbonnements/services/AbonnementService.ts(21,11): error TS6133: 'nextInvoiceId' is declared but its value is never read.
+src/pages/GestionHopital/GestionConsultations/components/ConsultationProgressForm.tsx(13,3): error TS6133: 'tenantId' is declared but its value is never read.
+src/pages/GestionHopital/GestionConsultations/GestionConsultations.tsx(101,35): error TS6133: 'consultation' is declared but its value is never read.
+src/pages/GestionHopital/GestionMedicaments/components/MedicamentModal.tsx(48,3): error TS6133: 'mode' is declared but its value is never read.
+src/pages/GestionHopital/GestionMedicaments/components/MedicamentProgressForm.tsx(5,3): error TS6133: 'Medicament' is declared but its value is never read.
+src/pages/GestionHopital/GestionMedicaments/components/MedicamentProgressForm.tsx(57,22): error TS6133: 'setCategories' is declared but its value is never read.
+src/pages/GestionHopital/GestionMedicaments/components/MedicamentProgressForm.tsx(123,19): error TS18048: 'formData.stock_minimum' is possibly 'undefined'.
+src/pages/GestionHopital/GestionMedicaments/components/MedicamentProgressForm.tsx(123,50): error TS18048: 'formData.stock_maximum' is possibly 'undefined'.
+src/pages/GestionHopital/GestionMedicaments/components/MedicamentProgressForm.tsx(123,76): error TS18048: 'formData.stock_minimum' is possibly 'undefined'.
+src/pages/GestionHopital/GestionMedicaments/components/MedicamentProgressForm.tsx(125,19): error TS18048: 'formData.prix_achat' is possibly 'undefined'.
+src/pages/GestionHopital/GestionMedicaments/components/MedicamentProgressForm.tsx(125,47): error TS18048: 'formData.prix_vente' is possibly 'undefined'.
+src/pages/GestionHopital/GestionMedicaments/GestionMedicaments.tsx(13,1): error TS6133: 'MouvementModal' is declared but its value is never read.
+src/pages/GestionHopital/GestionMedicaments/GestionMedicaments.tsx(59,10): error TS6133: 'stats' is declared but its value is never read.
+src/pages/GestionHopital/GestionMedicaments/GestionMedicamentsSimple.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/pages/GestionHopital/GestionOrdonnances/components/OrdonnanceModal.tsx(76,20): error TS2339: Property 'data' does not exist on type '{ success: boolean; errors?: string[] | undefined; }'.
+src/pages/GestionHopital/GestionOrdonnances/components/OrdonnanceModal.tsx(77,25): error TS2339: Property 'data' does not exist on type '{ success: boolean; errors?: string[] | undefined; }'.
+src/pages/GestionHopital/GestionOrdonnances/components/OrdonnanceProgressForm.tsx(13,3): error TS6133: 'tenantId' is declared but its value is never read.
+src/pages/GestionHopital/GestionOrdonnances/GestionOrdonnances.tsx(101,33): error TS6133: 'ordonnance' is declared but its value is never read.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(59,34): error TS2339: Property 'methode_id' does not exist on type 'MethodePaiement'.
+  Property 'methode_id' does not exist on type '"Mobile Money"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(60,32): error TS2339: Property 'statut_id' does not exist on type 'StatutPaiement'.
+  Property 'statut_id' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(61,40): error TS2339: Property 'nom' does not exist on type 'MethodePaiement'.
+  Property 'nom' does not exist on type '"Mobile Money"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(62,29): error TS2339: Property 'nom' does not exist on type 'StatutPaiement'.
+  Property 'nom' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(146,40): error TS2339: Property 'methode_id' does not exist on type 'MethodePaiement'.
+  Property 'methode_id' does not exist on type '"Mobile Money"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(146,67): error TS2339: Property 'nom' does not exist on type 'MethodePaiement'.
+  Property 'nom' does not exist on type '"Mobile Money"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(147,30): error TS2339: Property 'nom' does not exist on type 'MethodePaiement'.
+  Property 'nom' does not exist on type '"Mobile Money"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(164,39): error TS2339: Property 'statut_id' does not exist on type 'StatutPaiement'.
+  Property 'statut_id' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(164,64): error TS2339: Property 'nom' does not exist on type 'StatutPaiement'.
+  Property 'nom' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementModal.tsx(165,29): error TS2339: Property 'nom' does not exist on type 'StatutPaiement'.
+  Property 'nom' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/components/PaiementProgressForm.tsx(10,3): error TS6133: 'totalSteps' is declared but its value is never read.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(25,69): error TS2339: Property '_tenantId' does not exist on type 'GestionPaiementsProps'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(42,23): error TS6133: 'setCurrentPage' is declared but its value is never read.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(56,7): error TS2552: Cannot find name 'tenantId'. Did you mean '_tenantId'?
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(106,26): error TS18048: 'paiement.patient_id' is possibly 'undefined'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(116,9): error TS6133: '_totalPages' is declared but its value is never read.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(135,43): error TS2339: Property 'nom' does not exist on type 'StatutPaiement'.
+  Property 'nom' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(136,23): error TS2339: Property 'couleur' does not exist on type 'StatutPaiement'.
+  Property 'couleur' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(244,37): error TS2339: Property 'statut_id' does not exist on type 'StatutPaiement'.
+  Property 'statut_id' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(244,62): error TS2339: Property 'nom' does not exist on type 'StatutPaiement'.
+  Property 'nom' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(244,75): error TS2339: Property 'nom' does not exist on type 'StatutPaiement'.
+  Property 'nom' does not exist on type '"Payé"'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(255,38): error TS2339: Property 'methode_id' does not exist on type 'MethodePaiement'.
+  Property 'methode_id' does not exist on type '"Mobile Money"'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(255,65): error TS2339: Property 'nom' does not exist on type 'MethodePaiement'.
+  Property 'nom' does not exist on type '"Mobile Money"'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(255,79): error TS2339: Property 'nom' does not exist on type 'MethodePaiement'.
+  Property 'nom' does not exist on type '"Mobile Money"'.
+src/pages/GestionHopital/GestionPaiements/GestionPaiements.tsx(326,60): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(15,5): error TS2322: Type '{ methode_id: number; nom: string; actif: true; }' is not assignable to type 'MethodePaiement'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(16,5): error TS2322: Type '{ methode_id: number; nom: string; actif: true; }' is not assignable to type 'MethodePaiement'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(17,5): error TS2322: Type '{ methode_id: number; nom: string; actif: true; }' is not assignable to type 'MethodePaiement'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(18,5): error TS2322: Type '{ methode_id: number; nom: string; actif: true; }' is not assignable to type 'MethodePaiement'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(19,5): error TS2322: Type '{ methode_id: number; nom: string; actif: true; }' is not assignable to type 'MethodePaiement'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(24,5): error TS2322: Type '{ statut_id: number; nom: string; couleur: string; }' is not assignable to type 'StatutPaiement'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(25,5): error TS2322: Type '{ statut_id: number; nom: string; couleur: string; }' is not assignable to type 'StatutPaiement'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(26,5): error TS2322: Type '{ statut_id: number; nom: string; couleur: string; }' is not assignable to type 'StatutPaiement'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(27,5): error TS2322: Type '{ statut_id: number; nom: string; couleur: string; }' is not assignable to type 'StatutPaiement'.
+src/pages/GestionHopital/GestionPaiements/services/PaiementService.ts(106,48): error TS2339: Property 'actif' does not exist on type 'MethodePaiement'.
+  Property 'actif' does not exist on type '"Mobile Money"'.
+src/pages/GestionHopital/GestionPatients/components/PatientModal.tsx(101,3): error TS2339: Property 'patient' does not exist on type 'PatientModalProps'.
+src/pages/GestionHopital/GestionPatients/components/PatientModal.tsx(101,3): error TS6133: 'patient' is declared but its value is never read.
+src/pages/GestionHopital/GestionPatients/components/PatientModal.tsx(104,3): error TS2339: Property 'patientComplet' does not exist on type 'PatientModalProps'.
+src/pages/GestionHopital/GestionPatients/components/PatientViewModal.tsx(15,3): error TS6133: 'hopitalNom' is declared but its value is never read.
+src/pages/GestionHopital/GestionPatients/GestionPatiens.tsx(26,10): error TS6133: 'formErrors' is declared but its value is never read.
+src/pages/GestionHopital/GestionRendezVous/components/RendezVousModal.tsx(82,17): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/pages/GestionHopital/GestionRendezVous/components/RendezVousProgressForm.tsx(4,3): error TS6133: 'RendezVous' is declared but its value is never read.
+src/pages/GestionHopital/GestionRendezVous/components/RendezVousProgressForm.tsx(22,3): error TS6133: 'tenantId' is declared but its value is never read.
+src/pages/GestionHopital/GestionRendezVous/components/SearchableSelect.tsx(15,3): error TS6133: 'value' is declared but its value is never read.
+src/pages/GestionHopital/GestionRendezVous/GestionRendezVous.tsx(43,23): error TS6133: 'setCurrentPage' is declared but its value is never read.
+src/pages/GestionHopital/GestionRendezVous/GestionRendezVous.tsx(118,41): error TS6133: 'isError' is declared but its value is never read.
+src/pages/GestionHopital/GestionRendezVous/GestionRendezVous.tsx(138,9): error TS6133: 'totalPages' is declared but its value is never read.
+src/pages/GestionHopital/GestionUtilisateur/GestionUtilisateur.tsx(40,23): error TS6133: 'setCurrentPage' is declared but its value is never read.
+src/pages/GestionHopital/GestionUtilisateur/GestionUtilisateur.tsx(118,9): error TS6133: '_totalPages' is declared but its value is never read.
+src/pages/GestionHopital/TenantPaiement/TenantPaiementModule.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/pages/GestionHopital/TenantPaiement/TenantPaiementModule.tsx(107,58): error TS6133: 'currentPlan' is declared but its value is never read.
+src/pages/GestionHopital/TenantPaiement/TenantPaiementModule.tsx(173,9): error TS6133: 'handleMethodSelect' is declared but its value is never read.
+src/pages/index/CTA.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/index/FinalCTA.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/index/Footer.tsx(3,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/index/MobileApp.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/index/Pricing.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/index/Testimonials.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+src/services/modalService.tsx(198,5): error TS6133: 'autoCloseDelay' is declared but its value is never read.
+vite.config.ts(9,7): error TS6133: '__dirname' is declared but its value is never read.

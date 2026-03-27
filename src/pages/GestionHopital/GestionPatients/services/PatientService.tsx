@@ -16,6 +16,7 @@ export interface Patient {
   groupe_sanguin?: string;
   cree_le: string;
   modifie_le: string;
+  created_at?: string;
 }
 
 export interface Hopital {
@@ -64,10 +65,11 @@ export const patientService = {
         nom: p.nom || p.last_name || p.nom || '',
         prenom: p.prenom || p.first_name || p.prenom || '',
         sexe: p.sexe || p.gender || p.sexe || '',
-        date_naissance: p.date_naissance || p.birth_date || p.date_naissance || '',
+        date_naissance: p.date_naissance || p.birth_date || p.dob || p.date_de_naissance || p.date_naissance || '',
         telephone: p.telephone || p.phone || p.telephone || '',
         email: p.email || '',
-        numero_dossier_medical: p.numero_dossier_medical || p.file_number || p.numero_dossier || p.numero_dossier_medical || ''
+        numero_dossier_medical: p.numero_dossier_medical || p.file_number || p.numero_dossier || p.dossier_medical || p.numero_dossier_medical || '',
+        cree_le: p.cree_le || p.created_at || p.date_creation || p.created || p.cree_le || ''
       }));
     }
     return [];
@@ -95,10 +97,9 @@ export const patientService = {
     // Générer un numéro de dossier médical s'il n'existe pas
     const numero_dossier = formData.patient.numero_dossier_medical || `PAT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
 
-    const payload = {
+    const payload: any = {
       ...formData.patient,
       numero_dossier_medical: numero_dossier,
-      hopital: hopitalId, // Le backend attend 'hopital' pas 'hopital_id'
       // The backend PatientSerializer expects these fields for nested creation
       adresse: formData.adresse, 
       contacts: formData.contacts,
@@ -106,34 +107,85 @@ export const patientService = {
       allergies: formData.allergies,
       antecedents: formData.antecedents
     };
+
+    // Nettoyer les champs vides qui ont une contrainte d'unicité côté backend
+    // DRF/PostgreSQL considère deux strings vides ("") comme des doublons.
+    const optionalUniqueFields = ['numero_identification_nationale', 'email', 'telephone'];
+    optionalUniqueFields.forEach(field => {
+      if (payload[field] === '') {
+        delete payload[field];
+      }
+    });
+
+    
+    // N'envoyer l'ID de l'hôpital que s'il est valide (> 0) pour éviter "Invalid pk 0".
+    // Si absent, le backend devra l'inférer de l'utilisateur connecté s'il est requis.
+    if (hopitalId && hopitalId > 0) {
+      payload.hopital = hopitalId;
+    } else if (formData.patient.hopital) {
+      payload.hopital = formData.patient.hopital;
+    }
     
     const response = await hospitalApi.patients.create(payload);
     return {
       success: response.success,
       data: response.data,
-      errors: response.success ? undefined : [response.message]
+      errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
     };
   },
 
   // Modifier un patient complet
   modifierPatientComplet: async (patientId: number, formData: PatientFormData) => {
-    const payload = {
-      ...formData.patient,
-      // Le backend peut exiger le numéro de dossier même en update
-      ...(formData.patient.numero_dossier_medical && { numero_dossier_medical: formData.patient.numero_dossier_medical }),
-      // On inclut aussi hopital si présent dans formData, sinon le backend utilise l'existant
-      adresse: formData.adresse,
-      contacts: formData.contacts,
-      assurances: formData.assurances,
-      allergies: formData.allergies,
-      antecedents: formData.antecedents
-    };
+    // Only extract the core fields for the patient patch request, 
+    // omitting nested relationships and read-only fields that cause 400 Bad Request
+    const allowedFields = [
+      'nom', 'prenom', 'email', 'telephone', 'date_naissance', 
+      'sexe', 'numero_identification_nationale',
+      'groupe_sanguin', 'statut_matrimonial', 'profession'
+    ];
     
+    const payload: any = {};
+    for (const key of allowedFields) {
+      if (formData.patient[key] !== undefined && formData.patient[key] !== null) {
+        payload[key] = formData.patient[key];
+      }
+    }
+
+    // Nettoyer les champs vides qui ont une contrainte d'unicité côté backend
+    // DRF/PostgreSQL considère deux strings vides ("") comme des doublons.
+    const optionalUniqueFields = ['numero_identification_nationale', 'email', 'telephone'];
+    optionalUniqueFields.forEach(field => {
+      if (payload[field] === '') {
+        delete payload[field];
+      }
+    });
+    
+    // On ne renvoie PAS le numero_dossier_medical lors d'un PATCH
+    // car le backend signale une erreur d'unicité (Ce numéro de dossier médical existe déjà)
+    // même s'il s'agit du même patient. Le numero_dossier_medical est read-only après création.
+    
+    // Si hopital est spécifié, l'inclure
+    if (formData.patient.hopital || formData.patient.hopital_id) {
+      payload.hopital = formData.patient.hopital || formData.patient.hopital_id;
+    }
+
+    // Gestion de la photo: ne l'envoyer que si c'est un nouveau fichier
+    if (formData.patient.photo instanceof File) {
+      payload.photo = formData.patient.photo;
+    }
+    // Si la photo est une URL string, on l'omet pour éviter les erreurs de validation DRF
+    
+    
+    // For nested data like adresse, contacts, assurances, etc., the backend usually expects
+    // separate requests to specific endpoints (e.g. adresses: adresses.update, etc.) on update,
+    // rather than processing them in the main Patient WritableNestedModelSerializer.
+    // If they are required to be kept in sync, they should be done here via separate API calls.
+
     const response = await hospitalApi.patients.update(patientId, payload);
     return {
       success: response.success,
       data: response.data,
-      errors: response.success ? undefined : [response.message]
+      errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
     };
   },
 

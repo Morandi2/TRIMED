@@ -22,6 +22,10 @@ import RendezVous from "./pages/GestionHopital/RendezVous";
 import Configuration from "./pages/GestionHopital/Configuration";
 import Index from "./pages/index/Index";
 import ForgotPassword from "./pages/AuthPages/ForgotPassword";
+import Contact from "./pages/index/Contact";
+import PolitiqueConfidentialite from "./pages/index/PolitiqueConfidentialite";
+import ConditionsUtilisation from "./pages/index/ConditionsUtilisation";
+import CentreAide from "./pages/index/CentreAide";
 
 export default function App() {
   return (
@@ -37,6 +41,10 @@ export default function App() {
               <Route path="/signup" element={<SignUp />} />
               <Route path="/connexion" element={<SignIn />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/politique-de-confidentialite" element={<PolitiqueConfidentialite />} />
+              <Route path="/conditions-utilisation" element={<ConditionsUtilisation />} />
+              <Route path="/centre-aide" element={<CentreAide />} />
 
               {/* Espace Protégé */}
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

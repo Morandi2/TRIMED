@@ -18,10 +18,17 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
   const [patientComplet, setPatientComplet] = React.useState<any>(null);
 
   React.useEffect(() => {
-    if (patient) {
-      const complet = patientService.obtenirPatientComplet(patient.patient_id);
-      setPatientComplet(complet);
-    }
+    const loadPatient = async () => {
+      if (patient) {
+        try {
+          const complet = await patientService.obtenirPatientComplet(patient.patient_id);
+          setPatientComplet(complet);
+        } catch (error) {
+          console.error("Erreur chargement détails patient:", error);
+        }
+      }
+    };
+    loadPatient();
   }, [patient]);
 
   if (!patientComplet) return null;
@@ -34,9 +41,12 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
     }
   };
 
-  const calculateAge = (dateNaissance: string) => {
+  const calculateAge = (dateNaissance?: string) => {
+    if (!dateNaissance) return 'N/A';
     const today = new Date();
     const birthDate = new Date(dateNaissance);
+    if (isNaN(birthDate.getTime())) return 'N/A';
+
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     
@@ -45,6 +55,13 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
     }
     
     return age;
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('fr-FR');
   };
 
   return (
@@ -112,7 +129,7 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
                 <div>
                   <span className="text-sm text-gray-700 dark:text-gray-400">Date naissance:</span>
                   <p className="font-medium text-gray-800 dark:text-white/90">
-                    {new Date(patientComplet.patient.date_naissance).toLocaleDateString('fr-FR')}
+                    {formatDate(patientComplet.patient.date_naissance)}
                   </p>
                 </div>
                 <div>

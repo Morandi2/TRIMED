@@ -189,12 +189,12 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
                   <tr key={ordonnance.ordonnance_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {ordonnanceService.obtenirNomPatient(ordonnance.patient_id)}
+                        {ordonnance.patient_nom || ordonnanceService.obtenirNomPatient(ordonnance.patient_id)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-white">
-                        {ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id)}
+                        {ordonnance.medecin_nom || ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -303,11 +303,11 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Patient:</label>
-                    <p className="text-gray-900 dark:text-white">{ordonnanceService.obtenirNomPatient(selectedOrdonnance.patient_id)}</p>
+                    <p className="text-gray-900 dark:text-white">{selectedOrdonnance.patient_nom || ordonnanceService.obtenirNomPatient(selectedOrdonnance.patient_id)}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Médecin:</label>
-                    <p className="text-gray-900 dark:text-white">{ordonnanceService.obtenirNomMedecin(selectedOrdonnance.medecin_id)}</p>
+                    <p className="text-gray-900 dark:text-white">{selectedOrdonnance.medecin_nom || ordonnanceService.obtenirNomMedecin(selectedOrdonnance.medecin_id)}</p>
                   </div>
                 </div>
                 <div>
