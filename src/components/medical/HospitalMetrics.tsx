@@ -9,6 +9,7 @@ import {
 } from "../../icons";
 import Badge from "../ui/badge/Badge";
 import hospitalApi from "../../api/hospitalApi";
+import { djangoAuthApi } from "../../api/djangoAuthApi";
 
 export default function HospitalMetrics() {
     const [stats, setStats] = useState({
@@ -36,9 +37,9 @@ export default function HospitalMetrics() {
                 const results = await Promise.allSettled([
                     hospitalApi.patients.getStatistiques(), // 0
                     hospitalApi.rendezvous.getStatistiques(), // 1
-                    hospitalApi.medecins.getAll({ hopital_id: tenantId }), // 2
-                    hospitalApi.patients.getAll({ hopital_id: tenantId }), // 3 (Fallback count)
-                    hospitalApi.rendezvous.getAll({ hopital_id: tenantId }), // 4 (Fallback count)
+                    hospitalApi.medecins.getAll({ hopital_id: tenantId } as any), // 2
+                    hospitalApi.patients.getAll({ hopital_id: tenantId } as any), // 3 (Fallback count)
+                    hospitalApi.rendezVous.getAll({ hopital_id: tenantId } as any), // 4 (Fallback count)
                 ]);
 
                 console.log("[HospitalMetrics] Raw results:", results);

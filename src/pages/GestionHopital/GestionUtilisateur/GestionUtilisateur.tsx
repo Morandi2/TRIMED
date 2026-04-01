@@ -165,8 +165,10 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
   const roleOptions = ['Tous', ...roles.map(r => r.role_id.toString())];
   const statutOptions = ['Tous', ...statuts.map(s => s.statut_id.toString())];
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined | null) => {
+    if (!dateString) return '-';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
     return date.toLocaleDateString('fr-FR');
   };
 
@@ -338,12 +340,15 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
                 <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
                   Statut
                 </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Créé le
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Actions
-                </TableCell>
+                  <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
+                    Dernière connexion
+                  </TableCell>
+                  <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
+                    Créé le
+                  </TableCell>
+                  <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
+                    Actions
+                  </TableCell>
               </TableRow>
             </TableHeader>
 
@@ -382,7 +387,12 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
                   </TableCell>
                   <TableCell className="py-3">
                     <p className="text-black text-sm dark:text-white/90">
-                      {formatDate(user.created_at)}
+                      {user.last_login ? formatDate(user.last_login) : 'Jamais'}
+                    </p>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <p className="text-black text-sm dark:text-white/90">
+                      {user.created_at ? formatDate(user.created_at) : 'N/A'}
                     </p>
                   </TableCell>
                   <TableCell className="py-3">

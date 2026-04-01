@@ -9,6 +9,7 @@ export interface Utilisateur {
   statut_id: number;
   created_at: string;
   updated_at: string;
+  last_login?: string;
   tenant_id: number;
   hopital_nom?: string;
 }
@@ -16,10 +17,12 @@ export interface Utilisateur {
 export interface UtilisateurFormData {
   nom_complet: string;
   email: string;
+  telephone?: string;
   password?: string;
   password_confirm?: string;
   role_id: number;
   statut_id: number;
+  tenant_id?: number;
 }
 
 export interface UtilisateurFilters {

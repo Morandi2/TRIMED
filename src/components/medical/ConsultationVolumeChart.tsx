@@ -3,7 +3,9 @@ import { ApexOptions } from "apexcharts";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import hospitalApi from "../../api/hospitalApi";
+import { djangoAuthApi } from "../../api/djangoAuthApi";
 
 export default function ConsultationVolumeChart() {
     const options: ApexOptions = {
@@ -86,12 +88,42 @@ export default function ConsultationVolumeChart() {
         },
     };
 
-    const series = [
+    const [series, setSeries] = useState([
         {
             name: "Consultations",
-            data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
+            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         },
-    ];
+    ]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const { user } = djangoAuthApi.verifierSession();
+                const tenantId = user?.hopital_id || 0;
+                
+                const response = await hospitalApi.rendezVous.getStats({ tenant: tenantId, par_mois: true });
+                if (response.success && response.data) {
+                    const data = response.data.mensuel || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                    setSeries([
+                        {
+                            name: "Consultations",
+                            data: data,
+                        },
+                    ]);
+                } else {
+                    setSeries([{ name: "Consultations", data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }]);
+                }
+            } catch (error) {
+                console.error("[ConsultationVolumeChart] Error:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const [isOpen, setIsOpen] = useState(false);
 

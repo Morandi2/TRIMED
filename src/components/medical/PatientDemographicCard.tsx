@@ -3,6 +3,7 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
 import hospitalApi from "../../api/hospitalApi";
+import { djangoAuthApi } from "../../api/djangoAuthApi";
 
 export default function PatientDemographicCard() {
     const [isOpen, setIsOpen] = useState(false);

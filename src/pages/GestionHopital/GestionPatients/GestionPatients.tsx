@@ -178,10 +178,10 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Gestion des Patients - {hopitalNom || "Mon Hôpital"}
+              Gestion des Patients
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Gérez les dossiers patients de votre hôpital
+              Consultez et gérez l'ensemble des dossiers patients
             </p>
           </div>
 
@@ -351,7 +351,6 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
         <PatientViewModal
           patient={selectedPatient}
           onClose={closeModal}
-          hopitalNom={hopitalNom || ""}
           onPrint={handlePrintPatient}
         />
       ) : null}

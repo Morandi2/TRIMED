@@ -8,6 +8,7 @@ export interface Patient {
   nom: string;
   prenom: string;
   date_naissance: string;
+  age?: number;
   sexe: 'M' | 'F' | 'Autre';
   numero_dossier_medical: string;
   numero_identification_nationale?: string;
@@ -62,14 +63,15 @@ export const patientService = {
       return patients.map((p: any) => ({
         ...p, // PRESERVE ALL ORIGINAL FIELDS
         patient_id: p.id || p.patient_id || 0,
-        nom: p.nom || p.last_name || p.nom || '',
-        prenom: p.prenom || p.first_name || p.prenom || '',
-        sexe: p.sexe || p.gender || p.sexe || '',
-        date_naissance: p.date_naissance || p.birth_date || p.dob || p.date_de_naissance || p.date_naissance || '',
-        telephone: p.telephone || p.phone || p.telephone || '',
+        nom: p.nom || p.last_name || '',
+        prenom: p.prenom || p.first_name || '',
+        sexe: p.sexe || p.gender || '',
+        age: p.age || null, // Capture de l'âge renvoyé par le backend
+        date_naissance: p.date_naissance || p.birth_date || p.dob || p.date_de_naissance || '',
+        telephone: p.telephone || p.phone || '',
         email: p.email || '',
-        numero_dossier_medical: p.numero_dossier_medical || p.file_number || p.numero_dossier || p.dossier_medical || p.numero_dossier_medical || '',
-        cree_le: p.cree_le || p.created_at || p.date_creation || p.created || p.cree_le || ''
+        numero_dossier_medical: p.numero_dossier_medical || p.file_number || p.numero_dossier || p.dossier_medical || '',
+        cree_le: p.cree_le || p.created_at || p.date_creation || p.created || p.date_joined || p.timestamp || ''
       }));
     }
     return [];
@@ -164,9 +166,10 @@ export const patientService = {
     // car le backend signale une erreur d'unicité (Ce numéro de dossier médical existe déjà)
     // même s'il s'agit du même patient. Le numero_dossier_medical est read-only après création.
     
-    // Si hopital est spécifié, l'inclure
-    if (formData.patient.hopital || formData.patient.hopital_id) {
-      payload.hopital = formData.patient.hopital || formData.patient.hopital_id;
+    // Si hopital est spécifié, l'inclure (S'assurer que c'est un ID, pas un objet)
+    const hopitalVal = formData.patient.hopital || formData.patient.hopital_id;
+    if (hopitalVal) {
+      payload.hopital = typeof hopitalVal === 'object' ? (hopitalVal.id || hopitalVal.tenant_id || hopitalVal.hopital_id) : hopitalVal;
     }
 
     // Gestion de la photo: ne l'envoyer que si c'est un nouveau fichier
@@ -184,7 +187,7 @@ export const patientService = {
     const response = await hospitalApi.patients.update(patientId, payload);
     return {
       success: response.success,
-      data: response.data,
+      data: (response as any).data,
       errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
     };
   },

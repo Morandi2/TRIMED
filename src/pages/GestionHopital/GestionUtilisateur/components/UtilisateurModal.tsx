@@ -28,7 +28,8 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
     password: '',
     password_confirm: '',
     role_id: 2, // Défaut : Médecin
-    statut_id: 1
+    statut_id: 1,
+    telephone: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,7 +50,8 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
         password: '',
         password_confirm: '',
         role_id: utilisateur.role_id,
-        statut_id: utilisateur.statut_id
+        statut_id: utilisateur.statut_id,
+        telephone: utilisateur.telephone || ''
       });
     } else {
       setFormData({
@@ -58,7 +60,8 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
         password: '',
         password_confirm: '',
         role_id: 2,
-        statut_id: 1
+        statut_id: 1,
+        telephone: ''
       });
     }
   }, [utilisateur, isOpen]);
@@ -157,6 +160,19 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
               className={`w-full rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
             />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Téléphone
+            </label>
+            <input
+              type="tel"
+              placeholder="+509..."
+              value={formData.telephone}
+              onChange={(e) => setFormData(p => ({ ...p, telephone: e.target.value }))}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
+            />
           </div>
 
           {!utilisateur && (

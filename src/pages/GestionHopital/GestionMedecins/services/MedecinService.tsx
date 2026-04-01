@@ -54,10 +54,10 @@ export const medecinService = {
       return medecins.map((m: any) => ({
         ...m, // PRESERVE ALL ORIGINAL FIELDS
         medecin_id: m.id || m.medecin_id || 0,
-        nom: m.nom || m.last_name || m.nom || '',
-        prenom: m.prenom || m.first_name || m.prenom || '',
-        email_professionnel: m.email_professionnel || m.email || m.email_professionnel || '',
-        telephone: m.telephone || m.phone || m.telephone || '',
+        nom: m.nom || m.last_name || '',
+        prenom: m.prenom || m.first_name || '',
+        email_professionnel: m.email_professionnel || m.email || '',
+        telephone: m.telephone || m.phone || '',
         specialite_principale_id: m.specialite_principale_id || (m.specialite_principale ? m.specialite_principale.id : 0),
         statut: m.statut || 'Actif'
       }));

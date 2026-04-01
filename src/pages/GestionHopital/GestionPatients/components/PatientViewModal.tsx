@@ -1,18 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { Patient, patientService } from '../services/PatientService';
+import { calculateAge, formatDateFR } from '../../../../utils/dateUtils';
 
 interface PatientViewModalProps {
   patient: Patient | null;
   onClose: () => void;
-  hopitalNom?: string;
   onPrint?: (patient: Patient) => void;
 }
 
 export const PatientViewModal: React.FC<PatientViewModalProps> = ({
   patient,
   onClose,
-  hopitalNom = "Hôpital Général",
   onPrint
 }) => {
   const [patientComplet, setPatientComplet] = React.useState<any>(null);
@@ -41,27 +40,8 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
     }
   };
 
-  const calculateAge = (dateNaissance?: string) => {
-    if (!dateNaissance) return 'N/A';
-    const today = new Date();
-    const birthDate = new Date(dateNaissance);
-    if (isNaN(birthDate.getTime())) return 'N/A';
-
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return 'N/A';
-    return date.toLocaleDateString('fr-FR');
+    return formatDateFR(dateStr);
   };
 
   return (

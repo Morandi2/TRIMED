@@ -175,15 +175,30 @@ export class RendezVousService {
   public async loadMetadata(tenantId?: number) {
     const params = tenantId ? { tenant: tenantId } : {};
     const [typesRes, statutsRes] = await Promise.all([
-      hospitalApi.rendezVous.getTypes(params as any),
-      hospitalApi.rendezVous.getStatuts(params as any)
+      hospitalApi.rendezVous.getTypes(params as any).catch(() => ({ success: false, data: [] })),
+      hospitalApi.rendezVous.getStatuts(params as any).catch(() => ({ success: false, data: [] }))
     ]);
 
-    if (typesRes.success) {
+    if (typesRes.success && typesRes.data && typesRes.data.length > 0) {
       this._types = typesRes.data.results || typesRes.data;
+    } else {
+      this._types = [
+        { id: 1, type_id: 1, nom: "Consultation standard", duree_estimee: 30, couleur: "#3b82f6" },
+        { id: 2, type_id: 2, nom: "Suivi médical", duree_estimee: 15, couleur: "#10b981" },
+        { id: 3, type_id: 3, nom: "Urgence", duree_estimee: 45, couleur: "#ef4444" },
+        { id: 4, type_id: 4, nom: "Visite de contrôle", duree_estimee: 20, couleur: "#8b5cf6" }
+      ];
     }
-    if (statutsRes.success) {
+    
+    if (statutsRes.success && statutsRes.data && statutsRes.data.length > 0) {
       this._statuts = statutsRes.data.results || statutsRes.data;
+    } else {
+      this._statuts = [
+        { id: 1, statut_id: 1, nom: "Planifié", couleur: "#f59e0b" },
+        { id: 2, statut_id: 2, nom: "Confirmé", couleur: "#10b981" },
+        { id: 3, statut_id: 3, nom: "Terminé", couleur: "#3b82f6" },
+        { id: 4, statut_id: 4, nom: "Annulé", couleur: "#ef4444" }
+      ];
     }
   }
 

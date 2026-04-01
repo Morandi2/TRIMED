@@ -17,8 +17,14 @@ export const djangoAuthApi = {
    */
   connexion: async function (data: ConnexionData): Promise<ApiResponse<ConnexionResponse>> {
     try {
+      // Envoyer à la fois email et username au cas où le backend attend l'un ou l'autre
+      const payload = {
+        ...data,
+        username: data.email
+      };
+      
       console.log('🔍 Tentative de connexion Django:', data.email);
-      const response = await apiClient.post('/comptes/login/', data);
+      const response = await apiClient.post('/comptes/login/', payload);
 
       console.log('📦 Data reçue du backend (KEYS):', Object.keys(response.data));
       const respData = response.data;
@@ -150,37 +156,22 @@ export const djangoAuthApi = {
    * Créer un utilisateur (Staff)
    */
   creerUtilisateur: async function (data: any): Promise<ApiResponse<any>> {
-    const endpointsToTry = [
-      '/comptes/creer-utilisateur/',
-      '/comptes/utilisateurs/register/',
-      '/comptes/utilisateurs/'
-    ];
-
-    let lastError = null;
-
-    for (const endpoint of endpointsToTry) {
-      try {
-        console.log(`👤 Tentative de création utilisateur sur: ${endpoint}`);
-        const response = await apiClient.post(endpoint, data);
-        return {
-          success: true,
-          message: 'Utilisateur créé avec succès',
-          data: response.data
-        };
-      } catch (error: any) {
-        lastError = error;
-        if (error.response?.status === 404 || error.response?.status === 405) {
-          continue;
-        }
-        break;
-      }
+    try {
+      console.log('👤 Tentative de création utilisateur sur: /comptes/utilisateurs/');
+      const response = await apiClient.post('/comptes/utilisateurs/', data);
+      return {
+        success: true,
+        message: 'Utilisateur créé avec succès',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('❌ Erreur création utilisateur Django:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.response?.data?.error || 'Impossible de créer l\'utilisateur',
+        error: error.response?.data
+      };
     }
-
-    return {
-      success: false,
-      message: lastError?.response?.data?.detail || lastError?.response?.data?.error || 'Impossible de créer l\'utilisateur',
-      error: lastError?.response?.data
-    };
   },
 
   /**
@@ -228,6 +219,30 @@ export const djangoAuthApi = {
       return { success: true, message: 'Utilisateur supprimé' };
     } catch (error: any) {
       return { success: false, message: 'Erreur suppression', error: error.response?.data };
+    }
+  },
+
+  /**
+   * Liste des sessions actives (Outstanding Tokens)
+   */
+  getOutstandingTokens: async function (): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await apiClient.get('/comptes/outstanding-tokens/');
+      return { success: true, message: 'Sessions récupérées', data: response.data };
+    } catch (error: any) {
+      return { success: false, message: 'Erreur récupération sessions', error: error.response?.data };
+    }
+  },
+
+  /**
+   * Liste des tokens révoqués (Blacklisted Tokens)
+   */
+  getBlacklistedTokens: async function (): Promise<ApiResponse<any[]>> {
+    try {
+      const response = await apiClient.get('/comptes/blacklisted-tokens/');
+      return { success: true, message: 'Tokens révoqués récupérés', data: response.data };
+    } catch (error: any) {
+      return { success: false, message: 'Erreur récupération blacklist', error: error.response?.data };
     }
   },
 

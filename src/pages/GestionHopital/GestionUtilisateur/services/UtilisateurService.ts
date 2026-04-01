@@ -20,8 +20,7 @@ class UtilisateurService {
   private clean(val: any): string | null {
     if (!val || typeof val !== 'string') return null;
     const cleaned = val.trim();
-    const upper = cleaned.toUpperCase();
-    if (upper === 'N/A' || upper === 'NULL' || upper === '-' || upper === 'TRIMEDH' || upper === 'TRIMED') return null;
+    if (cleaned === '' || cleaned === '-') return null;
     return cleaned;
   }
 
@@ -54,26 +53,27 @@ class UtilisateurService {
         const hopitalInfo = u.hopital && typeof u.hopital === 'object' ? u.hopital : null;
         
         // Priorité aux champs spécifiques, sinon split du nom_complet
-        const rawNom = this.clean(u.nom) || this.clean(u.last_name);
-        const rawPrenom = this.clean(u.prenom) || this.clean(u.first_name);
-        const rawNomComplet = this.clean(u.nom_complet);
+        const rawNom = this.clean(u.nom) || this.clean(u.last_name) || this.clean(u.nom_famille);
+        const rawPrenom = this.clean(u.prenom) || this.clean(u.first_name) || this.clean(u.petit_nom);
+        const rawNomComplet = this.clean(u.nom_complet) || this.clean(u.full_name) || this.clean(u.name);
 
         const prenom = rawPrenom || (rawNomComplet ? rawNomComplet.split(' ')[0] : (u.email ? u.email.split('@')[0] : ''));
         const nom = rawNom || (rawNomComplet ? rawNomComplet.split(' ').slice(1).join(' ') : '');
         
         return {
-          utilisateur_id: u.id || u.utilisateur_id,
-          nom_complet: rawNomComplet || `${prenom} ${nom}`.trim() || u.email || '',
+          utilisateur_id: u.id || u.utilisateur_id || u.pk,
+          nom_complet: rawNomComplet || `${prenom} ${nom}`.trim() || u.username || u.email || '',
           nom: nom,
           prenom: prenom,
-          email: u.email || '',
-          telephone: u.telephone || u.phone || '',
+          email: u.email || u.username || '',
+          telephone: u.telephone || u.phone || u.mobile || '',
           role_id: this.mapRoleToId(u.role),
-          statut_id: u.is_active ? 1 : 2,
-          created_at: u.date_joined || u.created_at || u.created || u.date_creation || new Date().toISOString(),
-          updated_at: u.updated_at || new Date().toISOString(),
-          tenant_id: (hopitalInfo ? hopitalInfo.id : u.hopital) || 0,
-          hopital_nom: hopitalInfo ? hopitalInfo.nom : (this.clean(u.hopital_nom) || (typeof u.hopital === 'string' ? u.hopital : null))
+          statut_id: u.is_active === false ? 2 : 1, // Par défaut actif si is_active n'est pas explicitement false
+          created_at: u.date_joined || u.created_at || u.created || u.date_creation || u.cree_le || (u as any).timestamp || '',
+          updated_at: u.updated_at || u.modified_at || u.modifie_le || '',
+          last_login: u.last_login || u.derniere_connexion || u.login_at || u.last_seen || null,
+          tenant_id: (hopitalInfo ? (hopitalInfo.id || hopitalInfo.tenant_id) : u.hopital) || 0,
+          hopital_nom: hopitalInfo ? (hopitalInfo.nom || hopitalInfo.name) : (this.clean(u.hopital_nom) || (typeof u.hopital === 'string' ? u.hopital : null))
         };
       });
     }
@@ -118,21 +118,20 @@ class UtilisateurService {
     // L'endpoint /comptes/utilisateurs/ (CRUD) peut ne pas hasher le mot de passe correctement
     const apiData = {
       email: data.email,
+      username: data.email,
       nom_complet: data.nom_complet,
-      nom: data.nom_complet.split(' ').slice(1).join(' ') || data.nom_complet,
-      prenom: data.nom_complet.split(' ')[0] || '',
-      first_name: data.nom_complet.split(' ')[0] || '',
-      last_name: data.nom_complet.split(' ').slice(1).join(' ') || data.nom_complet,
       role: this.mapIdToRole(data.role_id),
+      role_id: Number(data.role_id),
       password: data.password,
-      mot_de_passe: data.password, // Fallback JSON Server / Custom
       password_confirm: data.password_confirm,
-      confirm_password: data.password_confirm,
+      mot_de_passe: data.password,
+      mot_de_passe_confirm: data.password_confirm,
+      password1: data.password,
+      password2: data.password_confirm,
       is_active: data.statut_id === 1,
       hopital: tenantId,
-      hopital_id: tenantId, // Requis par InscriptionView pour Medecin
-      tenant_id: tenantId,
-      tenant: tenantId
+      hopital_id: tenantId,
+      telephone: data.telephone,
     };
 
     console.log('[UtilisateurService] Envoi création utilisateur:', apiData);
@@ -195,8 +194,11 @@ class UtilisateurService {
   async modifierUtilisateur(id: number, data: UtilisateurFormData, originalEmail?: string): Promise<{ success: boolean; data?: Utilisateur; fieldErrors?: Record<string, string>; message?: string }> {
     const apiData: any = {
       nom_complet: data.nom_complet,
+      first_name: data.nom_complet.split(' ')[0] || '',
+      last_name: data.nom_complet.split(' ').slice(1).join(' ') || data.nom_complet,
       role: this.mapIdToRole(data.role_id),
-      is_active: data.statut_id === 1
+      is_active: data.statut_id === 1,
+      telephone: data.telephone
     };
 
     // N'envoyer l'email que s'il a changé pour éviter l'erreur "Email déjà utilisé" sur le backend

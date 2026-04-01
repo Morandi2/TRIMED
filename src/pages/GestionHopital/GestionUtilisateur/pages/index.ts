@@ -6,4 +6,5 @@ export { ManagerDashboard } from './ManagerDashboard';
 export { TechnicienDashboard } from './TechnicienDashboard';
 export { FinanceDashboard } from './FinanceDashboard';
 export { AuditeurDashboard } from './AuditeurDashboard';
+export { AuditLogPage } from './AuditLogPage';
 export { PatientDashboard } from './PatientDashboard';

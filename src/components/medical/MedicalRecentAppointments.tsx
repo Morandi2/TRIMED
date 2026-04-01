@@ -8,6 +8,7 @@ import {
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import hospitalApi from "../../api/hospitalApi";
+import { djangoAuthApi } from "../../api/djangoAuthApi";
 
 interface Appointment {
     id: number;

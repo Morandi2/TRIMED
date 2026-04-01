@@ -10,6 +10,7 @@ import {
 } from "../../../../components/ui/table";
 import { Patient } from '../services/PatientService';
 import { Tooltip } from './Tooltip';
+import { calculateAge, formatDateFR } from '../../../../utils/dateUtils';
 
 interface PatientTableProps {
   patients: Patient[];
@@ -51,27 +52,8 @@ export const PatientTable: React.FC<PatientTableProps> = ({
     }
   };
 
-  const calculateAge = (dateNaissance?: string) => {
-    if (!dateNaissance) return 'N/A';
-    const today = new Date();
-    const birthDate = new Date(dateNaissance);
-    if (isNaN(birthDate.getTime())) return 'N/A';
-
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return 'N/A';
-    return date.toLocaleDateString('fr-FR');
+    return formatDateFR(dateStr);
   };
 
   return (
@@ -89,16 +71,13 @@ export const PatientTable: React.FC<PatientTableProps> = ({
               Dossier Medical
             </TableCell>
             <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
-              Âge
+              Âge & Date de Naissance
             </TableCell>
             <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
               Sexe
             </TableCell>
             <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
               Téléphone
-            </TableCell>
-            <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
-              Date Création
             </TableCell>
             <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
               Actions
@@ -128,9 +107,14 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                 </div>
               </TableCell>
               <TableCell className="py-3">
-                <div className="text-gray-800 text-theme-sm dark:text-white/90">
-                  {calculateAge(patient.date_naissance)} ans
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  {patient.age ? `${patient.age} ans` : (patient.date_naissance ? `${calculateAge(patient.date_naissance)} ans` : "N/A")}
                 </div>
+                {patient.date_naissance && (
+                  <div className="text-xs text-gray-500">
+                    {formatDate(patient.date_naissance)}
+                  </div>
+                )}
               </TableCell>
               <TableCell className="py-3">
                 <Badge
@@ -143,11 +127,6 @@ export const PatientTable: React.FC<PatientTableProps> = ({
               <TableCell className="py-3">
                 <div className="text-gray-800 text-theme-sm dark:text-white/90">
                   {patient.telephone || 'Non renseigné'}
-                </div>
-              </TableCell>
-              <TableCell className="py-3">
-                <div className="text-gray-600 text-theme-xs dark:text-gray-400">
-                  {formatDate(patient.cree_le || patient.created_at)}
                 </div>
               </TableCell>
               <TableCell className="py-3">

@@ -109,12 +109,14 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
                 </div>
               </td>
               <td className="px-4 py-4">
-                <div className="text-sm text-gray-900 dark:text-white">
-                  {calculateAge(medecin.date_naissance)} ans
+                <div className="text-sm text-gray-900 dark:text-white font-medium">
+                  {medecin.date_naissance ? `${calculateAge(medecin.date_naissance)} ans` : 'Âge inconnu'}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatDate(medecin.date_naissance)}
-                </div>
+                {medecin.date_naissance && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatDate(medecin.date_naissance)}
+                  </div>
+                )}
               </td>
               <td className="px-4 py-4">
                 <div className="flex items-center gap-2">
