@@ -1,6 +1,7 @@
 import React from 'react';
 import { Medecin, medecinService, Specialite } from '../services/MedecinService';
 import { Tooltip } from '../../GestionPatients/components/Tooltip';
+import { calculateAge as getAge, formatDateFR } from '../../../../utils/dateUtils';
 
 interface MedecinTableProps {
   medecins: Medecin[];
@@ -27,20 +28,12 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
   const currentMedecins = safeMedecins.slice(startIndex, endIndex);
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Non spécifiée';
-    return new Date(dateString).toLocaleDateString('fr-FR');
+    return formatDateFR(dateString);
   };
 
-  const calculateAge = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    const today = new Date();
-    const birthDate = new Date(dateString);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
+  const calculateAge = (dateString?: string, age?: number): string | number => {
+    if (age) return age;
+    return getAge(dateString);
   };
 
   return (
@@ -57,150 +50,116 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
               Contact
             </th>
+
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-              Âge
+              Créé le
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-          {currentMedecins.map((medecin) => (
-            <tr key={medecin.medecin_id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-              <td className="px-4 py-4">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 h-10 w-10">
-                    {medecin.photo ? (
-                      <img 
-                        src={medecin.photo} 
-                        alt={`Dr. ${medecin.prenom} ${medecin.nom}`}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                          {medecin.prenom.charAt(0)}{medecin.nom.charAt(0)}
-                        </span>
+        <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+          {currentMedecins.map((medecin, index) => {
+            const colors = ['bg-blue-500', 'bg-purple-500', 'bg-indigo-500', 'bg-teal-500', 'bg-rose-500', 'bg-amber-500'];
+            const colorIndex = ((medecin?.nom || '').length + (medecin?.prenom || '').length) % colors.length;
+            const avatarBg = colors[colorIndex];
+
+            const rowKey = medecin.medecin_id || `user-${index}`;
+
+            return (
+              <tr key={rowKey} className="group hover:bg-gray-50/80 dark:hover:bg-white/[0.02] transition-colors duration-200">
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-shrink-0">
+                      {medecin.photo ? (
+                        <img 
+                          src={medecin.photo} 
+                          alt={`Dr. ${medecin?.prenom || ''} ${medecin?.nom || ''}`}
+                          className="h-11 w-11 rounded-full object-cover ring-2 ring-white dark:ring-gray-800 shadow-sm"
+                        />
+                      ) : (
+                        <div className={`h-11 w-11 rounded-full ${avatarBg} flex items-center justify-center text-white font-bold text-sm shadow-sm ring-2 ring-white dark:ring-gray-800`}>
+                          {(medecin?.prenom || 'M').charAt(0)}{(medecin?.nom || 'D').charAt(0)}
+                        </div>
+                      )}
+                      <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-gray-800 ${medecin.statut === 'Actif' ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        Dr. {medecin?.prenom || ''} {medecin?.nom || ''}
                       </div>
-                    )}
-                  </div>
-                  <div className="ml-4">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      Dr. {medecin.prenom} {medecin.nom}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {medecin.numero_matricule_professionnel || 'Matricule non défini'}
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5">
+                        <span className="inline-block w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                        {medecin.numero_matricule_professionnel || 'Sans matricule'}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </td>
-              <td className="px-4 py-4">
-                <div className="text-sm text-gray-900 dark:text-white">
-                  {medecinService.obtenirNomSpecialite(medecin.specialite_principale_id, specialites)}
-                </div>
-              </td>
-              <td className="px-4 py-4">
-                <div className="text-sm text-gray-900 dark:text-white">
-                  {medecin.telephone || 'Non spécifié'}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {medecin.email_professionnel || 'Email non spécifié'}
-                </div>
-              </td>
-              <td className="px-4 py-4">
-                <div className="text-sm text-gray-900 dark:text-white font-medium">
-                  {medecin.date_naissance ? `${calculateAge(medecin.date_naissance)} ans` : 'Âge inconnu'}
-                </div>
-                {medecin.date_naissance && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatDate(medecin.date_naissance)}
+                </td>
+                <td className="px-5 py-4">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-100 dark:border-blue-800">
+                    {medecin?.specialite_principale_nom || medecinService.obtenirNomSpecialite(medecin?.specialite_principale_id, specialites)}
+                  </span>
+                </td>
+                <td className="px-5 py-4">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <svg className="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                      {medecin.telephone || '—'}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 italic">
+                      <svg className="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                      {medecin.email_professionnel || '—'}
+                    </div>
                   </div>
-                )}
-              </td>
-              <td className="px-4 py-4">
-                <div className="flex items-center gap-2">
-                  <Tooltip text="Voir les détails">
-                    <button
-                      onClick={() => onViewMedecin(medecin)}
-                      className="rounded p-1.5 text-green-600 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                  </Tooltip>
-                  <Tooltip text="Modifier">
-                    <button
-                      onClick={() => onEditMedecin(medecin)}
-                      className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
+                </td>
+
+                <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 font-bold">
+                  {(() => {
+                    const createdDate = formatDate(medecin?.cree_le);
+                    if (createdDate !== 'N/A') {
+                      return createdDate;
+                    }
+                    return <span className="text-xs text-gray-400 italic font-normal">Non renseigné</span>;
+                  })()}
+                </td>
+                <td className="px-5 py-4 text-right whitespace-nowrap">
+                  <div className="flex justify-end gap-2">
+                    <Tooltip text="Voir détails">
+                      <button
+                        onClick={() => medecin && onViewMedecin(medecin)}
+                        className="p-2 rounded-xl text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 transition-all active:scale-90"
                       >
-                        <path
-                          d="M7.33301 1.33331H5.99967C2.66634 1.33331 1.33301 2.66665 1.33301 5.99998V9.99998C1.33301 13.3333 2.66634 14.6666 5.99967 14.6666H9.99967C13.333 14.6666 14.6663 13.3333 14.6663 9.99998V8.66665"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M10.6933 2.01332L5.43992 7.26665C5.23992 7.46665 5.03992 7.85999 4.99992 8.14665L4.71325 10.1533C4.60659 10.88 5.11992 11.3867 5.84659 11.2867L7.85325 11C8.13325 10.96 8.52659 10.76 8.73325 10.56L13.9866 5.30665C14.8933 4.39999 15.3199 3.34665 13.9866 2.01332C12.6533 0.679985 11.5999 1.10665 10.6933 2.01332Z"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeMiterlimit="10"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </Tooltip>
-                  <Tooltip text="Supprimer">
-                    <button
-                      onClick={() => onDeleteMedecin(medecin)}
-                      className="rounded p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </button>
+                    </Tooltip>
+                    <Tooltip text="Modifier">
+                      <button
+                        onClick={() => medecin && onEditMedecin(medecin)}
+                        className="p-2 rounded-xl text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 transition-all active:scale-90"
                       >
-                        <path
-                          d="M13.3337 3.98666C11.2203 3.76666 9.10033 3.65332 6.98699 3.65332C5.66699 3.65332 4.34699 3.71999 3.02699 3.85332L2.66699 3.98666"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M5.66699 3.31333L5.81366 2.44C5.92033 1.80667 6.00033 1.33333 7.12699 1.33333H8.87366C10.0003 1.33333 10.0869 1.83333 10.187 2.44667L10.3337 3.31333"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M12.5663 6.09332L12.133 12.8067C12.0597 13.8533 11.9997 14.6667 10.1397 14.6667H5.85967C3.99967 14.6667 3.93967 13.8533 3.86634 12.8067L3.43301 6.09332"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </Tooltip>
-                </div>
-              </td>
-            </tr>
-          ))}
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                    </Tooltip>
+                    <Tooltip text="Supprimer">
+                      <button
+                        onClick={() => medecin && onDeleteMedecin(medecin)}
+                        className="p-2 rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-all active:scale-90"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                      </button>
+                    </Tooltip>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
       

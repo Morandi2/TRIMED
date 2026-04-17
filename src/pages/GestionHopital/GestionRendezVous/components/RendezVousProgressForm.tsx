@@ -6,9 +6,13 @@ import {
   TYPES_CONSULTATION,
   MOYENS_PAIEMENT,
   SALLES_CONSULTATION,
-  DUREES_CONSULTATION
+  DUREES_CONSULTATION,
+  RendezVousType,
+  RendezVousStatut
 } from '../types/RendezVousTypes';
 import { SearchableSelect } from './SearchableSelect';
+import { rendezVousService } from '../services/RendezVousService';
+
 
 interface RendezVousProgressFormProps {
   tenantId: number;
@@ -26,6 +30,8 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
   onSuccess
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [dynamicTypes, setDynamicTypes] = useState<RendezVousType[]>([]);
+  const [dynamicStatuts, setDynamicStatuts] = useState<RendezVousStatut[]>([]);
   const [formData, setFormData] = useState<RendezVousFormData>({
     patient_id: 0,
     patient_nom: '',
@@ -52,11 +58,18 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedPatientName, setSelectedPatientName] = useState('');
   const [selectedMedecinName, setSelectedMedecinName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    // Load types & statuts
+    const t = rendezVousService.obtenirTypes();
+    const s = rendezVousService.obtenirStatuts();
+    setDynamicTypes(t);
+    setDynamicStatuts(s);
+
     if (rendezVousId) {
       setIsModifying(true);
-      // Simulation de chargement des données existantes
+      // Let existing logic apply, but normally we should load by ID
       const existingData = {
         patient_id: 1,
         patient_nom: 'Jean Dupont',
@@ -66,10 +79,10 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
         medecin_nom: 'Dr. Marie Cassandre',
         specialite: 'Cardiologie',
         date_heure: new Date().toISOString().split('T')[0] + 'T10:00',
-        type_id: 1,
-        type_nom: 'Consultation',
-        statut_id: 1,
-        statut_nom: 'Programmé',
+        type_id: t.length > 0 ? t[0].type_id || (t[0] as any).id : 1,
+        type_nom: t.length > 0 ? t[0].nom : 'Consultation',
+        statut_id: s.length > 0 ? s[0].statut_id || (s[0] as any).id : 1,
+        statut_nom: s.length > 0 ? s[0].nom : 'Programmé',
         motif: 'Consultation de routine',
         duree: 30,
         salle: 'Salle 101',
@@ -93,10 +106,10 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
         medecin_nom: '',
         specialite: '',
         date_heure: new Date().toISOString().split('T')[0] + 'T09:00',
-        type_id: 1,
-        type_nom: 'Consultation',
-        statut_id: 1,
-        statut_nom: 'Programmé',
+        type_id: t.length > 0 ? t[0].type_id || (t[0] as any).id : 1,
+        type_nom: t.length > 0 ? t[0].nom : 'Consultation',
+        statut_id: s.length > 0 ? s[0].statut_id || (s[0] as any).id : 1,
+        statut_nom: s.length > 0 ? s[0].nom : 'Programmé',
         motif: '',
         duree: 30,
         salle: 'Salle 101',
@@ -213,7 +226,9 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSaving) return;
+
     console.log('Soumission du formulaire avec données:', formData);
     
     // Valider tout les étapes avant de soumettre
@@ -224,20 +239,27 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
     console.log('Validation étapes:', { step1Valid, step2Valid, step3Valid });
 
     if (step1Valid && step2Valid && step3Valid) {
-      console.log('Toutes les validations passent, appel de onSave');
-      
-      // Prepare data for service
-      const submitData = {
-        ...formData,
-        patient_id: formData.patient_id || 1,
-        medecin_id: formData.medecin_id || 1,
-        type_id: formData.type_id || 1,
-        statut_id: formData.statut_id || 1
-      };
-      
-      onSave(submitData, isModifying);
-      if (onSuccess) {
-        onSuccess(isModifying ? 'Rendez-vous modifié avec succès' : 'Rendez-vous créé avec succès');
+      setIsSaving(true);
+      try {
+        console.log('Toutes les validations passent, appel de onSave');
+        
+        // Prepare data for service
+        const submitData = {
+          ...formData,
+          patient_id: formData.patient_id || 1,
+          medecin_id: formData.medecin_id || 1,
+          type_id: formData.type_id || 1,
+          statut_id: formData.statut_id || 1
+        };
+        
+        await onSave(submitData, isModifying);
+        if (onSuccess) {
+          onSuccess(isModifying ? 'Rendez-vous modifié avec succès' : 'Rendez-vous créé avec succès');
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'enregistrement du rendez-vous:", error);
+      } finally {
+        setIsSaving(false);
       }
     } else {
       console.log('Validations échouées');
@@ -456,12 +478,21 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
                       Type de consultation
                     </label>
                     <select
-                      value={formData.type_nom}
-                      onChange={(e) => updateRendezVousField('type_nom', e.target.value)}
+                      value={formData.type_id || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        const selectedType = dynamicTypes.find(t => (t.type_id || (t as any).id) === val);
+                        if (selectedType) {
+                          updateRendezVousField('type_id', val);
+                          updateRendezVousField('type_nom', selectedType.nom);
+                        }
+                      }}
                       className={inputClass}
                     >
-                      {TYPES_CONSULTATION.map(type => (
-                        <option key={type} value={type}>{type}</option>
+                      {dynamicTypes.map((type: any) => (
+                        <option key={type.type_id || type.id} value={type.type_id || type.id}>
+                          {type.nom}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -524,12 +555,21 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
                       Statut
                     </label>
                     <select
-                      value={formData.statut_nom}
-                      onChange={(e) => updateRendezVousField('statut_nom', e.target.value)}
+                      value={formData.statut_id || ''}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        const selectedStatut = dynamicStatuts.find(s => (s.statut_id || (s as any).id) === val);
+                        if (selectedStatut) {
+                          updateRendezVousField('statut_id', val);
+                          updateRendezVousField('statut_nom', selectedStatut.nom);
+                        }
+                      }}
                       className={inputClass}
                     >
-                      {STATUTS_RENDEZ_VOUS.map(statut => (
-                        <option key={statut} value={statut}>{statut}</option>
+                      {dynamicStatuts.map((statut: any) => (
+                        <option key={statut.statut_id || statut.id} value={statut.statut_id || statut.id}>
+                          {statut.nom}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -610,14 +650,24 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!isStepValid(1) || !isStepValid(2) || !isStepValid(3)}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  isStepValid(1) && isStepValid(2) && isStepValid(3)
-                    ? 'bg-green-600 text-white hover:bg-green-700'
+                disabled={!isStepValid(1) || !isStepValid(2) || !isStepValid(3) || isSaving}
+                className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                  isStepValid(1) && isStepValid(2) && isStepValid(3) && !isSaving
+                    ? 'bg-green-600 text-white hover:bg-green-700 shadow-md active:scale-95'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                 }`}
               >
-                {isModifying ? 'Modifier' : 'Enregistrer'}
+                {isSaving ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Chargement...
+                  </>
+                ) : (
+                  isModifying ? 'Modifier' : 'Enregistrer'
+                )}
               </button>
             ) : (
               <button

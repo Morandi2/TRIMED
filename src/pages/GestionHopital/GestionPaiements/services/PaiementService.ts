@@ -7,7 +7,49 @@ import {
   StatutPaiement
 } from '../types/PaiementTypes';
 
+interface PaiementsCache {
+  data: Paiement[];
+  tenantId: number;
+  fetchedAt: number;
+}
+
+const CACHE_TTL_MS = 30 * 60 * 1000;
+
 class PaiementService {
+  private paiementsCache: PaiementsCache | null = null;
+  
+  constructor() {
+    this.loadCacheFromStorage();
+  }
+
+  private loadCacheFromStorage() {
+    try {
+      const stored = localStorage.getItem('paiements_cache');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Date.now() - parsed.fetchedAt < CACHE_TTL_MS) {
+          this.paiementsCache = parsed;
+        } else {
+          localStorage.removeItem('paiements_cache');
+        }
+      }
+    } catch (e) {}
+  }
+
+  private saveCacheToStorage() {
+    try {
+      if (this.paiementsCache) {
+        localStorage.setItem('paiements_cache', JSON.stringify(this.paiementsCache));
+      }
+    } catch (e) {}
+  }
+
+  public invalidateCache(): void {
+    this.paiementsCache = null;
+    try {
+      localStorage.removeItem('paiements_cache');
+    } catch (e) {}
+  }
   // Méthodes de paiement disponibles
   private methodesPaiement: MethodePaiement[] = [
     { methode_id: 1, nom: 'Espèces', actif: true },
@@ -26,9 +68,22 @@ class PaiementService {
   ];
 
   async obtenirTousPaiements(tenantId: number): Promise<Paiement[]> {
+    if (this.paiementsCache && this.paiementsCache.tenantId === tenantId) {
+      if (Date.now() - this.paiementsCache.fetchedAt < CACHE_TTL_MS) {
+        return this.paiementsCache.data;
+      }
+    }
+
     const response = await hospitalApi.facturation.paiements.getAll({ tenant: tenantId });
     if (response.success) {
-      return response.data.results || response.data;
+      const data = response.data.results || response.data;
+      this.paiementsCache = {
+        data,
+        tenantId,
+        fetchedAt: Date.now()
+      };
+      this.saveCacheToStorage();
+      return data;
     }
     return [];
   }
@@ -43,8 +98,42 @@ class PaiementService {
     return null;
   }
 
-  async creerPaiement(data: PaiementFormData, tenantId: number): Promise<{ success: boolean; data?: any; message?: string }> {
+  async creerPaiement(data: PaiementFormData, tenantId: number): Promise<{ success: boolean; data?: any; errors?: string[] }> {
     const response = await (hospitalApi.facturation.paiements as any).create({ ...data, tenant: tenantId });
+    
+    if (response.success && response.data) {
+      this.invalidateCache();
+      
+      // Optimistic cache update
+      if (this.paiementsCache && Array.isArray(this.paiementsCache.data)) {
+        this.paiementsCache.data.unshift(response.data);
+      }
+    }
+    
+    return response;
+  }
+
+  async modifierPaiement(id: number, data: PaiementFormData): Promise<{ success: boolean; data?: any; errors?: string[] }> {
+    const response = await (hospitalApi.facturation.paiements as any).update(id, data);
+    
+    if (response.success && response.data) {
+      this.invalidateCache();
+      
+      // Optimistic cache update
+      if (this.paiementsCache && Array.isArray(this.paiementsCache.data)) {
+        const index = this.paiementsCache.data.findIndex(p => (p.paiement_id || (p as any).id) === id);
+        if (index !== -1) {
+          this.paiementsCache.data[index] = response.data;
+        }
+      }
+    }
+    
+    return response;
+  }
+
+  async supprimerPaiement(id: number): Promise<{ success: boolean; errors?: string[] }> {
+    const response = await (hospitalApi.facturation.paiements as any).delete(id);
+    if (response.success) this.invalidateCache();
     return response;
   }
 

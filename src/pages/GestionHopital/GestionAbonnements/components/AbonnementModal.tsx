@@ -40,15 +40,19 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
       const dateFin = new Date();
       dateFin.setMonth(dateFin.getMonth() + 1);
       
-      setFormData({
-        tenant_id: tenantId,
-        plan_id: 1,
-        date_debut: dateDebut.toISOString().split('T')[0],
-        date_fin: dateFin.toISOString().split('T')[0],
-        statut_id: statuts[0]?.statut_id || 1
+      setFormData(prev => {
+        // Only update if fundamentally different to avoid loop from prop statuts reference
+        if (prev.tenant_id === tenantId && prev.date_debut === dateDebut.toISOString().split('T')[0] && !abonnement) return prev;
+        return {
+          tenant_id: tenantId,
+          plan_id: 1,
+          date_debut: dateDebut.toISOString().split('T')[0],
+          date_fin: dateFin.toISOString().split('T')[0],
+          statut_id: statuts[0]?.statut_id || 1
+        };
       });
     }
-  }, [abonnement, statuts, tenantId]);
+  }, [abonnement, tenantId]); // Remove 'statuts' from dependency to stop loop if parent re-renders it
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

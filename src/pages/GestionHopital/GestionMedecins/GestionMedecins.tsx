@@ -5,9 +5,16 @@ import { MedecinTable } from './components/MedecinTable';
 import { MedecinStats } from './components/MedecinStats';
 import { MedecinViewModal } from './components/MedecinViewModal';
 import { MedecinPrintPage } from './components/MedecinPrintPage';
-import { DeleteConfirmationModal } from '../GestionPatients/components/DeleteConfirmationModal';
-import { SuccessModal } from '../GestionPatients/components/SuccessModal';
-import { Tooltip } from '../GestionPatients/components/Tooltip';
+import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
+import { 
+  Stethoscope, 
+  Plus, 
+  Search, 
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  Users2
+} from 'lucide-react';
 
 interface GestionMedecinsProps {
   tenantId: number;
@@ -17,6 +24,7 @@ interface GestionMedecinsProps {
 const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom }) => {
   const [medecins, setMedecins] = useState<Medecin[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<'recent' | 'ancien' | 'nom_az' | 'nom_za' | 'specialite'>('recent');
   const [currentPage, setCurrentPage] = useState(1);
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | null>(null);
   const [selectedMedecin, setSelectedMedecin] = useState<Medecin | null>(null);
@@ -29,8 +37,9 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
   const [showPrintPage, setShowPrintPage] = useState(false);
   const [printMedecin, setPrintMedecin] = useState<Medecin | null>(null);
   const [specialites, setSpecialites] = useState<Specialite[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const medecinsPerPage = 5;
+  const medecinsPerPage = 8;
   const hopitalId = tenantId;
 
   useEffect(() => {
@@ -51,8 +60,15 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
   }, [modalType]);
 
   const loadMedecins = async () => {
-    const medecinsData = await medecinService.obtenirMedecinsParHopital(hopitalId);
-    setMedecins(medecinsData);
+    setIsLoading(true);
+    try {
+      const medecinsData = await medecinService.obtenirMedecinsParHopital(hopitalId);
+      setMedecins(medecinsData);
+    } catch (e) {
+      console.error('[GestionMedecins] Erreur chargement:', e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const loadSpecialites = async () => {
@@ -63,6 +79,8 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
   const handleCreateMedecin = async (formData: MedecinFormData, isModifying: boolean) => {
     let result;
     
+    if (successModal.isOpen) return; 
+
     if (isModifying && selectedMedecin) {
       result = await medecinService.modifierMedecin(selectedMedecin.medecin_id, formData);
     } else {
@@ -71,6 +89,11 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
     
     if (result.success) {
       await loadMedecins();
+      
+      if (!isModifying) {
+        setCurrentPage(1);
+      }
+
       setModalType(null);
       setSelectedMedecin(null);
       
@@ -144,197 +167,223 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
     setSelectedMedecin(null);
   };
 
-  const filteredMedecins = medecins.filter(medecin =>
-    `${medecin.nom || ""} ${medecin.prenom || ""}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (medecin.numero_matricule_professionnel || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (medecin.telephone || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (medecin.email_professionnel || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredMedecins = medecins.filter(medecin => {
+    if (!medecin) return false;
+    return `${medecin?.nom || ""} ${medecin?.prenom || ""}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (medecin?.numero_matricule_professionnel || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (medecin?.telephone || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (medecin?.email_professionnel || "").toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
-  const _totalPages = Math.ceil(filteredMedecins.length / medecinsPerPage);
+  const sortedMedecins = [...filteredMedecins].sort((a, b) => {
+    if (sortBy === 'recent' || sortBy === 'ancien') {
+      const dA = a.cree_le ? new Date(a.cree_le).getTime() : 0;
+      const dB = b.cree_le ? new Date(b.cree_le).getTime() : 0;
+      const validA = !isNaN(dA) && dA > 0 ? dA : 0;
+      const validB = !isNaN(dB) && dB > 0 ? dB : 0;
+
+      if (validA === 0 && validB === 0) {
+        return sortBy === 'recent' 
+          ? (b.medecin_id || 0) - (a.medecin_id || 0)
+          : (a.medecin_id || 0) - (b.medecin_id || 0);
+      }
+
+      const diff = sortBy === 'recent' ? validB - validA : validA - validB;
+      
+      if (diff === 0) {
+        return sortBy === 'recent'
+          ? (b.medecin_id || 0) - (a.medecin_id || 0)
+          : (a.medecin_id || 0) - (b.medecin_id || 0);
+      }
+      return diff;
+    } else if (sortBy === 'nom_az') {
+      return `${a?.nom || ''} ${a?.prenom || ''}`.localeCompare(`${b?.nom || ''} ${b?.prenom || ''}`);
+    } else if (sortBy === 'nom_za') {
+      return `${b?.nom || ''} ${b?.prenom || ''}`.localeCompare(`${a?.nom || ''} ${a?.prenom || ''}`);
+    } else if (sortBy === 'specialite') {
+      const spA = medecinService.obtenirNomSpecialite(a.specialite_principale_id, specialites);
+      const spB = medecinService.obtenirNomSpecialite(b.specialite_principale_id, specialites);
+      return spA.localeCompare(spB);
+    }
+    return 0;
+  });
+
+  const _totalPages = Math.ceil(sortedMedecins.length / medecinsPerPage);
+  const currentMedecins = sortedMedecins.slice((currentPage - 1) * medecinsPerPage, currentPage * medecinsPerPage);
 
   return (
-    <div className="relative">
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
+    <div className="min-h-screen pb-12 space-y-8">
+      {/* Header Premium Glassmorphism */}
+      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
         
-        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Gestion des Médecins - {hopitalNom || "Mon Hôpital"}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Gérez les médecins de votre hôpital
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20">
+                <Stethoscope className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-black uppercase tracking-tight">
+                Gestion des Médecins
+              </h1>
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+              Filiale: <span className="text-gray-700 dark:text-gray-200">{hopitalNom || "Portail Médical Professionnel"}</span>
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Tooltip text="Ajouter un médecin" position="bottom">
-              <button 
-                onClick={handleAddMedecin}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-blue-700"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M8 3.33331V12.6666"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M3.33301 8H12.6663"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Ajouter un Médecin
-              </button>
-            </Tooltip>
-          </div>
+          <button
+            onClick={handleAddMedecin}
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-xl shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Plus className="w-5 h-5" />
+            Ajouter Médecin
+          </button>
         </div>
+      </div>
 
+      {/* Stats Section */}
+      <MedecinStats medecins={medecins} specialites={specialites} />
 
-
-        {/* Seksyon Estatistik */}
-        <MedecinStats medecins={medecins} specialites={specialites} />
-
-        <div className="flex flex-col gap-4 mb-6 lg:flex-row">
-          <div className="flex-1">
-            <div className="relative">
+      {/* Main Content Container */}
+      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+        {/* Filters Bar */}
+        <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
               <input
                 type="text"
-                placeholder="Rechercher par nom, prénom, matricule..."
+                placeholder="Rechercher par nom, spécialité ou matricule..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pl-10 text-theme-sm text-gray-800 placeholder:text-gray-600 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-gray-400 dark:focus:border-blue-500"
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
               />
-              <svg
-                className="absolute left-3 top-3 h-4 w-4 text-gray-600 dark:text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-black/20 border border-gray-100 dark:border-gray-800 rounded-2xl text-black dark:text-white">
+                <Filter className="w-4 h-4 text-gray-400" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => { setSortBy(e.target.value as typeof sortBy); setCurrentPage(1); }}
+                  className="bg-transparent border-none text-xs font-black focus:ring-0 outline-none uppercase tracking-tight"
+                >
+                  <option value="recent">Plus récent</option>
+                  <option value="ancien">Plus ancien</option>
+                  <option value="nom_az">Nom A → Z</option>
+                  <option value="nom_za">Nom Z → A</option>
+                  <option value="specialite">Spécialité</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-2xl">
+                <Users2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                  {filteredMedecins.length} PRATICIENS
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        <MedecinTable
-          medecins={filteredMedecins}
-          currentPage={currentPage}
-          medecinsPerPage={medecinsPerPage}
-          onViewMedecin={handleViewMedecin}
-          onEditMedecin={handleEditMedecin}
-          onDeleteMedecin={handleDeleteClick}
-          specialites={specialites}
-        />
+        {/* Table Section */}
+        <div className="overflow-x-auto min-h-[400px]">
+          {isLoading ? (
+            <TableSkeleton rows={5} columns={4} />
+          ) : (
+            <MedecinTable
+              medecins={currentMedecins}
+              currentPage={currentPage}
+              medecinsPerPage={medecinsPerPage}
+              onViewMedecin={handleViewMedecin}
+              onEditMedecin={handleEditMedecin}
+              onDeleteMedecin={handleDeleteClick}
+              specialites={specialites}
+            />
+          )}
+        </div>
 
+        {/* Improved Pagination */}
         {_totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-800 sm:px-6">
-            <div className="flex flex-1 justify-between sm:hidden">
+          <div className="p-6 border-t border-gray-100 dark:border-white/[0.05] bg-gray-50/30 dark:bg-transparent flex items-center justify-between">
+             <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">
+              Affichage de {currentMedecins.length} sur {filteredMedecins.length} praticiens
+            </p>
+            <div className="flex gap-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                className="p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
               >
-                Précédent
+                <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
+              <div className="flex gap-1.5">
+                {Array.from({ length: Math.min(5, _totalPages) }, (_, i) => {
+                  let pageNum = i + 1;
+                  if (_totalPages > 5 && currentPage > 3) {
+                    pageNum = currentPage - 3 + i + 1;
+                    if (pageNum > _totalPages) pageNum = _totalPages - (4 - i);
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${
+                        currentPage === pageNum 
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+                          : 'bg-white dark:bg-white/5 text-gray-400 hover:text-blue-600 border border-gray-100 dark:border-white/10'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, _totalPages))}
                 disabled={currentPage === _totalPages}
-                className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                className="p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
               >
-                Suivant
+                <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
-            </div>
-            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700 dark:text-gray-400">
-                  Affichage de <span className="font-medium">{(currentPage - 1) * medecinsPerPage + 1}</span> à <span className="font-medium">
-                    {Math.min(currentPage * medecinsPerPage, filteredMedecins.length)}
-                  </span> sur <span className="font-medium">{filteredMedecins.length}</span> médecins
-                </p>
-              </div>
-              <div>
-                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-600 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 dark:text-gray-400 dark:ring-gray-600 dark:hover:bg-gray-700"
-                  >
-                    <span className="sr-only">Précédent</span>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                  
-                  {Array.from({ length: _totalPages }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                        currentPage === page
-                          ? 'bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                          : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:text-gray-100 dark:ring-gray-600 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, _totalPages))}
-                    disabled={currentPage === _totalPages}
-                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-600 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 dark:text-gray-400 dark:ring-gray-600 dark:hover:bg-gray-700"
-                  >
-                    <span className="sr-only">Suivant</span>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5-4.25a.75.75 0 010 1.08l4.5-4.25a.75.75 0 011.06-.02z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </nav>
-              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Modals */}
-      {modalType === "add" || modalType === "edit" ? (
-        <MedecinModal
-          hopitalId={hopitalId}
-          onSave={handleCreateMedecin}
-          onClose={closeModal}
-          medecinId={modalType === "edit" && selectedMedecin ? selectedMedecin.medecin_id : undefined}
-        />
-      ) : modalType === "delete" ? (
-        <DeleteConfirmationModal
-          patient={selectedMedecin as any}
-          onConfirm={handleDeleteConfirm}
-          onCancel={closeModal}
-        />
-      ) : modalType === "view" ? (
+      {/* Modals & Utility Components */}
+      {(modalType === "add" || modalType === "edit") && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
+          <div className="relative bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl border border-white/10">
+            <MedecinModal
+              hopitalId={hopitalId}
+              onSave={handleCreateMedecin}
+              onClose={closeModal}
+              medecinId={modalType === "edit" && selectedMedecin ? selectedMedecin.medecin_id : undefined}
+            />
+          </div>
+        </div>
+      )}
+
+      <DeleteConfirmModal
+        isOpen={modalType === 'delete' && !!selectedMedecin}
+        onConfirm={handleDeleteConfirm}
+        onCancel={closeModal}
+        title="Supprimer le médecin"
+        entityName={selectedMedecin ? `Dr. ${selectedMedecin.prenom} ${selectedMedecin.nom}` : undefined}
+        entityId={selectedMedecin?.medecin_id}
+      />
+
+      {modalType === "view" && selectedMedecin && (
         <MedecinViewModal
           medecin={selectedMedecin}
           onClose={closeModal}
           hopitalNom={hopitalNom || ""}
           onPrint={handlePrintMedecin}
         />
-      ) : null}
+      )}
       
       {/* Page d'impression */}
       {showPrintPage && printMedecin && (
@@ -349,12 +398,11 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
       )}
       
       {/* Modal de succès/erreur */}
-      <SuccessModal
+      <NotificationToast
         isOpen={successModal.isOpen}
         onClose={() => setSuccessModal(prev => ({ ...prev, isOpen: false }))}
-        title={successModal.title}
         message={successModal.message}
-        type={successModal.type}
+        type={successModal.type === 'error' ? 'error' : 'success'}
       />
     </div>
   );

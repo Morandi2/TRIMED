@@ -1,5 +1,5 @@
-import React from 'react';
 import { Ordonnance, ordonnanceService } from '../services/OrdonnanceService';
+import { formatDateTimeFR } from '../../../../utils/dateUtils';
 
 interface OrdonnancePrintPageProps {
   ordonnance: Ordonnance | null;
@@ -14,15 +14,7 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
 }) => {
   if (!ordonnance) return null;
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+
 
   const handlePrint = () => {
     window.print();
@@ -59,7 +51,7 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
           <h1 className="text-3xl font-bold text-gray-800 mb-6">{hopitalNom}</h1>
           <h2 className="text-2xl font-semibold text-gray-700 mb-4">Ordonnance Médicale</h2>
           <p className="text-sm text-gray-600">
-            Imprimé le {new Date().toLocaleDateString('fr-FR')} à {new Date().toLocaleTimeString('fr-FR')}
+            Imprimé le {formatDateTimeFR(new Date().toISOString())}
           </p>
         </div>
 
@@ -75,9 +67,9 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
               <p className="text-black"><strong className="text-black">Médecin:</strong> {ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id)}</p>
             </div>
             <div>
-              <p className="text-black"><strong className="text-black">Date d'ordonnance:</strong> {formatDate(ordonnance.date_ordonnance)}</p>
+              <p className="text-black"><strong className="text-black">Date d'ordonnance:</strong> {formatDateTimeFR(ordonnance.date_ordonnance)}</p>
               <p className="text-black"><strong className="text-black">Validité:</strong> {ordonnance.validite}</p>
-              <p className="text-black"><strong className="text-black">Consultation:</strong> {ordonnanceService.obtenirConsultationInfo(ordonnance.consultation_id)}</p>
+              <p className="text-black"><strong className="text-black">Consultation:</strong> {ordonnanceService.obtenirConsultationInfo(ordonnance.consultation_id)?.motif || 'N/A'}</p>
             </div>
           </div>
         </div>
@@ -160,7 +152,7 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
             <div className="flex justify-between items-end">
               <div>
                 <p className="text-black"><strong>Médecin:</strong> {ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id)}</p>
-                <p className="text-black"><strong>Date:</strong> {formatDate(ordonnance.date_ordonnance)}</p>
+                <p className="text-black"><strong>Date:</strong> {formatDateTimeFR(ordonnance.date_ordonnance)}</p>
               </div>
               <div className="text-center">
                 <div className="w-48 h-20 border-2 border-gray-300 rounded-lg mb-2"></div>
@@ -174,7 +166,7 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
         <div className="mt-12 pt-6 border-t-2 border-gray-300 text-center text-sm text-gray-600">
           <p>Cette ordonnance est confidentielle et destinée uniquement à un usage médical.</p>
           <p>Généré automatiquement par le système de gestion hospitalière TRIMEDH</p>
-          <p className="mt-2"><strong>Créé le:</strong> {formatDate(ordonnance.created_at)}</p>
+          <p className="mt-2"><strong>Créé le:</strong> {formatDateTimeFR(ordonnance.created_at)}</p>
         </div>
       </div>
     </div>

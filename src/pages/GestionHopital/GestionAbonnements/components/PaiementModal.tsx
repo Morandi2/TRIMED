@@ -31,14 +31,18 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
   });
 
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      tenant_id: tenantId,
-      abonnement_id: abonnementId,
-      methode_id: methodes[0]?.methode_id || 1,
-      statut_id: statuts[0]?.statut_id || 1
-    }));
-  }, [abonnementId, tenantId, methodes, statuts]);
+    // Only update if IDs change to prevent infinite loops from array prop references
+    setFormData(prev => {
+      if (prev.tenant_id === tenantId && prev.abonnement_id === abonnementId) return prev;
+      return {
+        ...prev,
+        tenant_id: tenantId,
+        abonnement_id: abonnementId,
+        methode_id: methodes[0]?.methode_id || 1,
+        statut_id: statuts[0]?.statut_id || 1
+      };
+    });
+  }, [abonnementId, tenantId]); // Only depend on stable IDs
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

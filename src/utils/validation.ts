@@ -132,6 +132,59 @@ export const validation = {
   },
 
   /**
+   * Validation de téléphone haïtien
+   */
+  validateHaitiPhone(phone: string): { valid: boolean; message?: string } {
+    if (!phone || phone.trim() === '') {
+      return { valid: false, message: 'Le téléphone est requis' };
+    }
+    
+    // On nettoie pour ne garder que les chiffres
+    const cleaned = phone.replace(/\D/g, '');
+    
+    // Un numéro haïtien valide a 8 chiffres (après le prefixe 509)
+    // On accepte soit "509XXXXXXXX" (11 chiffres) soit "XXXXXXXX" (8 chiffres)
+    if (cleaned.length === 8) return { valid: true };
+    if (cleaned.length === 11 && cleaned.startsWith('509')) return { valid: true };
+    
+    return { 
+      valid: false, 
+      message: 'Format de téléphone invalide (8 chiffres requis après +509)' 
+    };
+  },
+
+  /**
+   * Formatage dynamique de téléphone haïtien (+509 XXXX-XXXX)
+   */
+  formatHaitiPhone(value: string): string {
+    // Retire tout ce qui n'est pas chiffre
+    let cleaned = value.replace(/\D/g, '');
+    
+    // Gère le préfixe 509
+    if (cleaned.startsWith('509')) {
+      cleaned = cleaned.slice(3);
+    }
+    
+    // Limite à 8 chiffres
+    cleaned = cleaned.slice(0, 8);
+    
+    // Application du masque XXXX-XXXX
+    if (cleaned.length === 0) return '';
+    if (cleaned.length <= 4) return `+509 ${cleaned}`;
+    return `+509 ${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
+  },
+
+  /**
+   * Nettoyage du téléphone pour envoi au backend (format 509XXXXXXXX)
+   */
+  cleanPhone(value: string): string {
+    const numeric = value.replace(/\D/g, '');
+    if (numeric.length === 8) return `509${numeric}`;
+    if (numeric.length === 11 && numeric.startsWith('509')) return numeric;
+    return numeric;
+  },
+
+  /**
    * Validation complète pour le formulaire d'inscription
    */
   validateInscriptionForm(data: {
@@ -154,8 +207,8 @@ export const validation = {
     const adresseValidation = this.validateRequired(data.adresse, 'L\'adresse');
     if (!adresseValidation.valid) errors.adresse = adresseValidation.message!;
     
-    // Téléphone
-    const phoneValidation = this.validatePhone(data.telephone);
+    // Téléphone (Utilise la nouvelle validation haïtienne)
+    const phoneValidation = this.validateHaitiPhone(data.telephone);
     if (!phoneValidation.valid) errors.telephone = phoneValidation.message!;
     
     // Email

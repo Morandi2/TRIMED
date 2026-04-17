@@ -12,7 +12,49 @@ import {
 } from '../types/AbonnementTypes';
 import { AbonnementRenouvellement, RenouvellementFormData, RenouvellementStats } from '../types/RenouvellementTypes';
 
+interface AbonnementsCache {
+  data: Abonnement[];
+  tenantId: number;
+  fetchedAt: number;
+}
+
+const CACHE_TTL_MS = 30 * 60 * 1000;
+
 class AbonnementService {
+  private abonnementsCache: AbonnementsCache | null = null;
+
+  constructor() {
+    this.loadCacheFromStorage();
+  }
+
+  private loadCacheFromStorage() {
+    try {
+      const stored = localStorage.getItem('abonnements_cache');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Date.now() - parsed.fetchedAt < CACHE_TTL_MS) {
+          this.abonnementsCache = parsed;
+        } else {
+          localStorage.removeItem('abonnements_cache');
+        }
+      }
+    } catch (e) {}
+  }
+
+  private saveCacheToStorage() {
+    try {
+      if (this.abonnementsCache) {
+        localStorage.setItem('abonnements_cache', JSON.stringify(this.abonnementsCache));
+      }
+    } catch (e) {}
+  }
+
+  public invalidateCache(): void {
+    this.abonnementsCache = null;
+    try {
+      localStorage.removeItem('abonnements_cache');
+    } catch (e) {}
+  }
   // Statuts d'abonnement
   private statutsAbonnement: AbonnementStatut[] = [
     { statut_id: 1, nom: 'Actif', description: 'Abonnement actif' },
@@ -22,9 +64,22 @@ class AbonnementService {
 
   // Abonnements
   async obtenirTousAbonnements(tenantId: number): Promise<Abonnement[]> {
+    if (this.abonnementsCache && this.abonnementsCache.tenantId === tenantId) {
+      if (Date.now() - this.abonnementsCache.fetchedAt < CACHE_TTL_MS) {
+        return this.abonnementsCache.data;
+      }
+    }
+
     const response = await hospitalApi.abonnements.getAll({ tenant: tenantId });
     if (response.success) {
-      return response.data.results || response.data;
+      const data = response.data.results || response.data;
+      this.abonnementsCache = {
+        data,
+        tenantId,
+        fetchedAt: Date.now()
+      };
+      this.saveCacheToStorage();
+      return data;
     }
     return [];
   }
@@ -40,22 +95,43 @@ class AbonnementService {
   // Créer un abonnement
   async creerAbonnement(data: AbonnementFormData): Promise<{ success: boolean; data?: any; message?: string }> {
     const response = await hospitalApi.abonnements.create(data);
+    if (response.success && response.data) {
+      this.invalidateCache();
+      
+      // Optimistic update
+      if (this.abonnementsCache && Array.isArray(this.abonnementsCache.data)) {
+        this.abonnementsCache.data.unshift(response.data);
+      }
+    }
     return response;
   }
 
   async modifierAbonnement(id: number, data: AbonnementFormData): Promise<{ success: boolean; data?: any; message?: string }> {
     const response = await hospitalApi.abonnements.update(id, data);
+    if (response.success && response.data) {
+      this.invalidateCache();
+      
+      // Optimistic update
+      if (this.abonnementsCache && Array.isArray(this.abonnementsCache.data)) {
+        const index = this.abonnementsCache.data.findIndex(a => (a.abonnement_id || (a as any).id) === id);
+        if (index !== -1) {
+          this.abonnementsCache.data[index] = response.data;
+        }
+      }
+    }
     return response;
   }
 
   async supprimerAbonnement(id: number): Promise<{ success: boolean; message?: string }> {
     const response = await hospitalApi.abonnements.delete(id);
+    if (response.success) this.invalidateCache();
     return response;
   }
 
   // Renouvellements
   async creerRenouvellement(data: any): Promise<{ success: boolean; data?: any; message?: string }> {
     const response = await hospitalApi.abonnements.renouveler(data.abonnement_id, { periode_mois: data.periode_mois || 1 });
+    if (response.success) this.invalidateCache();
     return response;
   }
 

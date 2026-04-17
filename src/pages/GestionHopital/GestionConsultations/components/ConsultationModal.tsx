@@ -87,11 +87,9 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
         onClose();
       } else {
         console.error('Erreurs de validation:', result.errors);
-        alert('Erreurs: ' + (result.errors?.join(', ') || 'Erreur inconnue'));
       }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de la sauvegarde');
     }
   };
   if (!isOpen) return null;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Utilisateur, UtilisateurFormData, UtilisateurRole, UtilisateurStatut } from '../types/UtilisateurTypes';
+import { validation } from '../../../../utils/validation';
 
 interface UtilisateurModalProps {
   isOpen: boolean;
@@ -27,19 +28,54 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
     email: '',
     password: '',
     password_confirm: '',
-    role_id: 2, // Défaut : Médecin
+    role_id: 3, // Défaut : Médecin
     statut_id: 1,
     telephone: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [medecinMatchWarning, setMedecinMatchWarning] = useState<string | null>(null);
 
   useEffect(() => {
     if (serverErrors) {
       setErrors(serverErrors);
     }
   }, [serverErrors]);
+
+  useEffect(() => {
+    if (formData.role_id !== 3 || !formData.email || formData.email.length < 5) {
+      setMedecinMatchWarning(null);
+      return;
+    }
+    
+    // Check locally if a Medecin with this email already exists
+    try {
+      let found = false;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('medecins_cache_v')) {
+          const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+          if (parsed && Array.isArray(parsed.data)) {
+            const existingMedecin = parsed.data.find((m: any) => 
+              (m.email_professionnel && m.email_professionnel.toLowerCase() === formData.email) ||
+              (m.email && m.email.toLowerCase() === formData.email)
+            );
+            if (existingMedecin) {
+              setMedecinMatchWarning(`Un profil Médecin existe déjà pour l'email "${formData.email}". La création de ce compte utilisateur sera automatiquement liée à ce médecin.`);
+              found = true;
+              break;
+            }
+          }
+        }
+      }
+      if (!found) {
+        setMedecinMatchWarning(`Attention: Aucun profil Médecin correspondant à "${formData.email}" n'a été trouvé. La création de cet utilisateur génèrera un nouveau profil Médecin vierge dans le système.`);
+      }
+    } catch (e) {
+      setMedecinMatchWarning(null);
+    }
+  }, [formData.email, formData.role_id]);
 
   useEffect(() => {
     setErrors({});
@@ -59,7 +95,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
         email: '',
         password: '',
         password_confirm: '',
-        role_id: 2,
+        role_id: 3, // Défaut : Médecin
         statut_id: 1,
         telephone: ''
       });
@@ -79,6 +115,12 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
       if (formData.password !== formData.password_confirm) {
         newErrors.password_confirm = 'Les mots de passe ne correspondent pas.';
       }
+    }
+
+    // Validation téléphone haïtien
+    if (formData.telephone && formData.telephone.trim() !== '') {
+      const phoneVal = validation.validateHaitiPhone(formData.telephone);
+      if (!phoneVal.valid) newErrors.telephone = phoneVal.message || 'Format téléphone invalide (+509 XXXX-XXXX)';
     }
 
     setErrors(newErrors);
@@ -168,11 +210,17 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
             </label>
             <input
               type="tel"
-              placeholder="+509..."
+              placeholder="+509 4030-2622"
+              maxLength={14}
               value={formData.telephone}
-              onChange={(e) => setFormData(p => ({ ...p, telephone: e.target.value }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400"
+              onChange={(e) => {
+                const formatted = validation.formatHaitiPhone(e.target.value);
+                setFormData(p => ({ ...p, telephone: formatted }));
+                if (errors.telephone) setErrors(prev => ({ ...prev, telephone: '' }));
+              }}
+              className={`w-full rounded-lg border ${errors.telephone ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
             />
+            {errors.telephone && <p className="mt-1 text-xs text-red-500">{errors.telephone}</p>}
           </div>
 
           {!utilisateur && (
@@ -220,6 +268,21 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
                 </option>
               ))}
             </select>
+            
+            {formData.role_id === 3 && medecinMatchWarning && (
+              <div className={`mt-3 p-3 text-sm rounded-lg border ${
+                medecinMatchWarning.includes('existe déjà') 
+                  ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800/30 dark:text-green-400'
+                  : 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800/30 dark:text-yellow-400'
+              }`}>
+                <div className="flex items-start gap-2">
+                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p>{medecinMatchWarning}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>

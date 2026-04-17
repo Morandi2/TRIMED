@@ -20,6 +20,27 @@ import {
   TableHeader,
   TableRow,
 } from '../../../components/ui/table';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  CreditCard, 
+  Calendar, 
+  CheckCircle, 
+  AlertCircle, 
+  Clock, 
+  Trash, 
+  Pencil, 
+  DollarSign, 
+  TrendingUp, 
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  PlusCircle,
+  FileText
+} from 'lucide-react';
+import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 
 interface GestionAbonnementsProps {
   tenantId: number;
@@ -41,7 +62,7 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
     dateDebut: '',
     dateFin: ''
   });
-  const [currentPage, _setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [showAbonnementModal, setShowAbonnementModal] = useState(false);
   const [showPaiementModal, setShowPaiementModal] = useState(false);
   const [editingAbonnement, setEditingAbonnement] = useState<Abonnement | null>(null);
@@ -51,14 +72,29 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
   const [statuts, setStatuts] = useState<AbonnementStatut[]>([]);
   const [methodes, setMethodes] = useState<PaiementMethode[]>([]);
   const [statutsPaiement, setStatutsPaiement] = useState<PaiementStatut[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+  }>({ isOpen: false, title: '', message: '', type: 'success' });
 
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
 
   useEffect(() => {
-    loadData();
-    setStatuts(abonnementService.obtenirStatutsAbonnement());
-    setMethodes(abonnementService.obtenirMethodesPaiement());
-    setStatutsPaiement(abonnementService.obtenirStatutsPaiement());
+    const init = async () => {
+      setIsLoading(true);
+      try {
+        await loadData();
+        setStatuts(abonnementService.obtenirStatutsAbonnement());
+        setMethodes(abonnementService.obtenirMethodesPaiement());
+        setStatutsPaiement(abonnementService.obtenirStatutsPaiement());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    init();
   }, [tenantId]);
 
   const loadData = async () => {
@@ -70,7 +106,6 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
 
   const handleSaveAbonnement = async (formData: AbonnementFormData) => {
     let result;
-
     if (editingAbonnement) {
       result = await abonnementService.modifierAbonnement(editingAbonnement.abonnement_id, formData);
     } else {
@@ -78,23 +113,44 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
     }
 
     if (result.success) {
+      setNotification({
+        isOpen: true,
+        title: 'Opération réussie',
+        message: editingAbonnement ? 'Abonnement mis à jour.' : 'Abonnement créé avec succès.',
+        type: 'success'
+      });
       await loadData();
       setShowAbonnementModal(false);
       setEditingAbonnement(null);
     } else {
-      console.error('Erreur:', result.message || 'Erreur inconnue');
+      setNotification({
+        isOpen: true,
+        title: 'Erreur',
+        message: result.message || 'Échec de l\'opération',
+        type: 'error'
+      });
     }
   };
 
   const handleSavePaiement = async (formData: PaiementFormData) => {
     const result = await abonnementService.creerPaiement(formData);
-
     if (result.success) {
+      setNotification({
+        isOpen: true,
+        title: 'Paiement enregistré',
+        message: 'Le paiement a été ajouté à l\'abonnement.',
+        type: 'success'
+      });
       await loadData();
       setShowPaiementModal(false);
       setSelectedAbonnementId(0);
     } else {
-      console.error('Erreur:', result.message || 'Erreur inconnue');
+      setNotification({
+        isOpen: true,
+        title: 'Erreur',
+        message: result.message || 'Échec de l\'enregistrement du paiement',
+        type: 'error'
+      });
     }
   };
 
@@ -117,7 +173,20 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
     if (deletingId) {
       const result = await abonnementService.supprimerAbonnement(deletingId);
       if (result.success) {
+        setNotification({
+          isOpen: true,
+          title: 'Abonnement supprimé',
+          message: 'L\'abonnement a été retiré du système.',
+          type: 'success'
+        });
         await loadData();
+      } else {
+        setNotification({
+          isOpen: true,
+          title: 'Erreur',
+          message: result.message || 'Échec de la suppression',
+          type: 'error'
+        });
       }
     }
     setShowDeleteModal(false);
@@ -134,7 +203,7 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
     return matchesSearch && matchesStatut && matchesDateDebut && matchesDateFin;
   });
 
-  // const _totalPages = Math.ceil(filteredAbonnements.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredAbonnements.length / itemsPerPage);
   const currentAbonnements = filteredAbonnements.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -148,7 +217,7 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
   const formatMontant = (montant: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
-      currency: 'EUR'
+      currency: 'HTG'
     }).format(montant);
   };
 
@@ -167,226 +236,218 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
   };
 
   return (
-    <div className="space-y-6">
-      {/* En-tête avec statistiques */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
-              <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Abonnements</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-              <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Actifs</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.actif}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-              <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Expirés</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.expire}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/20">
-              <svg className="h-6 w-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Revenus Total</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatMontant(stats.revenus_total)}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Contrôles */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-screen pb-12 space-y-8">
+      {/* Header Premium Glassmorphism */}
+      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+        
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Gestion des Abonnements
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Gérez les abonnements et les paiements des clients
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
+                <CreditCard className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-black uppercase tracking-tight">
+                Gestion des Abonnements
+              </h1>
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+              Souscriptions & Licences Clients
             </p>
           </div>
 
-          <button
-            onClick={() => setShowAbonnementModal(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+          <button 
+            onClick={() => { setEditingAbonnement(null); setShowAbonnementModal(true); }}
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <Plus className="h-5 w-5" />
             Nouvel Abonnement
           </button>
         </div>
+      </div>
 
-        {/* Filtres */}
-        <div className="flex flex-col gap-4 mb-6 lg:flex-row">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Rechercher par ID..."
-              value={filters.searchTerm}
-              onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
-            />
+      {/* Stats Section with Glassmorphism */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: 'Total Actifs', value: stats.actif, icon: ShieldCheck, color: 'emerald', sub: 'licences vivantes' },
+          { label: 'En Danger', value: stats.expire, icon: AlertCircle, color: 'red', sub: 'expirés' },
+          { label: 'Revenus Mois', value: formatMontant(stats.revenus_mois), icon: TrendingUp, color: 'indigo', sub: 'HTG' },
+          { label: 'Revenu Total', value: formatMontant(stats.revenus_total), icon: DollarSign, color: 'purple', sub: 'HTG' }
+        ].map((stat, i) => (
+          <div key={i} className="group p-6 rounded-3xl bg-white/40 dark:bg-white/[0.03] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
+            <div className={`absolute -right-4 -top-4 p-8 opacity-5 group-hover:opacity-10 transition-opacity text-${stat.color}-500`}>
+              <stat.icon className="w-24 h-24" />
+            </div>
+            <div className="flex items-center gap-4 relative z-10">
+              <div className={`p-3 rounded-2xl bg-${stat.color}-50 dark:bg-${stat.color}-900/20 text-${stat.color}-600 dark:text-${stat.color}-400 group-hover:scale-110 transition-transform`}>
+                <stat.icon className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{stat.label}</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">{stat.value}</span>
+                  <span className={`text-[10px] font-black text-${stat.color}-600 bg-${stat.color}-50 dark:bg-${stat.color}-900/20 px-2 py-0.5 rounded-lg border border-${stat.color}-100 dark:border-${stat.color}-900/30 uppercase`}>{stat.sub}</span>
+                </div>
+              </div>
+            </div>
           </div>
+        ))}
+      </div>
 
-          <div className="flex gap-3">
-            <select
-              value={filters.statut}
-              onChange={(e) => setFilters(prev => ({ ...prev, statut: e.target.value }))}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
-            >
-              <option value="Tous">Tous les statuts</option>
-              {statuts.map(statut => (
-                <option key={statut.statut_id} value={statut.statut_id.toString()}>{statut.nom}</option>
-              ))}
-            </select>
+      {/* Main Container */}
+      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+        <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="Rechercher par ID client, Tenant ID..."
+                value={filters.searchTerm}
+                onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+                className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-black/20 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium"
+              />
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-black/20 border border-gray-100 dark:border-gray-800 rounded-2xl">
+                <Filter className="h-4 w-4 text-gray-400" />
+                <select
+                  value={filters.statut}
+                  onChange={(e) => setFilters(prev => ({ ...prev, statut: e.target.value }))}
+                  className="bg-transparent border-none text-sm font-bold focus:ring-0 outline-none uppercase tracking-tight"
+                >
+                  <option value="Tous">Tous les statuts</option>
+                  {statuts.map(s => <option key={s.statut_id} value={s.statut_id.toString()}>{s.nom}</option>)}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Tableau */}
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
-              <TableRow>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  ID
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Tenant
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Plan
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Période
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Statut
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {currentAbonnements.map((abonnement) => (
-                <TableRow key={abonnement.abonnement_id}>
-                  <TableCell className="py-3">
-                    <p className="font-medium text-black text-sm dark:text-white/90">
-                      {abonnement.abonnement_id}
-                    </p>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <p className="font-medium text-black text-sm dark:text-white/90">
-                      {abonnement.tenant_id}
-                    </p>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <p className="text-black text-sm dark:text-white/90">
-                      Plan {abonnement.plan_id}
-                    </p>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <div>
-                      <p className="text-black text-sm dark:text-white/90">
-                        {formatDate(abonnement.date_debut)}
-                      </p>
-                      <span className="text-gray-500 text-xs dark:text-gray-400">
-                        au {formatDate(abonnement.date_fin)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <Badge size="sm" color={getStatutColor(abonnement.statut_id)}>
-                      {getStatutNom(abonnement.statut_id)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(abonnement)}
-                        className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M7.33301 1.33331H5.99967C2.66634 1.33331 1.33301 2.66665 1.33301 5.99998V9.99998C1.33301 13.3333 2.66634 14.6666 5.99967 14.6666H9.99967C13.333 14.6666 14.6663 13.3333 14.6663 9.99998V8.66665" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M10.6933 2.01332L5.43992 7.26665C5.23992 7.46665 5.03992 7.85999 4.99992 8.14665L4.71325 10.1533C4.60659 10.88 5.11992 11.3867 5.84659 11.2867L7.85325 11C8.13325 10.96 8.52659 10.76 8.73325 10.56L13.9866 5.30665C14.8933 4.39999 15.3199 3.34665 13.9866 2.01332C12.6533 0.679985 11.5999 1.10665 10.6933 2.01332Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleAddPaiement(abonnement.abonnement_id)}
-                        className="rounded p-1.5 text-green-600 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(abonnement.abonnement_id)}
-                        className="rounded p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M13.3337 3.98666C11.2203 3.76666 9.10033 3.65332 6.98699 3.65332C5.66699 3.65332 4.34699 3.71999 3.02699 3.85332L2.66699 3.98666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M5.66699 3.31333L5.81366 2.44C5.92033 1.80667 6.00033 1.33333 7.12699 1.33333H8.87366C10.0003 1.33333 10.0869 1.83333 10.187 2.44667L10.3337 3.31333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M12.5663 6.09332L12.133 12.8067C12.0597 13.8533 11.9997 14.6667 10.1397 14.6667H5.85967C3.99967 14.6667 3.93967 13.8533 3.86634 12.8067L3.43301 6.09332" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                    </div>
-                  </TableCell>
+        <div className="overflow-x-auto min-h-[400px]">
+          {isLoading ? (
+            <TableSkeleton rows={8} columns={5} />
+          ) : (
+            <Table>
+              <TableHeader className="bg-gray-50/50 dark:bg-white/[0.02]">
+                <TableRow>
+                  <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Souscription</TableCell>
+                  <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Tenant Info</TableCell>
+                  <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Période Validité</TableCell>
+                  <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">Statut</TableCell>
+                  <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
+                {currentAbonnements.map((abonnement) => (
+                  <TableRow key={abonnement.abonnement_id} className="group hover:bg-white/60 dark:hover:bg-white/[0.03] transition-all">
+                    <TableCell className="py-5 px-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100 dark:border-indigo-900/30 transition-transform group-hover:scale-110">
+                          <PlusCircle className="w-6 h-6" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-black uppercase tracking-tight">ID #{abonnement.abonnement_id}</span>
+                          <span className="text-[10px] font-bold text-gray-400 italic">Plan ID: {abonnement.plan_id}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5 px-6">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center text-[10px] font-black">T</div>
+                        <span className="text-sm font-black text-gray-700 dark:text-gray-200 uppercase">Tenant #{abonnement.tenant_id}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5 px-6">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-xs font-bold text-emerald-600">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>Du {formatDate(abonnement.date_debut)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs font-bold text-red-500">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Au {formatDate(abonnement.date_fin)}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5 px-6 text-center">
+                      <Badge size="sm" color={getStatutColor(abonnement.statut_id)}>
+                        {getStatutNom(abonnement.statut_id)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-5 px-6 text-right">
+                      <div className="flex justify-end gap-2 transition-all duration-300">
+                        <button 
+                          onClick={() => handleAddPaiement(abonnement.abonnement_id)}
+                          title="Ajouter Paiement"
+                          className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                        >
+                          <DollarSign className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleEdit(abonnement)}
+                          className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(abonnement.abonnement_id)}
+                          className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
 
-          {filteredAbonnements.length === 0 && (
-            <div className="text-center py-8">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucun abonnement trouvé</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Aucun abonnement ne correspond à vos critères de recherche.
-              </p>
+          {currentAbonnements.length === 0 && !isLoading && (
+            <div className="py-24 text-center">
+              <div className="mx-auto w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mb-6">
+                <CreditCard className="w-10 h-10 text-gray-300" />
+              </div>
+              <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Aucun abonnement</h3>
+              <p className="text-gray-500 dark:text-gray-400 italic font-medium">La liste des souscriptions est vide.</p>
             </div>
           )}
         </div>
+
+        {/* Pagination Premium */}
+        {totalPages > 1 && !isLoading && (
+          <div className="p-6 border-t border-gray-100 dark:border-white/[0.05] bg-gray-50/30 dark:bg-transparent flex items-center justify-between">
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">
+               Page {currentPage} sur {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <button 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+                className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <div className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-black text-sm shadow-lg shadow-indigo-600/20">
+                {currentPage}
+              </div>
+              <button 
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => p + 1)}
+                className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Modal Abonnement */}
+      {/* Modals Section */}
       <AbonnementModal
         isOpen={showAbonnementModal}
         onClose={() => {
@@ -399,7 +460,6 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
         tenantId={tenantId}
       />
 
-      {/* Modal Paiement */}
       <PaiementModal
         isOpen={showPaiementModal}
         onClose={() => {
@@ -413,44 +473,23 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
         statuts={statutsPaiement}
       />
 
-      {/* Modal de suppression */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-red-600 dark:text-red-400">
-                  <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                  Confirmer la suppression
-                </h3>
-              </div>
-            </div>
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        title="Supprimer Abonnement"
+        message="Voulez-vous vraiment supprimer cet abonnement ? Cette action est irréversible."
+        entityName="Abonnement"
+        entityId={deletingId}
+      />
 
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Êtes-vous sûr de vouloir supprimer cet abonnement ? Cette action est irréversible.
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <NotificationToast
+        isOpen={notification.isOpen}
+        title={notification.title}
+        message={notification.message}
+        type={notification.type}
+        onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

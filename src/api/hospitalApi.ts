@@ -63,12 +63,12 @@ export interface RendezVous {
  patient: number;
  medecin: number;
  date_heure: string;
- type?: number;
- statut: number;
- motif?: string;
- notes?: string;
- raison_annulation?: string;
- duree?: number;
+  type?: any;
+  statut: any;
+  motif?: string;
+  notes?: string;
+  raison_annulation?: string;
+  duree_minutes?: number;
  
  // Read-only fields from API
  patient_nom?: string;
@@ -129,7 +129,11 @@ export interface Medecin {
  numero_matricule_professionnel?: string;
  photo?: string | File | null;
  biographie?: string;
+ date_naissance?: string;
+ created_at?: string;
+ cree_le?: string;
 }
+
 
 export interface Medicament {
  medicament_id?: number;
@@ -372,14 +376,22 @@ export const hospitalApi = {
  data: response.data,
  message: 'Statistiques récupérées avec succès'
  };
- } catch (error: any) {
- console.error(' Erreur statistiques patients:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération des statistiques',
- error: error.message
- };
- }
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      console.warn('[hospitalApi] Patient statistics endpoint not found (404). Using fallback.');
+      return {
+        success: true,
+        data: { total_patients: 0, count: 0 },
+        is_fallback: true
+      };
+    }
+    console.error(' Erreur statistiques patients:', error);
+    return {
+      success: false,
+      message: error.response?.data?.detail || 'Erreur lors de la récupération des statistiques',
+      error: error.message
+    };
+  }
  },
 
  // --- SOUS-MODULES PATIENTS ---
@@ -702,19 +714,42 @@ export const hospitalApi = {
  }
  },
 
- // Mettre à jour un médecin
- async update(id: number, medecinData: Partial<Medecin>) {
- try {
- const response = await apiClient.patch(`/medical/medecins/${id}/`, medecinData);
- return {
- success: true,
- data: response.data,
- message: 'Médecin mis à jour avec succès'
- };
- } catch (error: any) {
- return { success: false, message: 'Erreur mise à jour médecin', error: error.message };
- }
- },
+  // Mettre à jour un médecin
+  async update(id: number, medecinData: Partial<Medecin>) {
+    try {
+      let payload: any = medecinData;
+      
+      // Gérer FormData si une photo est présente
+      if (medecinData.photo instanceof File) {
+        payload = new FormData();
+        Object.keys(medecinData).forEach(key => {
+          const value = (medecinData as any)[key];
+          if (value !== null && value !== undefined) {
+            if (Array.isArray(value)) {
+              value.forEach((val: any) => payload.append(`${key}[]`, val));
+            } else if (typeof value === 'object' && !(value instanceof File)) {
+              payload.append(key, JSON.stringify(value));
+            } else {
+              payload.append(key, value);
+            }
+          }
+        });
+      }
+
+      const response = await apiClient.patch(`/medical/medecins/${id}/`, payload, {
+        headers: payload instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined
+      });
+      
+      return {
+        success: true,
+        data: response.data,
+        message: 'Médecin mis à jour avec succès'
+      };
+    } catch (error: any) {
+      console.error(' Erreur mise à jour médecin:', error);
+      return formatApiError(error, "Erreur lors de la mise à jour du médecin");
+    }
+  },
 
  // Supprimer un médecin
  async delete(id: number) {
@@ -957,14 +992,18 @@ export const hospitalApi = {
  return { success: false, message: 'Erreur récupération paiements', error: error.message };
  }
  },
- async getStats() {
- try {
- const response = await apiClient.get('/facturation/paiements/statistiques/');
- return { success: true, data: response.data };
- } catch (error: any) {
- return { success: false, message: 'Erreur récupération statistiques paiements', error: error.message };
- }
- },
+    async getStats() {
+      try {
+        const response = await apiClient.get('/facturation/paiements/statistiques/');
+        return { success: true, data: response.data };
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          console.warn('[hospitalApi] Payment stats endpoint not found (404).');
+          return { success: true, data: { total_paiements: 0, montant_total: 0, par_statut: [] }, is_fallback: true };
+        }
+        return { success: false, message: 'Erreur récupération statistiques paiements', error: error.message };
+      }
+    },
  async create(paiementData: any) {
  try {
  const response = await apiClient.post('/facturation/paiements/', paiementData);
@@ -1279,7 +1318,8 @@ export const hospitalApi = {
  const response = await apiClient.post('/rendez-vous/', rdvData);
  return { success: true, data: response.data };
  } catch (error: any) {
-    return formatApiError(error, 'Erreur lors de la création du rendez-vous');
+     console.error("DEBUG API RDV:", error.response?.data);
+     return formatApiError(error, 'Erreur lors de la création du rendez-vous');
  }
  },
 
@@ -1339,32 +1379,48 @@ export const hospitalApi = {
  }
  },
 
- async getTypes(params?: any) {
- try {
- const response = await apiClient.get('/rendez-vous/types/', { params });
- return { success: true, data: response.data };
- } catch (error: any) {
- return { success: false, message: 'Erreur types rdv', error: error.message };
- }
- },
+  async getTypes(params?: any) {
+    try {
+      const response = await apiClient.get('/rendez-vous/types/', { params });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        console.warn('[hospitalApi] Rendez-vous types endpoint not found (404).');
+        return { success: true, data: [], is_fallback: true };
+      }
+      return { success: false, message: 'Erreur types rdv', error: error.message };
+    }
+  },
 
- async getStatuts(params?: any) {
- try {
- const response = await apiClient.get('/rendez-vous/statuts/', { params });
- return { success: true, data: response.data };
- } catch (error: any) {
- return { success: false, message: 'Erreur statuts rdv', error: error.message };
- }
- },
+  async getStatuts(params?: any) {
+    try {
+      const response = await apiClient.get('/rendez-vous/statuts/', { params });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        console.warn('[hospitalApi] Rendez-vous statuts endpoint not found (404).');
+        return { success: true, data: [], is_fallback: true };
+      }
+      return { success: false, message: 'Erreur statuts rdv', error: error.message };
+    }
+  },
 
- async getStats(params?: any) {
- try {
- const response = await apiClient.get('/rendez-vous/statistiques/', { params });
- return { success: true, data: response.data };
- } catch (error: any) {
- return { success: false, message: 'Erreur statistiques rdv', error: error.message };
- }
- }
+  async getStats(params?: any) {
+    try {
+      const response = await apiClient.get('/rendez-vous/statistiques/', { params });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        console.warn('[hospitalApi] Rendez-vous stats endpoint not found (404). Using empty fallback.');
+        return { 
+          success: true, 
+          data: { total: 0, programme: 0, confirme: 0, termine: 0, annule: 0, aujourdhui: 0, cette_semaine: 0 },
+          is_fallback: true 
+        };
+      }
+      return { success: false, message: 'Erreur statistiques rdv', error: error.message };
+    }
+  }
  },
 
  // ==================== CONFIGURATION ====================
@@ -1450,14 +1506,18 @@ export const hospitalApi = {
  return { success: false, message: 'Erreur suppression tenant', error: error.message };
  }
  },
- async getStatistiques(id: number) {
- try {
- const response = await apiClient.get(`/tenants/tenants/${id}/statistiques/`);
- return { success: true, data: response.data };
- } catch (error: any) {
- return { success: false, message: 'Erreur statistiques tenant', error: error.message };
- }
- },
+    async getStatistiques(id: number) {
+      try {
+        const response = await apiClient.get(`/tenants/tenants/${id}/statistiques/`);
+        return { success: true, data: response.data };
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          console.warn('[hospitalApi] Tenant stats endpoint not found (404).');
+          return { success: true, data: {}, is_fallback: true };
+        }
+        return { success: false, message: 'Erreur récupération statistiques tenant', error: error.message };
+      }
+    },
  async verifierDocuments(id: number, data: { statut_verification: string; notes?: string }) {
  try {
  const response = await apiClient.patch(`/tenants/tenants/${id}/verifier_documents/`, data);

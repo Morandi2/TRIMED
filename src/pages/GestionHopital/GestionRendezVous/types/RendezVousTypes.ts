@@ -5,9 +5,10 @@ export interface RendezVous {
   patient_id: number;
   medecin_id: number;
   date_heure: string;
-  type_id: number | null;
-  statut_id: number;
+  type_id: any;
+  statut_id: any;
   motif: string | null;
+  duree_minutes: number;
   
   // Read-only fields
   patient_nom?: string;

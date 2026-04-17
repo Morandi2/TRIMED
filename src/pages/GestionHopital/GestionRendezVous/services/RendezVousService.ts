@@ -35,7 +35,6 @@ export interface RendezVousStats {
   cette_semaine: number;
 }
 
-// Memory cache for names and metadata
 const namesCache: { [key: string]: string } = {};
 
 export class RendezVousService {
@@ -54,53 +53,194 @@ export class RendezVousService {
     return RendezVousService.instance;
   }
 
-  // CRUD operations pou rendez-vous
-  public async creerRendezVous(data: RendezVousFormData, tenantId: number): Promise<{ success: boolean; data?: any; errors?: string[] }> {
+  private findField(obj: any, targetField: string | string[]): any {
+    if (!obj || typeof obj !== 'object') return null;
+    
+    if (Array.isArray(targetField)) {
+        for (const field of targetField) {
+            const found = this.findField(obj, field);
+            if (found !== undefined && found !== null) return found;
+        }
+        return null;
+    }
+
+    if (obj[targetField] !== undefined) return obj[targetField];
+
+    for (const key in obj) {
+      if (typeof obj[key] === 'object') {
+        const found = this.findField(obj[key], targetField);
+        if (found !== undefined && found !== null) return found;
+      }
+    }
+    return null;
+  }
+
+  public normaliserRendezVous(rv: any): any {
+    if (!rv) return null;
+    const find = (f: string | string[]) => this.findField(rv, f);
+
+    const rdvId = find(['rendez_vous_id', 'id_rendezvous', 'id', 'pk', 'uid']) || 0;
+    
+    // Détection Patient
+    let pId = find(['patient_id', 'id_patient']);
+    let pNom = find(['patient_nom', 'patient_name']);
+    if (typeof rv.patient === 'object' && rv.patient !== null) {
+      pId = pId || rv.patient.id || rv.patient.patient_id;
+      pNom = pNom || `${rv.patient.prenom || ''} ${rv.patient.nom || ''}`.trim();
+    } else if (typeof rv.patient === 'number') {
+      pId = pId || rv.patient;
+    }
+
+    // Détection Médecin
+    let mId = find(['medecin_id', 'id_medecin', 'doctor_id']);
+    let mNom = find(['medecin_nom', 'medecin_name', 'doctor_name']);
+
+    if (typeof rv.medecin === 'object' && rv.medecin !== null) {
+      mId = mId || rv.medecin.id || rv.medecin.medecin_id;
+      mNom = mNom || `Dr. ${rv.medecin.prenom || ''} ${rv.medecin.nom || ''}`.trim();
+    } else if (typeof rv.medecin === 'number') {
+      mId = mId || rv.medecin;
+    }
+
+    // Détection Statut
+    let sId = find(['statut_id', 'id_statut']);
+    let sNom = find(['statut_nom', 'status_name', 'label_statut']);
+    if (typeof rv.statut === 'object' && rv.statut !== null) {
+      sId = sId || rv.statut.id || rv.statut.statut_id;
+      sNom = sNom || rv.statut.nom;
+    } else if (typeof rv.statut === 'number') {
+      sId = sId || rv.statut;
+    }
+
+    // Détection Type
+    let tId = find(['type_id', 'id_type']);
+    let tNom = find(['type_nom', 'type_name']);
+    if (typeof rv.type === 'object' && rv.type !== null) {
+      tId = tId || rv.type.id || rv.type.type_id;
+      tNom = tNom || rv.type.nom;
+    } else if (typeof rv.type === 'number') {
+      tId = tId || rv.type;
+    }
+
+    return {
+      ...rv,
+      rendez_vous_id: Number(rdvId),
+      patient_id: pId,
+      patient_nom: pNom || this.obtenirNomPatient(pId),
+      medecin_id: mId,
+      medecin_nom: mNom || this.obtenirNomMedecin(mId),
+      statut_id: sId,
+      statut_nom: sNom || 'Inconnu',
+      type_id: tId,
+      type_nom: tNom || 'Consultation',
+      cree_le: find(['cree_le', 'created_at', 'date_creation']) || ''
+    };
+  }
+
+  public async creeRendezVous(data: RendezVousFormData, tenantId: number): Promise<{ success: boolean; data?: any; errors?: string[] }> {
     try {
-      const payload: RendezVous = {
+      // Map des IDs numériques vers les slugs que le backend Django attend
+      const statutMap: Record<number, string> = {
+        1: 'planifie',
+        2: 'confirme',
+        3: 'termine',
+        4: 'annule'
+      };
+
+      const payload: any = {
         patient: data.patient_id,
         medecin: data.medecin_id,
         date_heure: data.date_heure,
-        type: data.type_id || undefined,
-        statut: data.statut_id,
-        motif: data.motif,
-        notes: data.notes,
-        duree: data.duree,
-        tenant: tenantId // Adajoute tenant ID
+        motif: data.motif || '',
+        notes: data.notes || '',
+        duree_minutes: data.duree || 30,
+        statut: statutMap[data.statut_id] || 'PLANIFIE',
+        hopital: tenantId,
+        hopital_id: tenantId
       };
 
-      const response = await hospitalApi.rendezVous.create(payload);
-      return {
-        success: response.success,
-        data: (response as any).data,
-        errors: response.success ? undefined : [(response as any).message || 'Erreur inconnue']
-      };
+      console.log('[RendezVousService] Payload création RDV:', payload);
+
+      const response = await hospitalApi.rendezVous.create(payload) as any;
+      console.log('[RendezVousService] Réponse création RDV:', response);
+      
+      if (response.success) {
+        return {
+          success: true,
+          data: this.normaliserRendezVous(response.data)
+        };
+      }
+      
+      // Extraire les messages d'erreur du backend
+      const errorMessages: string[] = [];
+      if (response.error && typeof response.error === 'object') {
+        Object.entries(response.error).forEach(([key, val]) => {
+          const msg = Array.isArray(val) ? val.join(', ') : String(val);
+          errorMessages.push(`${key}: ${msg}`);
+        });
+      }
+      if (errorMessages.length === 0) {
+        errorMessages.push(response.message || 'Erreur lors de la création du rendez-vous');
+      }
+      
+      return { success: false, errors: errorMessages };
     } catch (error: any) {
-      return { success: false, errors: [error.message] };
+      console.error('[RendezVousService] Exception création RDV:', error);
+      return { success: false, errors: [error.message || 'Erreur inattendue'] };
     }
   }
 
-  public async modifierRendezVous(id: number, data: RendezVousFormData): Promise<{ success: boolean; data?: any; errors?: string[] }> {
+  public async modifierRendezVous(id: number, data: RendezVousFormData, tenantId?: number): Promise<{ success: boolean; data?: any; errors?: string[] }> {
     try {
-      const payload: Partial<RendezVous> = {
+      const statutMap: Record<number, string> = {
+        1: 'planifie',
+        2: 'confirme',
+        3: 'termine',
+        4: 'annule'
+      };
+
+      const payload: any = {
         patient: data.patient_id,
         medecin: data.medecin_id,
         date_heure: data.date_heure,
-        type: data.type_id || undefined,
-        statut: data.statut_id,
-        motif: data.motif,
-        notes: data.notes,
-        duree: data.duree
+        motif: data.motif || '',
+        notes: data.notes || '',
+        duree_minutes: data.duree || 30,
+        statut: statutMap[data.statut_id] || 'planifie'
       };
 
-      const response = await hospitalApi.rendezVous.update(id, payload);
-      return {
-        success: response.success,
-        data: (response as any).data,
-        errors: response.success ? undefined : [(response as any).message || "Erreur inconnue"]
-      };
+      if (tenantId) {
+        payload.hopital = tenantId;
+        payload.hopital_id = tenantId;
+      }
+
+      console.log('[RendezVousService] Payload modification RDV:', payload);
+
+      const response = await hospitalApi.rendezVous.update(id, payload) as any;
+      console.log('[RendezVousService] Réponse modification RDV:', response);
+      
+      if (response.success) {
+        return {
+          success: true,
+          data: this.normaliserRendezVous(response.data)
+        };
+      }
+      
+      const errorMessages: string[] = [];
+      if (response.error && typeof response.error === 'object') {
+        Object.entries(response.error).forEach(([key, val]) => {
+          const msg = Array.isArray(val) ? val.join(', ') : String(val);
+          errorMessages.push(`${key}: ${msg}`);
+        });
+      }
+      if (errorMessages.length === 0) {
+        errorMessages.push(response.message || 'Erreur lors de la modification');
+      }
+      
+      return { success: false, errors: errorMessages };
     } catch (error: any) {
-      return { success: false, errors: [error.message] };
+      console.error('[RendezVousService] Exception modification RDV:', error);
+      return { success: false, errors: [error.message || 'Erreur inattendue'] };
     }
   }
 
@@ -113,65 +253,25 @@ export class RendezVousService {
   }
 
   public async obtenirTousRendezVous(params?: any): Promise<RendezVous[]> {
-    const response = await hospitalApi.rendezVous.getAll();
-    if (response.success && response.data) {
-      let rawData = response.data;
-      if (rawData.results && Array.isArray(rawData.results)) {
-        rawData = rawData.results;
-      } else if (rawData.data && Array.isArray(rawData.data)) {
-        rawData = rawData.data;
-      }
-      const arrData = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
-      return arrData.map((rv: any) => ({
-        ...rv,
-        patient_id: typeof rv.patient === 'object' ? rv.patient?.id || rv.patient?.patient_id : (rv.patient_id || rv.patient),
-        medecin_id: typeof rv.medecin === 'object' ? rv.medecin?.id || rv.medecin?.medecin_id : (rv.medecin_id || rv.medecin),
-        patient_nom: rv.patient_nom || (typeof rv.patient === 'object' ? (`${rv.patient?.prenom || ''} ${rv.patient?.nom || ''}`.trim() || rv.patient?.nom_complet) : undefined),
-        medecin_nom: rv.medecin_nom || (typeof rv.medecin === 'object' ? (`Dr. ${rv.medecin?.prenom || ''} ${rv.medecin?.nom || ''}`.trim() || rv.medecin?.nom_complet) : undefined),
-        statut_id: typeof rv.statut === 'object' ? rv.statut?.id || rv.statut?.statut_id : (rv.statut_id || rv.statut),
-        statut_nom: typeof rv.statut === 'object' ? rv.statut?.nom : rv.statut_nom,
-        type_id: typeof rv.type === 'object' ? rv.type?.id || rv.type?.type_id : (rv.type_id || rv.type),
-        type_nom: typeof rv.type === 'object' ? rv.type?.nom : rv.type_nom,
-        id: rv.id || rv.rendez_vous_id || rv.rendezvous_id
-      }));
-    }
-    return [];
+    try {
+      const response = await hospitalApi.rendezVous.getAll({ ordering: '-date_creation', page_size: 1000, ...params } as any);
+      if (!response.success || !response.data) return [];
+
+      let results: any[] = [];
+      const rawData = response.data;
+      if (rawData.results && Array.isArray(rawData.results)) results = rawData.results;
+      else if (rawData.data?.results && Array.isArray(rawData.data.results)) results = rawData.data.results;
+      else if (Array.isArray(rawData.data)) results = rawData.data;
+      else if (Array.isArray(rawData)) results = rawData;
+
+      return results.map(rv => this.normaliserRendezVous(rv)).sort((a, b) => {
+        const dA = new Date(a.date_heure).getTime();
+        const dB = new Date(b.date_heure).getTime();
+        return dB - dA;
+      });
+    } catch { return []; }
   }
 
-  public async obtenirRendezVous(id: number): Promise<any> {
-    const response = await hospitalApi.rendezVous.getById(id);
-    if (response.success && response.data) {
-      const rv = response.data;
-      return {
-        ...rv,
-        patient_id: typeof rv.patient === 'object' ? rv.patient?.id || rv.patient?.patient_id : (rv.patient_id || rv.patient),
-        medecin_id: typeof rv.medecin === 'object' ? rv.medecin?.id || rv.medecin?.medecin_id : (rv.medecin_id || rv.medecin),
-        patient_nom: rv.patient_nom || (typeof rv.patient === 'object' ? (`${rv.patient?.prenom || ''} ${rv.patient?.nom || ''}`.trim() || rv.patient?.nom_complet) : undefined),
-        medecin_nom: rv.medecin_nom || (typeof rv.medecin === 'object' ? (`Dr. ${rv.medecin?.prenom || ''} ${rv.medecin?.nom || ''}`.trim() || rv.medecin?.nom_complet) : undefined),
-        statut_id: typeof rv.statut === 'object' ? rv.statut?.id || rv.statut?.statut_id : (rv.statut_id || rv.statut),
-        statut_nom: typeof rv.statut === 'object' ? rv.statut?.nom : rv.statut_nom,
-        type_id: typeof rv.type === 'object' ? rv.type?.id || rv.type?.type_id : (rv.type_id || rv.type),
-        type_nom: typeof rv.type === 'object' ? rv.type?.nom : rv.type_nom,
-        id: rv.id || rv.rendez_vous_id || rv.rendezvous_id
-      };
-    }
-    return null;
-  }
-
-  // Specialized actions
-  public async confirmerRendezVous(id: number) {
-    return await hospitalApi.rendezVous.confirmer(id);
-  }
-
-  public async annulerRendezVous(id: number) {
-    return await hospitalApi.rendezVous.annuler(id);
-  }
-
-  public async reporterRendezVous(id: number, nouvelleDateHeure: string) {
-    return await hospitalApi.rendezVous.reporter(id, nouvelleDateHeure);
-  }
-
-  // Metadata operations
   public async loadMetadata(tenantId?: number) {
     const params = tenantId ? { tenant: tenantId } : {};
     const [typesRes, statutsRes] = await Promise.all([
@@ -179,35 +279,28 @@ export class RendezVousService {
       hospitalApi.rendezVous.getStatuts(params as any).catch(() => ({ success: false, data: [] }))
     ]);
 
-    if (typesRes.success && typesRes.data && typesRes.data.length > 0) {
-      this._types = typesRes.data.results || typesRes.data;
-    } else {
-      this._types = [
-        { id: 1, type_id: 1, nom: "Consultation standard", duree_estimee: 30, couleur: "#3b82f6" },
-        { id: 2, type_id: 2, nom: "Suivi médical", duree_estimee: 15, couleur: "#10b981" },
-        { id: 3, type_id: 3, nom: "Urgence", duree_estimee: 45, couleur: "#ef4444" },
-        { id: 4, type_id: 4, nom: "Visite de contrôle", duree_estimee: 20, couleur: "#8b5cf6" }
-      ];
+    if (typesRes.success && typesRes.data) {
+      this._types = typesRes.data.results || typesRes.data || [];
     }
-    
-    if (statutsRes.success && statutsRes.data && statutsRes.data.length > 0) {
-      this._statuts = statutsRes.data.results || statutsRes.data;
-    } else {
-      this._statuts = [
-        { id: 1, statut_id: 1, nom: "Planifié", couleur: "#f59e0b" },
-        { id: 2, statut_id: 2, nom: "Confirmé", couleur: "#10b981" },
-        { id: 3, statut_id: 3, nom: "Terminé", couleur: "#3b82f6" },
-        { id: 4, statut_id: 4, nom: "Annulé", couleur: "#ef4444" }
-      ];
+    if (statutsRes.success && statutsRes.data) {
+      this._statuts = statutsRes.data.results || statutsRes.data || [];
     }
-  }
 
-  public obtenirTypes(): RendezVousType[] {
-    return this._types;
-  }
-
-  public obtenirStatuts(): RendezVousStatut[] {
-    return this._statuts;
+    // Defaults if empty
+    if (this._types.length === 0) {
+        this._types = [
+            { id: 1, type_id: 1, nom: "Consultation standard", duree_estimee: 30, couleur: "#3b82f6" },
+            { id: 2, type_id: 2, nom: "Suivi médical", duree_estimee: 15, couleur: "#10b981" }
+        ] as any;
+    }
+    if (this._statuts.length === 0) {
+        this._statuts = [
+            { id: 1, statut_id: 1, nom: "Planifié", couleur: "#f59e0b" },
+            { id: 2, statut_id: 2, nom: "Confirmé", couleur: "#10b981" },
+            { id: 3, statut_id: 3, nom: "Terminé", couleur: "#3b82f6" },
+            { id: 4, statut_id: 4, nom: "Annulé", couleur: "#ef4444" }
+        ] as any;
+    }
   }
 
   public async loadCache(tenantId: number) {
@@ -215,75 +308,53 @@ export class RendezVousService {
       patientService.obtenirPatientsParHopital(tenantId),
       medecinService.obtenirMedecinsParHopital(tenantId)
     ]);
-
     this._patients = patients;
-    this._patients.forEach(p => {
-      namesCache[`patient_${p.patient_id}`] = `${p.prenom} ${p.nom}`.trim();
-    });
-
     this._medecins = medecins;
-    this._medecins.forEach(m => {
-      namesCache[`medecin_${m.medecin_id}`] = `Dr. ${m.prenom} ${m.nom}`.trim();
-    });
+    patients.forEach(p => namesCache[`patient_${p.patient_id}`] = `${p.prenom} ${p.nom}`.trim());
+    medecins.forEach(m => namesCache[`medecin_${m.medecin_id}`] = `Dr. ${m.prenom} ${m.nom}`.trim());
   }
 
   public rechercherPatients(term: string): any[] {
-    if (!term.trim()) return [];
-    return this._patients.filter(p => 
-      `${p.prenom} ${p.nom}`.toLowerCase().includes(term.toLowerCase()) ||
-      p.telephone.includes(term)
-    );
+    const t = term.toLowerCase();
+    return this._patients.filter(p => p.nom.toLowerCase().includes(t) || p.prenom.toLowerCase().includes(t));
   }
 
   public rechercherMedecins(term: string): any[] {
-    if (!term.trim()) return [];
-    return this._medecins.filter(m => 
-      `${m.prenom} ${m.nom}`.toLowerCase().includes(term.toLowerCase()) ||
-      m.telephone.includes(term)
-    );
+    const t = term.toLowerCase();
+    return this._medecins.filter(m => m.nom.toLowerCase().includes(t) || m.prenom.toLowerCase().includes(t));
   }
 
-  public obtenirNomPatient(id: number): string {
-    return namesCache[`patient_${id}`] || `Patient #${id}`;
-  }
-
-  public obtenirNomMedecin(id: number): string {
-    return namesCache[`medecin_${id}`] || `Dr. #${id}`;
-  }
-
-  // Fonksyon pou netwaye nimewo telefòn
-  public cleanPhoneNumber(phone: string): string {
+  public formatPhoneNumber(phone?: string): string {
     if (!phone) return '';
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.startsWith('509') && cleaned.length > 8) {
-      return cleaned.substring(3);
-    }
-    return cleaned;
+    return phone; // Keep simple formatting, as actual formatting logic varies
   }
 
-  // Fonksyon pou fòmate nimewo telefòn pou afichaj
-  public formatPhoneNumber(phone: string): string {
-    const cleaned = this.cleanPhoneNumber(phone);
-    if (cleaned.length === 8) {
-      return `+509 ${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 8)}`;
-    }
-    return phone;
-  }
+  public obtenirNomPatient(id: number): string { return namesCache[`patient_${id}`] || `Patient #${id}`; }
+  public obtenirNomMedecin(id: number): string { return namesCache[`medecin_${id}`] || `Dr. #${id}`; }
+  public obtenirTypes(): RendezVousType[] { return this._types; }
+  public obtenirStatuts(): RendezVousStatut[] { return this._statuts; }
 
-  // Statistics
-  public async obtenirStatistiques(tenantId?: number): Promise<RendezVousStats> {
-    const rdv = await this.obtenirTousRendezVous(tenantId ? { tenant: tenantId } : undefined);
-    const aujourdhui = new Date().toISOString().split('T')[0];
+  public async obtenirStatistiques(tenantId: number): Promise<RendezVousStats> {
+    const list = await this.obtenirTousRendezVous({ tenant: tenantId });
+    const today = new Date().toISOString().split('T')[0];
     
-    // Simplification pour l'instant, le backend pourrait fournir ça
+    // Very basic this week check
+    const now = new Date();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+    const endOfWeek = new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
+    
     return {
-      total: rdv.length,
-      programme: rdv.filter((r: any) => r.statut_nom === 'Planifié' || r.statut === 1).length,
-      confirme: rdv.filter((r: any) => r.statut_nom === 'Confirmé' || r.statut === 2).length,
-      termine: rdv.filter((r: any) => r.statut_nom === 'Terminé' || r.statut === 3).length,
-      annule: rdv.filter((r: any) => r.statut_nom === 'Annulé' || r.statut === 4).length,
-      aujourdhui: rdv.filter((r: any) => r.date_heure.split('T')[0] === aujourdhui).length,
-      cette_semaine: rdv.length // Placeholder
+      total: list.length,
+      programme: list.filter((r: any) => r.statut_nom?.toLowerCase().includes('planifié') || r.statut_nom?.toLowerCase().includes('programmé') || r.statut_id === 1).length,
+      confirme: list.filter((r: any) => r.statut_nom?.toLowerCase().includes('confirmé') || r.statut_id === 2).length,
+      termine: list.filter((r: any) => r.statut_nom?.toLowerCase().includes('terminé') || r.statut_id === 3).length,
+      annule: list.filter((r: any) => r.statut_nom?.toLowerCase().includes('annulé') || r.statut_id === 4).length,
+      aujourdhui: list.filter((r: any) => r.date_heure && r.date_heure.startsWith(today)).length,
+      cette_semaine: list.filter((r: any) => {
+        if (!r.date_heure) return false;
+        const d = new Date(r.date_heure);
+        return d >= startOfWeek && d <= endOfWeek;
+      }).length
     };
   }
 }

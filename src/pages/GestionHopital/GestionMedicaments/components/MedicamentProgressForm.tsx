@@ -55,7 +55,9 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
 
   const [isModifying, setIsModifying] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
-  const [_errors, _setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const loadInitData = async () => {
@@ -95,7 +97,7 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
   const totalSteps = 4;
 
   const nextStep = () => {
-    if (currentStep < totalSteps && validateStep(currentStep)) {
+    if (currentStep < totalSteps && validateStep(currentStep, true)) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -106,28 +108,87 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
     }
   };
 
-  const updateMedicamentField = (field: keyof MedicamentFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const validateStep = (step: number, updateState: boolean = true): boolean => {
+    let newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    if (step === 1) {
+      if (!formData.nom) newErrors.nom = "Le nom du médicament est obligatoire";
+      if (!formData.forme_pharmaceutique) newErrors.forme_pharmaceutique = "La forme pharmaceutique est obligatoire";
+      if (!formData.dosage_standard) newErrors.dosage_standard = "Le dosage est obligatoire";
+      
+      isValid = Object.keys(newErrors).length === 0;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => {
+          const e = { ...prev };
+          delete e.nom; delete e.forme_pharmaceutique; delete e.dosage_standard;
+          return e;
+        });
+      }
+      return isValid;
+    }
+
+    if (step === 2) {
+      if (formData.stock_minimum < 0) newErrors.stock_minimum = "Le stock minimum ne peut être négatif";
+      if (formData.stock_minimum === null || formData.stock_minimum === undefined || formData.stock_minimum.toString() === '') newErrors.stock_minimum = "Le stock minimum est obligatoire";
+      
+      if ((formData.stock_maximum ?? 0) < 1) newErrors.stock_maximum = "Le stock maximum doit être supérieur à 0";
+      if (!formData.stock_maximum) newErrors.stock_maximum = "Le stock maximum est obligatoire";
+
+      isValid = Object.keys(newErrors).length === 0;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => {
+          const e = { ...prev };
+          delete e.stock_minimum; delete e.stock_maximum;
+          return e;
+        });
+      }
+      return isValid;
+    }
+
+    return true;
   };
 
-  const validateStep = (step: number): boolean => {
-    switch (step) {
-      case 1:
-        return !!(formData.nom && formData.forme_pharmaceutique && formData.dosage_standard);
-      case 2:
-        return (formData.stock_minimum ?? 0) >= 0;
-      case 3:
-        return true; // Simple for now
-      case 4:
-        return true;
-      default:
-        return true;
+  // Memoize validities to prevent computation in render and potential loop triggers
+  const isStep1Valid = React.useMemo(() => validateStep(1, false), [formData.nom, formData.forme_pharmaceutique, formData.dosage_standard]);
+  const isStep2Valid = React.useMemo(() => validateStep(2, false), [formData.stock_minimum, formData.stock_maximum]);
+  const isStep3Valid = React.useMemo(() => validateStep(3, false), [formData.prix_unitaire]);
+  
+  const isCurrentStepValid = currentStep === 1 ? isStep1Valid : currentStep === 2 ? isStep2Valid : true;
+
+  const handleFieldBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateStep(currentStep, true);
+  };
+
+  const updateMedicamentField = (field: keyof MedicamentFormData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
   const handleSubmit = async () => {
-    if (validateStep(1) && validateStep(2) && validateStep(3)) {
-      await onSave(formData, isModifying);
+    setTouched({
+      nom: true, forme_pharmaceutique: true, dosage_standard: true,
+      stock_minimum: true, stock_maximum: true
+    });
+    
+    if (validateStep(1, true) && validateStep(2, true) && validateStep(3, true) && !isSaving) {
+      setIsSaving(true);
+      try {
+        await onSave(formData, isModifying);
+      } catch (error) {
+        console.error("Erreur lors de l'enregistrement du médicament:", error);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -169,7 +230,9 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
     </div>
   );
 
-  const inputClass = "w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500";
+  const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all duration-200";
+  const errorInputClass = "w-full px-4 py-3 border border-red-500 dark:border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-all duration-200";
+  const errorTextClass = "text-red-500 dark:text-red-400 text-sm mt-1";
 
   return (
     <div className="w-full h-[90vh] flex flex-col">
@@ -207,10 +270,14 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                       type="text"
                       value={formData.nom}
                       onChange={(e) => updateMedicamentField('nom', e.target.value)}
+                      onBlur={() => handleFieldBlur('nom')}
                       placeholder="Ex: Paracétamol"
-                      className={inputClass}
+                      className={errors.nom && touched.nom ? errorInputClass : inputClass}
                       required
                     />
+                    {errors.nom && touched.nom && (
+                      <div className={errorTextClass}>{errors.nom}</div>
+                    )}
                   </div>
 
                   <div>
@@ -233,12 +300,16 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                     <select
                       value={formData.forme_pharmaceutique}
                       onChange={(e) => updateMedicamentField('forme_pharmaceutique', e.target.value)}
-                      className={inputClass}
+                      onBlur={() => handleFieldBlur('forme_pharmaceutique')}
+                      className={errors.forme_pharmaceutique && touched.forme_pharmaceutique ? errorInputClass : inputClass}
                     >
                       {FORMES_PHARMACEUTIQUES.map(forme => (
                         <option key={forme} value={forme}>{forme}</option>
                       ))}
                     </select>
+                    {errors.forme_pharmaceutique && touched.forme_pharmaceutique && (
+                      <div className={errorTextClass}>{errors.forme_pharmaceutique}</div>
+                    )}
                   </div>
 
                   <div>
@@ -249,10 +320,14 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                       type="text"
                       value={formData.dosage_standard}
                       onChange={(e) => updateMedicamentField('dosage_standard', e.target.value)}
+                      onBlur={() => handleFieldBlur('dosage_standard')}
                       placeholder="Ex: 500mg, 10ml"
-                      className={inputClass}
+                      className={errors.dosage_standard && touched.dosage_standard ? errorInputClass : inputClass}
                       required
                     />
+                    {errors.dosage_standard && touched.dosage_standard && (
+                      <div className={errorTextClass}>{errors.dosage_standard}</div>
+                    )}
                   </div>
 
                   <div>
@@ -327,10 +402,14 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                     <input
                       type="number"
                       value={formData.stock_minimum}
-                      onChange={(e) => updateMedicamentField('stock_minimum', parseInt(e.target.value) || 0)}
-                      className={inputClass}
+                      onChange={(e) => updateMedicamentField('stock_minimum', parseInt(e.target.value))}
+                      onBlur={() => handleFieldBlur('stock_minimum')}
+                      className={errors.stock_minimum && touched.stock_minimum ? errorInputClass : inputClass}
                       min="0"
                     />
+                    {errors.stock_minimum && touched.stock_minimum && (
+                      <div className={errorTextClass}>{errors.stock_minimum}</div>
+                    )}
                   </div>
 
                   <div>
@@ -340,10 +419,14 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                     <input
                       type="number"
                       value={formData.stock_maximum}
-                      onChange={(e) => updateMedicamentField('stock_maximum', parseInt(e.target.value) || 0)}
-                      className={inputClass}
+                      onChange={(e) => updateMedicamentField('stock_maximum', parseInt(e.target.value))}
+                      onBlur={() => handleFieldBlur('stock_maximum')}
+                      className={errors.stock_maximum && touched.stock_maximum ? errorInputClass : inputClass}
                       min="1"
                     />
+                    {errors.stock_maximum && touched.stock_maximum && (
+                      <div className={errorTextClass}>{errors.stock_maximum}</div>
+                    )}
                   </div>
 
                   <div>
@@ -562,20 +645,30 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!validateStep(1) || !validateStep(2) || !validateStep(3)}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors ${validateStep(1) && validateStep(2) && validateStep(3)
-                  ? 'bg-green-600 text-white hover:bg-green-700'
+                disabled={!validateStep(1, false) || !validateStep(2, false) || !validateStep(3, false) || isSaving}
+                className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${validateStep(1, false) && validateStep(2, false) && validateStep(3, false) && !isSaving
+                  ? 'bg-green-600 text-white hover:bg-green-700 shadow-md active:scale-95'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                   }`}
               >
-                {isModifying ? 'Modifier' : 'Enregistrer'}
+                {isSaving ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Chargement...
+                  </>
+                ) : (
+                  isModifying ? 'Modifier' : 'Enregistrer'
+                )}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={nextStep}
-                disabled={!validateStep(currentStep)}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors ${validateStep(currentStep)
+                disabled={!validateStep(currentStep, false)}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${validateStep(currentStep, false)
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                   }`}

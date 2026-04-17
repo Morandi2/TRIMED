@@ -40,6 +40,9 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
   const [selectedPatientName, setSelectedPatientName] = useState('');
   const [selectedMedecinName, setSelectedMedecinName] = useState('');
   const [dateError, setDateError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -68,7 +71,8 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
               prescriptions: ordonnance.prescriptions || []
             }
           });
-          setSelectedConsultationName(ordonnanceService.obtenirConsultationInfo(ordonnance.consultation_id));
+          const consultation = ordonnanceService.obtenirConsultationInfo(ordonnance.consultation_id);
+          setSelectedConsultationName(consultation?.motif || `Consultation #${ordonnance.consultation_id}`);
           setSelectedPatientName((ordonnance as any).patient_nom || ordonnanceService.obtenirNomPatient(ordonnance.patient_id));
           setSelectedMedecinName((ordonnance as any).medecin_nom || ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id));
         }
@@ -82,7 +86,7 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
   const totalSteps = 3;
 
   const nextStep = () => {
-    if (currentStep < totalSteps && validateStep(currentStep)) {
+    if (currentStep < totalSteps && isCurrentStepValid) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -100,7 +104,6 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
       
       if (selectedDate < currentDate) {
         setDateError('La date d\'ordonnance ne peut pas être dans le passé');
-        return;
       } else {
         setDateError('');
       }
@@ -109,24 +112,81 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
     setFormData(prev => ({
       ordonnance: { ...prev.ordonnance, [field]: value }
     }));
-  };
-
-  const validateStep = (step: number): boolean => {
-    switch (step) {
-      case 1:
-        return !!(formData.ordonnance.consultation_id && formData.ordonnance.patient_id && formData.ordonnance.medecin_id);
-      case 2:
-        return !!(formData.ordonnance.date_ordonnance && formData.ordonnance.validite && !dateError);
-      case 3:
-        return true;
-      default:
-        return true;
+    if (errors[field]) {
+      setErrors(prev => {
+        const e = { ...prev };
+        delete e[field];
+        return e;
+      });
     }
   };
 
-  const handleSubmit = () => {
-    if (validateStep(1) && validateStep(2) && !dateError) {
-      onSave(formData, isModifying);
+  const validateStep = (step: number, updateState: boolean = true): boolean => {
+    let newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    if (step === 1) {
+      if (!formData.ordonnance.consultation_id) newErrors.consultation_id = "La consultation est obligatoire";
+      if (!formData.ordonnance.patient_id) newErrors.patient_id = "Le patient est obligatoire";
+      if (!formData.ordonnance.medecin_id) newErrors.medecin_id = "Le médecin est obligatoire";
+      
+      isValid = Object.keys(newErrors).length === 0;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => {
+          const e = { ...prev };
+          delete e.consultation_id; delete e.patient_id; delete e.medecin_id;
+          return e;
+        });
+      }
+      return isValid;
+    }
+    
+    if (step === 2) {
+      if (!formData.ordonnance.date_ordonnance) newErrors.date_ordonnance = "La date est obligatoire";
+      if (!formData.ordonnance.validite) newErrors.validite = "La validité est obligatoire";
+      
+      isValid = Object.keys(newErrors).length === 0 && !dateError;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => {
+          const e = { ...prev };
+          delete e.date_ordonnance; delete e.validite;
+          return e;
+        });
+      }
+      return isValid;
+    }
+    
+    if (step === 3) return true;
+
+    return true;
+  };
+
+  // Memoize validities to prevent computation in render and loop triggers
+  const isStep1Valid = React.useMemo(() => validateStep(1, false), [formData.ordonnance.consultation_id, formData.ordonnance.patient_id, formData.ordonnance.medecin_id]);
+  const isStep2Valid = React.useMemo(() => validateStep(2, false), [formData.ordonnance.date_ordonnance, formData.ordonnance.validite, dateError]);
+  const isCurrentStepValid = currentStep === 1 ? isStep1Valid : currentStep === 2 ? isStep2Valid : true;
+
+  const handleFieldBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateStep(currentStep, true);
+  };
+
+  const handleSubmit = async () => {
+    setTouched({
+      consultation_id: true, patient_id: true, medecin_id: true,
+      date_ordonnance: true, validite: true
+    });
+    if (isStep1Valid && isStep2Valid && !dateError && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onSave(formData, isModifying);
+      } catch (error) {
+        console.error("Erreur lors de l'enregistrement de l'ordonnance:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -210,7 +270,9 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
     </div>
   );
 
-  const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
+  const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200";
+  const errorInputClass = "w-full px-4 py-3 border border-red-500 dark:border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200";
+  const errorTextClass = "text-red-500 dark:text-red-400 text-sm mt-1";
 
   return (
     <div className="w-full h-[90vh] flex flex-col">
@@ -246,6 +308,7 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
                       required={true}
                       type="consultation"
                       placeholder="Rechercher une consultation..."
+                      error={touched.consultation_id && errors.consultation_id ? errors.consultation_id : undefined}
                     />
 
                     <SearchableSelect
@@ -254,6 +317,7 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
                       required={true}
                       type="patient"
                       placeholder="Rechercher un patient..."
+                      error={touched.patient_id && errors.patient_id ? errors.patient_id : undefined}
                     />
 
                     <SearchableSelect
@@ -262,6 +326,7 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
                       required={true}
                       type="medecin"
                       placeholder="Rechercher un médecin..."
+                      error={touched.medecin_id && errors.medecin_id ? errors.medecin_id : undefined}
                     />
                   </div>
                 </div>
@@ -282,13 +347,14 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
                         type="datetime-local"
                         value={formData.ordonnance.date_ordonnance}
                         onChange={(e) => updateOrdonnanceField('date_ordonnance', e.target.value)}
+                        onBlur={() => handleFieldBlur('date_ordonnance')}
                         min={getCurrentDateTime()}
-                        className={`${inputClass} ${dateError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                        className={errors.date_ordonnance && touched.date_ordonnance || dateError ? errorInputClass : inputClass}
                         required
                       />
-                      {dateError && (
-                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{dateError}</p>
-                      )}
+                      {(errors.date_ordonnance && touched.date_ordonnance) || dateError ? (
+                        <p className={errorTextClass}>{dateError || errors.date_ordonnance}</p>
+                      ) : null}
                     </div>
 
                     <div>
@@ -298,7 +364,8 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
                       <select
                         value={formData.ordonnance.validite}
                         onChange={(e) => updateOrdonnanceField('validite', e.target.value)}
-                        className={inputClass}
+                        onBlur={() => handleFieldBlur('validite')}
+                        className={errors.validite && touched.validite ? errorInputClass : inputClass}
                         required
                       >
                         <option value="">Sélectionner la validité...</option>
@@ -310,6 +377,9 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
                         <option value="6 mois">6 mois</option>
                         <option value="1 an">1 an</option>
                       </select>
+                      {errors.validite && touched.validite && (
+                        <p className={errorTextClass}>{errors.validite}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -441,22 +511,32 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!validateStep(1) || !validateStep(2) || dateError !== ''}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  validateStep(1) && validateStep(2) && !dateError
-                    ? 'bg-green-600 text-white hover:bg-green-700'
+                disabled={!isStep1Valid || !isStep2Valid || dateError !== '' || isSubmitting}
+                className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                  isStep1Valid && isStep2Valid && !dateError && !isSubmitting
+                    ? 'bg-green-600 text-white hover:bg-green-700 shadow-md active:scale-95'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                 }`}
               >
-                {isModifying ? 'Modifier' : 'Enregistrer'}
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Enregistrement...
+                  </>
+                ) : (
+                  isModifying ? 'Modifier' : 'Enregistrer'
+                )}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={nextStep}
-                disabled={!validateStep(currentStep)}
+                disabled={!isCurrentStepValid}
                 className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  validateStep(currentStep)
+                  isCurrentStepValid
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                 }`}

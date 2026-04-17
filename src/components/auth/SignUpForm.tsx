@@ -7,6 +7,7 @@ import Checkbox from "../form/input/Checkbox";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { InscriptionData } from "../../api/types/auth.types";
 import { Building2, MapPin, Phone, User, Settings, CreditCard, ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { validation } from "../../utils/validation";
 
 export default function SignUpForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -76,13 +77,18 @@ export default function SignUpForm() {
     const { name, value, type } = e.target as HTMLInputElement;
     const val = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
 
+    let finalValue = val;
+    if (typeof finalValue === 'string' && (name === 'telephone' || name === 'telephoneUrgence' || name === 'adminTelephone')) {
+      finalValue = validation.formatHaitiPhone(finalValue);
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: val,
+      [name]: finalValue,
       // Keep legacy fields in sync
-      adresse: name === 'adresseLigne1' ? value : prev.adresse,
+      adresse: name === 'adresseLigne1' ? (typeof finalValue === 'string' ? finalValue : prev.adresse) : prev.adresse,
       directeur: (name === 'prenomAdmin' || name === 'nomAdmin')
-        ? `${name === 'prenomAdmin' ? value : prev.prenomAdmin} ${name === 'nomAdmin' ? value : prev.nomAdmin}`.trim()
+        ? `${name === 'prenomAdmin' ? (typeof finalValue === 'string' ? finalValue : prev.prenomAdmin) : prev.prenomAdmin} ${name === 'nomAdmin' ? (typeof finalValue === 'string' ? finalValue : prev.nomAdmin) : prev.nomAdmin}`.trim()
         : prev.directeur
     }));
   };

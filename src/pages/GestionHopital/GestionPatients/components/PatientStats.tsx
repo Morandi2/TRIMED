@@ -1,6 +1,6 @@
 import React from 'react';
 import { Patient } from '../services/PatientService';
-
+import { Users, User, Baby, UserCheck } from 'lucide-react';
 
 interface PatientStatsProps {
   patients: Patient[];
@@ -8,96 +8,94 @@ interface PatientStatsProps {
 
 export const PatientStats: React.FC<PatientStatsProps> = ({ patients }) => {
   const calculateAge = (dateNaissance: string) => {
+    if (!dateNaissance) return -1; // -1 means unknown
     const today = new Date();
     const birthDate = new Date(dateNaissance);
+    if (isNaN(birthDate.getTime())) return -1;
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    
-    return age;
+    return age >= 0 ? age : -1;
   };
 
   const safePatients = Array.isArray(patients) ? patients : [];
+  const patientsAvecAge = safePatients.filter(p => calculateAge(p.date_naissance) >= 0);
 
   const stats = {
     total: safePatients.length,
     masculin: safePatients.filter(p => p.sexe === "M").length,
     feminin: safePatients.filter(p => p.sexe === "F").length,
-    enfants: safePatients.filter(p => calculateAge(p.date_naissance) < 18).length,
-    adultes: safePatients.filter(p => calculateAge(p.date_naissance) >= 18).length
+    enfants: patientsAvecAge.filter(p => calculateAge(p.date_naissance) < 18).length,
+    adultes: patientsAvecAge.filter(p => calculateAge(p.date_naissance) >= 18).length
   };
 
   return (
     <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-5">
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
-            <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
-            </svg>
+      {/* Total Patients */}
+      <div className="bg-white dark:bg-white/[0.02] p-5 rounded-3xl border border-gray-100 dark:border-white/[0.05] shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500">
+        <div className="absolute -right-2 -top-2 w-16 h-16 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition-colors" />
+        <div className="relative z-10 flex flex-col gap-3">
+          <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-600">
+            <Users className="h-5 w-5 stroke-[2.5px]" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Patients</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+            <p className="text-[10px] font-black text-blue-600/60 dark:text-blue-400 uppercase tracking-widest mb-0.5">Total Patients</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{stats.total}</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-            <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+      {/* Hommes */}
+      <div className="bg-white dark:bg-white/[0.02] p-5 rounded-3xl border border-gray-100 dark:border-white/[0.05] shadow-sm relative overflow-hidden group transition-all duration-500">
+        <div className="relative z-10 flex flex-col gap-3">
+          <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-emerald-600">
+            <User className="h-5 w-5 stroke-[2.5px]" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Patients Masculins</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.masculin}</p>
+            <p className="text-[10px] font-black text-emerald-600/60 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Hommes</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{stats.masculin}</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/20">
-            <svg className="h-6 w-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/>
-            </svg>
+      {/* Femmes */}
+      <div className="bg-white dark:bg-white/[0.02] p-5 rounded-3xl border border-gray-100 dark:border-white/[0.05] shadow-sm relative overflow-hidden group transition-all duration-500">
+        <div className="relative z-10 flex flex-col gap-3">
+          <div className="w-10 h-10 bg-pink-50 dark:bg-pink-900/20 rounded-xl flex items-center justify-center text-pink-600">
+            <User className="h-5 w-5 stroke-[2.5px]" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Patients Féminins</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.feminin}</p>
+            <p className="text-[10px] font-black text-pink-600/60 dark:text-pink-400 uppercase tracking-widest mb-0.5">Femmes</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{stats.feminin}</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20">
-            <svg className="h-6 w-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.5a2.5 2.5 0 110 5H9m4.5-5H15a2.5 2.5 0 110 5h-1.5m-5-5v10m5-10v10"/>
-            </svg>
+      {/* Enfants */}
+      <div className="bg-white dark:bg-white/[0.02] p-5 rounded-3xl border border-gray-100 dark:border-white/[0.05] shadow-sm relative overflow-hidden group transition-all duration-500">
+        <div className="relative z-10 flex flex-col gap-3">
+          <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center text-amber-600">
+            <Baby className="h-5 w-5 stroke-[2.5px]" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Enfants (&lt;18 ans)</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.enfants}</p>
+            <p className="text-[10px] font-black text-amber-600/60 dark:text-amber-400 uppercase tracking-widest mb-0.5">Enfants</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{stats.enfants}</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/20">
-            <svg className="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
+      {/* Adultes */}
+      <div className="bg-white dark:bg-white/[0.02] p-5 rounded-3xl border border-gray-100 dark:border-white/[0.05] shadow-sm relative overflow-hidden group transition-all duration-500">
+        <div className="relative z-10 flex flex-col gap-3">
+          <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600">
+            <UserCheck className="h-5 w-5 stroke-[2.5px]" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Adultes (≥18 ans)</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.adultes}</p>
+            <p className="text-[10px] font-black text-indigo-600/60 dark:text-indigo-400 uppercase tracking-widest mb-0.5">Adultes</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{stats.adultes}</p>
           </div>
         </div>
       </div>

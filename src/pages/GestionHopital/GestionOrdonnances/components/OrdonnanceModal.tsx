@@ -32,7 +32,7 @@ if (typeof document !== 'undefined' && !document.getElementById('ordonnance-moda
 interface OrdonnanceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (ordonnance: Ordonnance) => void;
+  onSave: (ordonnance: Ordonnance) => Promise<void>;
   ordonnanceId?: number;
   tenantId: number;
 }

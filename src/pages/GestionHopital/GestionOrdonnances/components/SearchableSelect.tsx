@@ -57,7 +57,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
       const consultations = ordonnanceService.obtenirConsultations();
       newOptions = consultations.map(c => ({
         id: c.consultation_id,
-        name: ordonnanceService.obtenirConsultationInfo(c.consultation_id),
+        name: ordonnanceService.obtenirConsultationInfo(c.consultation_id)?.motif || `Consultation #${c.consultation_id}`,
         extra: c.motif,
         searchText: `${ordonnanceService.obtenirNomPatient(c.patient_id)} ${c.motif}`
       }));

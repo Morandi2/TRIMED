@@ -57,29 +57,26 @@ export const PatientTable: React.FC<PatientTableProps> = ({
   };
 
   return (
-    <div className="max-w-full overflow-x-auto">
-      <Table>
+    <div className="overflow-x-auto">
+      <Table className="w-full min-w-[900px] whitespace-nowrap">
         <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
           <TableRow>
-            <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
-              ID
-            </TableCell>
-            <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
+            <TableCell isHeader className="py-4 px-6 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
               Patient
             </TableCell>
-            <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
+            <TableCell isHeader className="py-4 px-6 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
               Dossier Medical
             </TableCell>
-            <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
+            <TableCell isHeader className="py-4 px-6 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
               Âge & Date de Naissance
             </TableCell>
-            <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
+            <TableCell isHeader className="py-4 px-6 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
               Sexe
             </TableCell>
-            <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
+            <TableCell isHeader className="py-4 px-6 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
               Téléphone
             </TableCell>
-            <TableCell isHeader className="py-3 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
+            <TableCell isHeader className="py-4 px-6 font-medium text-gray-600 text-start text-theme-xs dark:text-gray-400">
               Actions
             </TableCell>
           </TableRow>
@@ -88,12 +85,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
         <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
           {currentPatients.map((patient) => (
             <TableRow key={patient.patient_id}>
-              <TableCell className="py-3">
-                <div className="font-mono text-gray-600 text-theme-sm dark:text-gray-400">
-                  #{patient.patient_id}
-                </div>
-              </TableCell>
-              <TableCell className="py-3">
+              <TableCell className="py-4 px-6">
                 <div className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
                   {patient.prenom} {patient.nom}
                 </div>
@@ -101,12 +93,12 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                   {patient.email}
                 </div>
               </TableCell>
-              <TableCell className="py-3">
+              <TableCell className="py-4 px-6">
                 <div className="font-mono text-gray-800 text-theme-sm dark:text-white/90">
                   {patient.numero_dossier_medical}
                 </div>
               </TableCell>
-              <TableCell className="py-3">
+              <TableCell className="py-4 px-6">
                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                   {patient.age ? `${patient.age} ans` : (patient.date_naissance ? `${calculateAge(patient.date_naissance)} ans` : "N/A")}
                 </div>
@@ -116,7 +108,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                   </div>
                 )}
               </TableCell>
-              <TableCell className="py-3">
+              <TableCell className="py-4 px-6">
                 <Badge
                   size="sm"
                   color={getSexeColor(patient.sexe)}
@@ -124,12 +116,12 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                   {getSexeText(patient.sexe)}
                 </Badge>
               </TableCell>
-              <TableCell className="py-3">
+              <TableCell className="py-4 px-6">
                 <div className="text-gray-800 text-theme-sm dark:text-white/90">
                   {patient.telephone || 'Non renseigné'}
                 </div>
               </TableCell>
-              <TableCell className="py-3">
+              <TableCell className="py-4 px-6">
                 <div className="flex items-center gap-2">
                   <Tooltip text="Voir les détails">
                     <button 

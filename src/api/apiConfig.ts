@@ -54,6 +54,13 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // Cache-buster universel pour forcer les requêtes GET à contourner le cache du navigateur
+    if (config.method?.toLowerCase() === 'get') {
+      config.params = config.params || {};
+      // Seuls les endpoints critiques nécessitent un rafraîchissement strict, mais on l'applique globalement
+      config.params._t = Date.now();
+    }
+
     // Log pour le débogage (désactiver en production)
     console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
       data: config.data,

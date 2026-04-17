@@ -1,5 +1,6 @@
 import React from 'react';
 import { HospitalConfig } from '../types/ConfigTypes';
+import { validation } from '../../../../utils/validation';
 
 interface Props {
  config: Partial<HospitalConfig>;

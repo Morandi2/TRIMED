@@ -187,11 +187,12 @@ export const djangoAuthApi = {
   },
 
   /**
-   * Liste des utilisateurs
+   * Liste des utilisateurs (Supporte la pagination si une URL est fournie)
    */
-  getUtilisateurs: async function (): Promise<ApiResponse<any[]>> {
+  getUtilisateurs: async function (url?: string): Promise<ApiResponse<any[]>> {
     try {
-      const response = await apiClient.get('/comptes/utilisateurs/');
+      const targetUrl = url || '/comptes/utilisateurs/';
+      const response = await apiClient.get(targetUrl);
       return { success: true, message: 'Utilisateurs récupérés avec succès', data: response.data };
     } catch (error: any) {
       return { success: false, message: 'Erreur lors de la récupération des utilisateurs', error: error.response?.data };

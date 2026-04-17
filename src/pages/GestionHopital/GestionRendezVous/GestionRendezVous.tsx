@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { rendezVousService } from './services/RendezVousService';
 import { RendezVousProgressForm } from './components/RendezVousProgressForm';
 import { 
   RendezVous, 
   RendezVousFormData, 
   RendezVousFilters,
-  RendezVousStats,
+  RendezVousStats as IRendezVousStats,
   RendezVousType,
   RendezVousStatut
 } from './types/RendezVousTypes';
@@ -17,15 +18,31 @@ import {
   TableHeader,
   TableRow,
 } from '../../../components/ui/table';
+import { RendezVousStats } from './components/RendezVousStats';
+import { 
+  Plus, 
+  Search, 
+  Calendar, 
+  Filter,
+  Pencil,
+  Trash,
+  ChevronLeft,
+  ChevronRight,
+  BadgeCheck,
+  CalendarDays
+} from 'lucide-react';
 
 interface GestionRendezVousProps {
   tenantId: number;
   hopitalNom?: string;
 }
 
+// Define the correct Badge color type based on what the component expects
+type BadgeColor = "primary" | "warning" | "success" | "info" | "error" | "light";
+
 export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, hopitalNom }) => {
   const [rendezVous, setRendezVous] = useState<RendezVous[]>([]);
-  const [stats, setStats] = useState<RendezVousStats>({
+  const [stats, setStats] = useState<IRendezVousStats>({
     total: 0,
     programme: 0,
     confirme: 0,
@@ -50,18 +67,24 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
   const [deletingId, setDeletingId] = useState<number | undefined>();
   const [types, setTypes] = useState<RendezVousType[]>([]);
   const [statuts, setStatuts] = useState<RendezVousStatut[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
 
   useEffect(() => {
     const init = async () => {
-      await Promise.all([
-        rendezVousService.loadMetadata(tenantId),
-        rendezVousService.loadCache(tenantId)
-      ]);
-      setTypes(rendezVousService.obtenirTypes());
-      setStatuts(rendezVousService.obtenirStatuts());
-      await loadData();
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          rendezVousService.loadMetadata(tenantId),
+          rendezVousService.loadCache(tenantId)
+        ]);
+        setTypes(rendezVousService.obtenirTypes());
+        setStatuts(rendezVousService.obtenirStatuts());
+        await loadData();
+      } finally {
+        setIsLoading(false);
+      }
     };
     init();
   }, [tenantId]);
@@ -69,32 +92,24 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
   const loadData = async () => {
     const data = await rendezVousService.obtenirTousRendezVous({ tenant: tenantId });
     const statistics = await rendezVousService.obtenirStatistiques(tenantId);
-    setRendezVous(data);
+    setRendezVous(data as any);
     setStats(statistics);
-    console.log('Données chargées:', data);
-    console.log('Statistiques:', statistics);
   };
 
   const handleSave = async (formData: RendezVousFormData, isModifying: boolean) => {
-    console.log('Données reçues dans handleSave:', formData);
-    
     let result;
-    
     if (editingRendezVous) {
-      result = await rendezVousService.modifierRendezVous(editingRendezVous.rendez_vous_id, formData);
+      result = await rendezVousService.modifierRendezVous(editingRendezVous.rendez_vous_id || (editingRendezVous as any).id, formData, tenantId);
     } else {
-      result = await rendezVousService.creerRendezVous(formData);
+      result = await rendezVousService.creeRendezVous(formData, tenantId);
     }
 
-    console.log('Résultat sauvegarde:', result);
-
     if (result.success) {
-      await loadData(); // Recharger les données
-      setShowModal(false); // Fermer le modal
+      await loadData();
+      setShowModal(false);
       setEditingRendezVous(null);
       showSuccess(isModifying ? 'Rendez-vous modifié avec succès' : 'Rendez-vous créé avec succès');
     } else {
-      console.error('Erreur:', result.errors);
       showSuccess('Erreur: ' + (result.errors?.join(', ') || 'Action échouée'), true);
     }
   };
@@ -126,19 +141,29 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
   const showSuccess = (message: string, isError: boolean = false) => {
     setSuccessMessage(message);
     setShowSuccessModal(true);
-    setTimeout(() => {
-      setShowSuccessModal(false);
-    }, 3000);
+    setTimeout(() => setShowSuccessModal(false), 3000);
   };
 
   const filteredRendezVous = rendezVous.filter(rdv => {
-    const matchesSearch = rdv.rendez_vous_id.toString().includes(filters.searchTerm) ||
-                         rdv.patient_id.toString().includes(filters.searchTerm) ||
-                         rdv.medecin_id.toString().includes(filters.searchTerm) ||
-                         (rdv.motif && rdv.motif.toLowerCase().includes(filters.searchTerm.toLowerCase()));
-    const matchesStatut = filters.statut === 'Tous' || rdv.statut_id.toString() === filters.statut;
-    const matchesType = filters.type === 'Tous' || rdv.type_id?.toString() === filters.type;
-    const matchesDate = !filters.date || rdv.date_heure.split('T')[0] === filters.date;
+    const searchLow = filters.searchTerm.toLowerCase();
+    const rdvId = String(rdv.rendez_vous_id || (rdv as any).id || '');
+    const patientId = String(rdv.patient_id || '');
+    const medecinId = String(rdv.medecin_id || '');
+    const motif = (rdv.motif || '').toLowerCase();
+    const patientNom = (rdv.patient_nom || '').toLowerCase();
+    const medecinNom = (rdv.medecin_nom || '').toLowerCase();
+
+    const matchesSearch = !filters.searchTerm || 
+                         rdvId.includes(searchLow) ||
+                         patientId.includes(searchLow) ||
+                         medecinId.includes(searchLow) ||
+                         motif.includes(searchLow) ||
+                         patientNom.includes(searchLow) ||
+                         medecinNom.includes(searchLow);
+
+    const matchesStatut = filters.statut === 'Tous' || String(rdv.statut_id) === filters.statut;
+    const matchesType = filters.type === 'Tous' || String(rdv.type_id) === filters.type;
+    const matchesDate = !filters.date || (rdv.date_heure && rdv.date_heure.split('T')[0] === filters.date);
     
     return matchesSearch && matchesStatut && matchesType && matchesDate;
   });
@@ -149,358 +174,251 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
     currentPage * itemsPerPage
   );
 
-  const typeOptions = ['Tous', ...types.map(t => t.type_id.toString())];
-  const statutOptions = ['Tous', ...statuts.map(s => s.statut_id.toString())];
-
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Non définie';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
       weekday: 'short',
-      year: 'numeric',
+      day: 'numeric',
       month: 'short',
-      day: 'numeric'
+      year: 'numeric'
     });
   };
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getStatutColor = (statut: string) => {
-    switch (statut) {
-      case 'Confirmé': return 'success';
-      case 'Programmé': return 'info';
-      case 'En cours': return 'warning';
-      case 'Terminé': return 'primary';
-      case 'Annulé': return 'error';
-      case 'Reporté': return 'warning';
-      default: return 'primary';
+  const getStatutColor = (statut: string): BadgeColor => {
+    switch (statut?.toLowerCase()) {
+      case 'planifié': return 'warning';
+      case 'confirmé': return 'success';
+      case 'terminé': return 'info';
+      case 'annulé': return 'error';
+      default: return 'light';
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'Urgence': return 'error';
-      case 'Téléconsultation': return 'info';
-      case 'Contrôle': return 'warning';
-      default: return 'primary';
-    }
+  const getTypeColor = (type: string): BadgeColor => {
+    const t = (type || '').toLowerCase();
+    if (t.includes('urgenc')) return 'error';
+    if (t.includes('tele')) return 'info';
+    if (t.includes('contr')) return 'warning';
+    return 'primary';
   };
 
   return (
-    <div className="space-y-6">
-      {/* STATISTIQUES */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="p-4 bg-blue-50 rounded-lg text-center">
-          <div className="text-2xl font-bold text-blue-700">{stats.total}</div>
-          <div className="text-sm text-blue-900">Total</div>
-        </div>
-        <div className="p-4 bg-yellow-50 rounded-lg text-center">
-          <div className="text-2xl font-bold text-yellow-700">{stats.programme}</div>
-          <div className="text-sm text-yellow-900">Programmé</div>
-        </div>
-        <div className="p-4 bg-green-50 rounded-lg text-center">
-          <div className="text-2xl font-bold text-green-700">{stats.confirme}</div>
-          <div className="text-sm text-green-900">Confirmé</div>
-        </div>
-        <div className="p-4 bg-gray-100 rounded-lg text-center">
-          <div className="text-2xl font-bold text-gray-700">{stats.termine}</div>
-          <div className="text-sm text-gray-900">Terminé</div>
-        </div>
-      </div>
-
-      {/* Contrôles */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-screen pb-12">
+      {/* Header Premium */}
+      <div className="relative mb-10 p-8 rounded-[2rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+        
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Gestion des Rendez-vous - {hopitalNom || "Mon Hôpital"}
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Planifiez et gérez les rendez-vous des patients
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20">
+                <Calendar className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-black uppercase tracking-tight">
+                Rendez-vous
+              </h1>
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              Filiale: <span className="text-gray-700 dark:text-gray-200">{hopitalNom || "Hôpital"}</span>
             </p>
           </div>
 
-          <div className="relative group">
-            <button 
-              onClick={() => {
-                setEditingRendezVous(null);
-                setShowModal(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Ajouter un Rendez-vous
-            </button>
+          <button 
+            onClick={() => { setEditingRendezVous(null); setShowModal(true); }}
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Plus className="h-5 w-5" />
+            Ajouter Rendez-vous
+          </button>
+        </div>
+      </div>
+
+      <RendezVousStats stats={stats} />
+
+      {/* Main Content Container */}
+      <div className="rounded-[2rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+        {/* Filters and Search */}
+        <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="Rechercher un patient, un médecin ou un motif..."
+                value={filters.searchTerm}
+                onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-black dark:text-white"
+              />
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl">
+                <Filter className="h-4 w-4 text-gray-400" />
+                <select
+                  value={filters.statut}
+                  onChange={(e) => setFilters(prev => ({ ...prev, statut: e.target.value }))}
+                  className="bg-transparent border-none text-sm font-medium focus:ring-0 outline-none text-black dark:text-white"
+                >
+                  <option value="Tous">Tous les statuts</option>
+                  {statuts.map(s => <option key={s.statut_id} value={String(s.statut_id)}>{s.nom}</option>)}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl">
+                <Calendar className="h-4 w-4 text-gray-400" />
+                <input
+                  type="date"
+                  value={filters.date}
+                  onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
+                  className="bg-transparent border-none text-sm font-medium focus:ring-0 outline-none cursor-pointer text-black dark:text-white"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Filtres */}
-        <div className="flex flex-col gap-4 mb-6 lg:flex-row">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Rechercher par ID, motif..."
-              value={filters.searchTerm}
-              onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
-            />
-          </div>
-
-          <div className="flex gap-3">
-            <select
-              value={filters.statut}
-              onChange={(e) => setFilters(prev => ({ ...prev, statut: e.target.value }))}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
-            >
-              {statutOptions.map(statut => (
-                <option key={statut} value={statut}>
-                  {statut === 'Tous' ? 'Tous' : statuts.find(s => s.statut_id.toString() === statut)?.nom}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
-            >
-              {typeOptions.map(type => (
-                <option key={type} value={type}>
-                  {type === 'Tous' ? 'Tous' : types.find(t => t.type_id.toString() === type)?.nom}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="date"
-              value={filters.date}
-              onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
-            />
-          </div>
-        </div>
-
-        {/* Tableau */}
-        <div className="overflow-x-auto">
+        {/* Table View */}
+        <div className="overflow-x-auto min-h-[400px]">
           <Table>
-            <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
+            <TableHeader className="bg-gray-50/50 dark:bg-white/[0.02]">
               <TableRow>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  ID
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Patient
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Médecin
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Date & Heure
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Motif
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Statut
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Type
-                </TableCell>
-                <TableCell isHeader className="py-3 font-medium text-gray-500 text-start text-xs dark:text-gray-400">
-                  Actions
-                </TableCell>
+                <TableCell isHeader className="py-4 px-6 text-theme-xs font-black text-gray-500 uppercase tracking-widest">Aperçu</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-theme-xs font-black text-gray-500 uppercase tracking-widest text-left">Bénéficiaire</TableCell>
+                <th className="px-6 py-4 text-theme-xs font-black text-gray-500 uppercase tracking-widest text-left">Praticien Responsable</th>
+                <TableCell isHeader className="py-4 px-6 text-theme-xs font-black text-gray-500 uppercase tracking-widest">Détails Du Motif</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-theme-xs font-black text-gray-500 uppercase tracking-widest text-right">Actions</TableCell>
               </TableRow>
             </TableHeader>
 
-            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {currentRendezVous.map((rdv) => (
-                <TableRow key={rdv.rendez_vous_id}>
-                  <TableCell className="py-3">
-                    <div>
-                      <p className="font-medium text-black text-sm dark:text-white/90">
-                        {rdv.rendez_vous_id}
-                      </p>
-                      <span className="text-gray-500 text-xs dark:text-gray-400">
-                        {formatDate(rdv.created_at)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <p className="font-medium text-black text-sm dark:text-white/90">
-                      {rdv.patient_nom || rendezVousService.obtenirNomPatient(rdv.patient_id || (rdv as any).patient)}
-                    </p>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <p className="text-black text-sm dark:text-white/90">
-                      {rdv.medecin_nom || rendezVousService.obtenirNomMedecin(rdv.medecin_id || (rdv as any).medecin)}
-                    </p>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <div>
-                      <p className="text-black text-sm dark:text-white/90">
-                        {formatDate(rdv.date_heure)}
-                      </p>
-                      <span className="text-gray-500 text-xs dark:text-gray-400">
-                        {formatTime(rdv.date_heure)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <p className="text-black text-sm dark:text-white/90 truncate max-w-xs">
-                      {rdv.motif || '-'}
-                    </p>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <Badge size="sm" color={getStatutColor(rdv.statut_nom || (statuts.find(s => s.statut_id === (rdv.statut_id || (rdv as any).statut))?.nom) || '')}>
-                      {rdv.statut_nom || statuts.find(s => s.statut_id === (rdv.statut_id || (rdv as any).statut))?.nom || 'Non spécifié'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <Badge size="sm" color={getTypeColor(rdv.type_nom || (types.find(t => t.type_id === (rdv.type_id || (rdv as any).type))?.nom) || '')}>
-                      {rdv.type_nom || types.find(t => t.type_id === (rdv.type_id || (rdv as any).type))?.nom || 'Non spécifié'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => handleEdit(rdv)}
-                        className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M7.33301 1.33331H5.99967C2.66634 1.33331 1.33301 2.66665 1.33301 5.99998V9.99998C1.33301 13.3333 2.66634 14.6666 5.99967 14.6666H9.99967C13.333 14.6666 14.6663 13.3333 14.6663 9.99998V8.66665" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M10.6933 2.01332L5.43992 7.26665C5.23992 7.46665 5.03992 7.85999 4.99992 8.14665L4.71325 10.1533C4.60659 10.88 5.11992 11.3867 5.84659 11.2867L7.85325 11C8.13325 10.96 8.52659 10.76 8.73325 10.56L13.9866 5.30665C14.8933 4.39999 15.3199 3.34665 13.9866 2.01332C12.6533 0.679985 11.5999 1.10665 10.6933 2.01332Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(rdv.rendez_vous_id)}
-                        className="rounded p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path d="M13.3337 3.98666C11.2203 3.76666 9.10033 3.65332 6.98699 3.65332C5.66699 3.65332 4.34699 3.71999 3.02699 3.85332L2.66699 3.98666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M5.66699 3.31333L5.81366 2.44C5.92033 1.80667 6.00033 1.33333 7.12699 1.33333H8.87366C10.0003 1.33333 10.0869 1.83333 10.187 2.44667L10.3337 3.31333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M12.5663 6.09332L12.133 12.8067C12.0597 13.8533 11.9997 14.6667 10.1397 14.6667H5.85967C3.99967 14.6667 3.93967 13.8533 3.86634 12.8067L3.43301 6.09332" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+            <TableBody>
+                {currentRendezVous.map((rdv) => (
+                  <TableRow key={rdv.rendez_vous_id} className="group hover:bg-white/60 dark:hover:bg-white/[0.03] transition-colors">
+                    <TableCell className="py-5 px-6">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-500">
+                          <CalendarDays className="h-6 w-6" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-theme-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">#{rdv.rendez_vous_id}</span>
+                          <span className="text-theme-xs text-gray-500 italic uppercase">{formatDate(rdv.date_heure)}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5 px-6">
+                      <div className="flex flex-col">
+                        <span className="text-theme-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{rdv.patient_nom}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5 px-6">
+                      <div className="flex flex-col">
+                        <span className="text-theme-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{rdv.medecin_nom}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5 px-6">
+                      <div className="space-y-2">
+                        <p className="text-theme-sm text-gray-700 dark:text-gray-300 line-clamp-1 italic font-medium">"{rdv.motif || 'Aucun motif'}"</p>
+                        <div className="flex gap-2">
+                          <Badge size="sm" color={getStatutColor(rdv.statut_nom || '')}>{rdv.statut_nom}</Badge>
+                          <Badge variant="light" size="sm" color={getTypeColor(rdv.type_nom || '')}>{rdv.type_nom}</Badge>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5 px-6 text-right">
+                      <div className="flex items-center justify-end gap-2 transition-all">
+                        <button 
+                          onClick={() => handleEdit(rdv)}
+                          className="p-2.5 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white transition-all active:scale-95"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(rdv.rendez_vous_id)}
+                          className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all active:scale-95"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
 
-          {filteredRendezVous.length === 0 && (
-            <div className="text-center py-8">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Aucun rendez-vous trouvé</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Aucun rendez-vous ne correspond à vos critères de recherche.
-              </p>
+          {filteredRendezVous.length === 0 && !isLoading && (
+            <div className="py-20 text-center">
+              <Calendar className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-700 mb-4" />
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Aucun rendez-vous</h3>
+              <p className="text-gray-500 dark:text-gray-400">Essayez de changer vos filtres ou créez-en un nouveau.</p>
             </div>
           )}
+
+          {isLoading && (
+            <TableSkeleton rows={5} columns={4} />
+          )}
         </div>
+
+        {/* Pagination Premium */}
+        {totalPages > 1 && (
+          <div className="p-6 border-t border-gray-100 dark:border-white/[0.05] bg-gray-50/30 dark:bg-transparent flex items-center justify-between">
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">
+              Affichage de {currentRendezVous.length} sur {filteredRendezVous.length} rendez-vous
+            </p>
+            <div className="flex items-center gap-2">
+              <button 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+                className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <div className="flex items-center px-4 py-2 rounded-xl bg-blue-600 text-white font-black text-sm shadow-lg shadow-blue-600/20">
+                {currentPage} / {totalPages}
+              </div>
+              <button 
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => p + 1)}
+                className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal RendezVous Progress */}
       {showModal && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl h-[95vh]">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-[2rem] shadow-2xl overflow-hidden h-[90vh]">
             <RendezVousProgressForm
               tenantId={tenantId}
               onSave={handleSave}
-              onClose={() => {
-                setShowModal(false);
-                setEditingRendezVous(null);
-              }}
+              onClose={() => { setShowModal(false); setEditingRendezVous(null); }}
               rendezVousId={editingRendezVous?.rendez_vous_id}
-              onSuccess={(message) => {
-                console.log('Success callback:', message);
-              }}
             />
           </div>
         </div>
       )}
 
-      {/* Modal de suppression */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-red-600 dark:text-red-400">
-                  <path d="M12 9V11M12 15H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                  Confirmer la suppression
-                </h3>
-              </div>
-            </div>
+      {/* Modern Confirm Delete Modal */}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={() => { setShowDeleteModal(false); setDeletingId(undefined); }}
+        title="Supprimer le rendez-vous"
+        message={`Êtes-vous sûr de vouloir supprimer le rendez-vous #${deletingId} ? Cette action est irréversible.`}
+      />
 
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Êtes-vous sûr de vouloir supprimer ce rendez-vous ? Cette action est irréversible.
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de succès */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-600 dark:text-green-400">
-                  <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                  Succès
-                </h3>
-              </div>
-            </div>
-
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {successMessage}
-            </p>
-
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Stylish Success Notification */}
+      <NotificationToast
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        message={successMessage}
+        type={successMessage.toLowerCase().includes('erreur') ? 'error' : 'success'}
+      />
     </div>
   );
 };

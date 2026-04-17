@@ -16,24 +16,6 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
   consultationId
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<ConsultationFormData>({
-    consultation: {
-      patient_id: 0,
-      medecin_id: 0,
-      rendez_vous_id: undefined,
-      date_consultation: '',
-      motif: '',
-      diagnostic_principal: '',
-      notes: ''
-    }
-  });
-
-  const [isModifying, setIsModifying] = useState(false);
-  const [selectedPatientName, setSelectedPatientName] = useState('');
-  const [selectedMedecinName, setSelectedMedecinName] = useState('');
-  const [selectedSalleName, setSelectedSalleName] = useState('');
-  const [dateError, setDateError] = useState('');
-
   // Obtenir la date/heure actuelle au format datetime-local
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -44,6 +26,27 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
     const minutes = String(now.getMinutes()).padStart(2, '0');
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
+
+  const [formData, setFormData] = useState<ConsultationFormData>({
+    consultation: {
+      patient_id: 0,
+      medecin_id: 0,
+      rendez_vous_id: undefined,
+      date_consultation: getCurrentDateTime(),
+      motif: '',
+      diagnostic_principal: '',
+      notes: ''
+    }
+  });
+
+  const [isModifying, setIsModifying] = useState(false);
+  const [selectedPatientName, setSelectedPatientName] = useState('');
+  const [selectedMedecinName, setSelectedMedecinName] = useState('');
+  const [selectedSalleName, setSelectedSalleName] = useState('');
+  const [dateError] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const loadConsultationData = async () => {
@@ -76,7 +79,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
   const totalSteps = 3;
 
   const nextStep = () => {
-    if (currentStep < totalSteps && validateStep(currentStep)) {
+    if (currentStep < totalSteps && isCurrentStepValid) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -88,39 +91,80 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
   };
 
   const updateConsultationField = (field: string, value: any) => {
-    if (field === 'date_consultation') {
-      const selectedDate = new Date(value);
-      const currentDate = new Date();
-      
-      if (selectedDate < currentDate) {
-        setDateError('La date de consultation ne peut pas être dans le passé');
-        return;
-      } else {
-        setDateError('');
-      }
-    }
-    
     setFormData(prev => ({
       consultation: { ...prev.consultation, [field]: value }
     }));
-  };
-
-  const validateStep = (step: number): boolean => {
-    switch (step) {
-      case 1:
-        return !!(formData.consultation.patient_id && formData.consultation.medecin_id && selectedSalleName);
-      case 2:
-        return !!(formData.consultation.date_consultation && formData.consultation.motif && !dateError);
-      case 3:
-        return true;
-      default:
-        return true;
+    if (errors[field]) {
+      setErrors(prev => {
+        const e = { ...prev };
+        delete e[field];
+        return e;
+      });
     }
   };
 
-  const handleSubmit = () => {
-    if (validateStep(1) && validateStep(2) && !dateError) {
-      onSave(formData, isModifying);
+  const validateStep = (step: number, updateState: boolean = true): boolean => {
+    let newErrors: Record<string, string> = {};
+    let isValid = true;
+    
+    if (step === 1) {
+      if (!formData.consultation.patient_id) newErrors.patient_id = "Le patient est obligatoire";
+      if (!formData.consultation.medecin_id) newErrors.medecin_id = "Le médecin est obligatoire";
+      
+      isValid = Object.keys(newErrors).length === 0;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => {
+          const e = { ...prev };
+          delete e.patient_id; delete e.medecin_id;
+          return e;
+        });
+      }
+      return isValid;
+    }
+    
+    if (step === 2) {
+      if (!formData.consultation.date_consultation) newErrors.date_consultation = "La date et l'heure sont obligatoires";
+      if (!formData.consultation.motif || !formData.consultation.motif.trim()) newErrors.motif = "Le motif est obligatoire";
+      
+      isValid = Object.keys(newErrors).length === 0;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => {
+          const e = { ...prev };
+          delete e.date_consultation; delete e.motif;
+          return e;
+        });
+      }
+      return isValid;
+    }
+    
+    return true;
+  };
+
+  // Memoize validities to prevent computation in render and potential loop triggers
+  const isStep1Valid = React.useMemo(() => validateStep(1, false), [formData.consultation.patient_id, formData.consultation.medecin_id]);
+  const isStep2Valid = React.useMemo(() => validateStep(2, false), [formData.consultation.date_consultation, formData.consultation.motif]);
+  const isCurrentStepValid = currentStep === 1 ? isStep1Valid : currentStep === 2 ? isStep2Valid : true;
+
+  const handleFieldBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateStep(currentStep, true);
+  };
+
+  const handleSubmit = async () => {
+    setTouched({
+      patient_id: true, medecin_id: true, date_consultation: true, motif: true
+    });
+    if (isStep1Valid && isStep2Valid && !isSaving) {
+      setIsSaving(true);
+      try {
+        await onSave(formData, isModifying);
+      } catch (error) {
+        console.error("Erreur lors de l'enregistrement de la consultation:", error);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -181,7 +225,9 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
     </div>
   );
 
-  const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
+  const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200";
+  const errorInputClass = "w-full px-4 py-3 border border-red-500 dark:border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200";
+  const errorTextClass = "text-red-500 dark:text-red-400 text-sm mt-1";
 
   return (
     <div className="w-full h-[90vh] flex flex-col">
@@ -217,6 +263,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
                       required={true}
                       type="patient"
                       placeholder="Rechercher un patient..."
+                      error={touched.patient_id && errors.patient_id ? errors.patient_id : undefined}
                     />
 
                     <SearchableSelect
@@ -225,6 +272,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
                       required={true}
                       type="medecin"
                       placeholder="Rechercher un médecin..."
+                      error={touched.medecin_id && errors.medecin_id ? errors.medecin_id : undefined}
                     />
 
                     <SearchableSelect
@@ -253,12 +301,13 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
                         type="datetime-local"
                         value={formData.consultation.date_consultation}
                         onChange={(e) => updateConsultationField('date_consultation', e.target.value)}
+                        onBlur={() => handleFieldBlur('date_consultation')}
                         min={getCurrentDateTime()}
-                        className={`${inputClass} ${dateError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                        className={errors.date_consultation && touched.date_consultation ? errorInputClass : inputClass}
                         required
                       />
-                      {dateError && (
-                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{dateError}</p>
+                      {errors.date_consultation && touched.date_consultation && (
+                        <p className={errorTextClass}>{errors.date_consultation}</p>
                       )}
                     </div>
 
@@ -269,11 +318,15 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
                       <textarea
                         value={formData.consultation.motif}
                         onChange={(e) => updateConsultationField('motif', e.target.value)}
-                        className={inputClass}
+                        onBlur={() => handleFieldBlur('motif')}
+                        className={errors.motif && touched.motif ? errorInputClass : inputClass}
                         rows={4}
                         placeholder="Décrivez le motif de la consultation..."
                         required
                       />
+                      {errors.motif && touched.motif && (
+                        <p className={errorTextClass}>{errors.motif}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -346,22 +399,32 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!validateStep(1) || !validateStep(2)}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  validateStep(1) && validateStep(2)
-                    ? 'bg-green-600 text-white hover:bg-green-700'
+                disabled={!isStep1Valid || !isStep2Valid || isSaving}
+                className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                  isStep1Valid && isStep2Valid && !isSaving
+                    ? 'bg-green-600 text-white hover:bg-green-700 shadow-md active:scale-95'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                 }`}
               >
-                {isModifying ? 'Modifier' : 'Enregistrer'}
+                {isSaving ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Chargement...
+                  </>
+                ) : (
+                  isModifying ? 'Modifier' : 'Enregistrer'
+                )}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={nextStep}
-                disabled={!validateStep(currentStep)}
+                disabled={!isCurrentStepValid}
                 className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                  validateStep(currentStep)
+                  isCurrentStepValid
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                 }`}

@@ -1,8 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { consultationService, Consultation } from './services/ConsultationService';
 import { ConsultationModal } from './components/ConsultationModal';
 import { ConsultationPrintPage } from './components/ConsultationPrintPage';
 import { ConsultationStats } from './components/ConsultationStats';
+import { formatDateTimeFR } from '../../../utils/dateUtils';
+import Badge from '../../../components/ui/badge/Badge';
+import { 
+  Plus, 
+  Search, 
+  FileText, 
+  Eye, 
+  Pencil, 
+  Trash, 
+  Printer, 
+  X, 
+  AlertTriangle, 
+  CheckCircle,
+  MoreVertical,
+  Calendar,
+  User
+} from 'lucide-react';
 
 interface GestionConsultationsProps {
   tenantId: number;
@@ -14,11 +32,17 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const init = async () => {
-      await consultationService.loadCache(tenantId);
-      await chargerConsultations();
+      setIsLoading(true);
+      try {
+        await consultationService.loadCache(tenantId);
+        await chargerConsultations();
+      } finally {
+        setIsLoading(false);
+      }
     };
     init();
   }, [tenantId]);
@@ -121,148 +145,185 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
   });
 
   return (
-    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Gestion des Consultations
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  {hopitalNom || "Mon Hôpital"}
-                </p>
+    <div className="min-h-screen pb-12 space-y-8">
+      {/* Header Premium */}
+      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+        
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20">
+                <FileText className="h-6 w-6 text-white" />
               </div>
-              <button
-                onClick={handleNouvelleConsultation}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center gap-2 font-medium shadow-sm hover:shadow-md"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Enregistrer une Consultation
-              </button>
+              <h1 className="text-2xl font-black uppercase tracking-tight">
+                Consultations
+              </h1>
             </div>
-
-            {/* Seksyon Estatistik */}
-            <ConsultationStats consultations={consultations} />
-
-            <div className="flex gap-4 mb-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Rechercher par patient, médecin ou motif..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              {filteredConsultations.length} consultation(s) trouvée(s)
-            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+              Filiale: <span className="text-gray-700 dark:text-gray-200">{hopitalNom || "Hôpital Santé Plus"}</span>
+            </p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+          <button 
+            onClick={handleNouvelleConsultation}
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Plus className="h-5 w-5" />
+            Ajouter Consultation
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Quick View */}
+      <ConsultationStats consultations={consultations} />
+
+      {/* Glass Container for Table & Filters */}
+      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden">
+        {/* Filters Bar */}
+        <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="flex-1 w-full relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Rechercher un dossier, médecin ou symptôme..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-600/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
+              />
+            </div>
+            <div className="flex items-center gap-3 text-[10px] font-black text-gray-400 bg-gray-100/50 dark:bg-white/5 px-5 py-3 rounded-xl uppercase tracking-widest border border-gray-100 dark:border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></div>
+              {filteredConsultations.length} RÉSULTATS
+            </div>
+          </div>
+        </div>
+
+        {/* Table Section */}
+        <div className="overflow-x-auto min-h-[400px]">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50/50 dark:bg-white/[0.02]">
+                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Bénéficiaire</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Praticien Responsable</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Session Temporelle</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Motif / Diagnostic</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
+              {isLoading ? (
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Patient
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Médecin
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Date/Heure
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Motif
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <td colSpan={5}>
+                    <TableSkeleton rows={5} columns={4} />
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredConsultations.map((consultation) => (
-                  <tr key={consultation.consultation_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {consultation.patient_nom || consultationService.obtenirNomPatient(consultation.patient_id)}
+              ) : filteredConsultations.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-20 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="w-20 h-20 bg-gray-50 dark:bg-white/5 rounded-[2rem] flex items-center justify-center mb-4">
+                        <FileText className="w-10 h-10 text-gray-300" />
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {consultation.medecin_nom || consultationService.obtenirNomMedecin(consultation.medecin_id)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {new Date(consultation.date_consultation).toLocaleDateString('fr-FR', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 dark:text-white max-w-xs truncate">
-                        {consultation.motif}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => handleVoirConsultation(consultation.consultation_id)}
-                          className="rounded p-1.5 text-green-600 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900/20 transition-all duration-200"
-                          title="Voir les détails"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                        <button 
-                          onClick={() => handleModifierConsultation(consultation.consultation_id)}
-                          className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-all duration-200"
-                          title="Modifier"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M7.33301 1.33331H5.99967C2.66634 1.33331 1.33301 2.66665 1.33301 5.99998V9.99998C1.33301 13.3333 2.66634 14.6666 5.99967 14.6666H9.99967C13.333 14.6666 14.6663 13.3333 14.6663 9.99998V8.66665" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M10.6933 2.01332L5.43992 7.26665C5.23992 7.46665 5.03992 7.85999 4.99992 8.14665L4.71325 10.1533C4.60659 10.88 5.11992 11.3867 5.84659 11.2867L7.85325 11C8.13325 10.96 8.52659 10.76 8.73325 10.56L13.9866 5.30665C14.8933 4.39999 15.3199 3.34665 13.9866 2.01332C12.6533 0.679985 11.5999 1.10665 10.6933 2.01332Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                        <button 
-                          onClick={() => handleSupprimerConsultation(consultation.consultation_id)}
-                          className="rounded p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200"
-                          title="Supprimer"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M13.3337 3.98666C11.2203 3.76666 9.10033 3.65332 6.98699 3.65332C5.66699 3.65332 4.34699 3.71999 3.02699 3.85332L2.66699 3.98666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M5.66699 3.31333L5.81366 2.44C5.92033 1.80667 6.00033 1.33333 7.12699 1.33333H8.87366C10.0003 1.33333 10.0869 1.83333 10.187 2.44667L10.3337 3.31333" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M12.5663 6.09332L12.133 12.8067C12.0597 13.8533 11.9997 14.6667 10.1397 14.6667H5.85967C3.99967 14.6667 3.93967 13.8533 3.86634 12.8067L3.43301 6.09332" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-[10px]">Aucune session trouvée</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredConsultations.map((consultation) => {
+                  const patientName = consultation.patient_nom || consultationService.obtenirNomPatient(consultation.patient_id);
+                  const colors = ['bg-blue-500', 'bg-purple-500', 'bg-indigo-500', 'bg-emerald-500', 'bg-amber-500'];
+                  const avatarColor = colors[patientName.length % colors.length];
 
-            {filteredConsultations.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-gray-500 dark:text-gray-400">
-                  Aucune consultation trouvée
-                </div>
-              </div>
-            )}
-          </div>
+                  return (
+                    <tr key={consultation.consultation_id} className="hover:bg-white/60 dark:hover:bg-white/[0.03] transition-all duration-200 group">
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-2xl ${avatarColor} flex items-center justify-center text-white font-black text-sm shadow-lg ring-4 ring-white/50 dark:ring-transparent transition-transform group-hover:scale-110`}>
+                            {patientName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                              {patientName}
+                            </span>
+                            <span className="text-[10px] font-bold text-blue-500 uppercase">Consultation #{consultation.consultation_id}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                            <User className="w-4 h-4 text-gray-400" />
+                          </div>
+                          <span className="text-sm font-bold text-gray-600 dark:text-gray-300">
+                            Dr. {consultation.medecin_nom || consultationService.obtenirNomMedecin(consultation.medecin_id)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-black text-gray-900 dark:text-gray-100">
+                            {consultation.date_consultation ? new Date(consultation.date_consultation).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-black uppercase tracking-tighter italic">
+                            {consultation.date_consultation ? new Date(consultation.date_consultation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col gap-2">
+                          <Badge 
+                            color={
+                              consultation.motif?.toLowerCase().includes('urgence') ? 'error' : 
+                              consultation.motif?.toLowerCase().includes('suivi') ? 'info' : 
+                              'primary'
+                            }
+                            size="sm"
+                            className="w-fit font-black uppercase tracking-widest text-[9px] py-1 px-3 rounded-lg"
+                          >
+                            {consultation.motif}
+                          </Badge>
+                          {consultation.diagnostic_principal && (
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 max-w-[200px] italic font-medium">
+                              {consultation.diagnostic_principal}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap text-right">
+                        <div className="flex justify-end gap-2 transition-all duration-300">
+                          <button 
+                            onClick={() => handleVoirConsultation(consultation.consultation_id)}
+                            className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
+                            title="Voir"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleModifierConsultation(consultation.consultation_id)}
+                            className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-600 hover:text-white transition-all active:scale-90"
+                            title="Modifier"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleSupprimerConsultation(consultation.consultation_id)}
+                            className="p-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all active:scale-90"
+                            title="Supprimer"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -274,66 +335,85 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
         tenantId={tenantId}
       />
 
-      {/* Modal de visualisation */}
+      {/* Modern Visualisation Modal */}
       {modalType === 'view' && selectedConsultation && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center animate-fadeIn">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal}></div>
-          <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Détails de la Consultation</h2>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handlePrintConsultation(selectedConsultation)}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                    Imprimer
-                  </button>
-                  <button onClick={closeModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
+          <div className="relative bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/10">
+            <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-transparent">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-600 rounded-2xl">
+                  <Eye className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Détails de la Session</h2>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Consultation #{selectedConsultation.consultation_id}</p>
                 </div>
               </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handlePrintConsultation(selectedConsultation)}
+                  className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+                >
+                  <Printer className="w-5 h-5" />
+                </button>
+                <button onClick={closeModal} className="p-3 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
-            <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Patient:</label>
-                    <p className="text-gray-900 dark:text-white">{selectedConsultation.patient_nom || consultationService.obtenirNomPatient(selectedConsultation.patient_id)}</p>
+            
+            <div className="p-8 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Patient</label>
+                    <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
+                      {selectedConsultation.patient_nom || consultationService.obtenirNomPatient(selectedConsultation.patient_id)}
+                    </p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Médecin:</label>
-                    <p className="text-gray-900 dark:text-white">{selectedConsultation.medecin_nom || consultationService.obtenirNomMedecin(selectedConsultation.medecin_id)}</p>
+                  <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Praticien</label>
+                    <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
+                      {selectedConsultation.medecin_nom || consultationService.obtenirNomMedecin(selectedConsultation.medecin_id)}
+                    </p>
                   </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Date et heure:</label>
-                  <p className="text-gray-900 dark:text-white">
-                    {new Date(selectedConsultation.date_consultation).toLocaleDateString('fr-FR', {
-                      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
-                    })}
-                  </p>
+
+                <div className="space-y-6">
+                  <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 flex items-center justify-between">
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Date & Heure</label>
+                      <p className="font-black text-gray-900 dark:text-white">
+                        {formatDateTimeFR(selectedConsultation.date_consultation)}
+                      </p>
+                    </div>
+                    <Calendar className="w-8 h-8 text-blue-500 opacity-20" />
+                  </div>
+                  <div className="p-6 rounded-3xl bg-blue-600 shadow-xl shadow-blue-600/20">
+                    <label className="text-[10px] font-black text-white/60 uppercase tracking-widest block mb-1">Motif Principal</label>
+                    <p className="font-black text-white text-lg tracking-tight">
+                      {selectedConsultation.motif}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Motif:</label>
-                  <p className="text-gray-900 dark:text-white">{selectedConsultation.motif}</p>
-                </div>
+              </div>
+
+              <div className="mt-8 space-y-6">
                 {selectedConsultation.diagnostic_principal && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Diagnostic principal:</label>
-                    <p className="text-gray-900 dark:text-white">{selectedConsultation.diagnostic_principal}</p>
+                  <div className="p-6 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Diagnostic Principal</label>
+                    <p className="text-gray-900 dark:text-white font-medium leading-relaxed italic">
+                    "{selectedConsultation.diagnostic_principal}"
+                    </p>
                   </div>
                 )}
                 {selectedConsultation.notes && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Notes:</label>
-                    <p className="text-gray-900 dark:text-white">{selectedConsultation.notes}</p>
+                  <div className="p-6 rounded-3xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
+                    <label className="text-[10px] font-black text-amber-600/60 dark:text-amber-400/60 uppercase tracking-widest block mb-2">Notes & Observations</label>
+                    <p className="text-gray-800 dark:text-gray-200 font-medium whitespace-pre-wrap leading-relaxed">
+                      {selectedConsultation.notes}
+                    </p>
                   </div>
                 )}
               </div>
@@ -342,79 +422,23 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
         </div>
       )}
 
-      {/* Modal de confirmation de suppression */}
-      {modalType === 'delete' && selectedConsultation && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center animate-fadeIn">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal}></div>
-          <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-md shadow-2xl">
-            <div className="p-6">
-              <div className="flex items-center mb-4">
-                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full mr-3">
-                  <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Confirmer la suppression</h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Êtes-vous sûr de vouloir supprimer cette consultation ? Cette action est irréversible.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modern Confirm Delete Modal */}
+      <DeleteConfirmModal
+        isOpen={modalType === 'delete' && !!selectedConsultation}
+        onConfirm={handleDeleteConfirm}
+        onCancel={closeModal}
+        title="Supprimer la consultation"
+        entityId={selectedConsultation?.consultation_id}
+        message={`Êtes-vous sûr de vouloir supprimer la consultation #${selectedConsultation?.consultation_id} ? Cette action effacera définitivement les données.`}
+      />
 
-      {/* Modal de succès/erreur */}
-      {successModal.isOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center animate-fadeIn">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSuccessModal(prev => ({ ...prev, isOpen: false }))}></div>
-          <div className="relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-md shadow-2xl">
-            <div className="p-6">
-              <div className="flex items-center mb-4">
-                <div className={`p-2 rounded-full mr-3 ${
-                  successModal.type === 'success' 
-                    ? 'bg-green-100 dark:bg-green-900/30' 
-                    : 'bg-red-100 dark:bg-red-900/30'
-                }`}>
-                  {successModal.type === 'success' ? (
-                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  )}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{successModal.title}</h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">{successModal.message}</p>
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setSuccessModal(prev => ({ ...prev, isOpen: false }))}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  OK
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Stylish Success/Error Notification */}
+      <NotificationToast
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal(prev => ({ ...prev, isOpen: false }))}
+        message={successModal.message}
+        type={successModal.type === 'error' ? 'error' : 'success'}
+      />
 
       {/* Page d'impression */}
       {showPrintPage && printConsultation && (

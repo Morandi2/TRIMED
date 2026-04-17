@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PatientFormData, patientService } from '../services/PatientService';
+import { validation } from '../../../../utils/validation';
 
 interface PatientProgressFormProps {
     hopitalId: number;
@@ -43,6 +44,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
     const [isModifying, setIsModifying] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         const loadPatientData = async () => {
@@ -138,9 +140,9 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
 
         // Validasyon telefòn
         if (telephone && telephone.trim().length > 0) {
-            const cleanedPhone = telephone.replace(/\D/g, '');
-            if (cleanedPhone.length !== 11) { // +509 + 8 chif = 11 chif
-                newErrors.telephone = 'Le numéro doit avoir 8 chiffres après +509';
+            const phoneVal = validation.validateHaitiPhone(telephone);
+            if (!phoneVal.valid) {
+                newErrors.telephone = phoneVal.message!;
             }
         }
 
@@ -243,7 +245,9 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
         }));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        if (isSaving) return;
+
         const validation = validateStep1();
         setErrors(validation.newErrors);
         setTouched({
@@ -252,7 +256,14 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
         });
 
         if (validation.isValid) {
-            onSave(formData, isModifying);
+            setIsSaving(true);
+            try {
+                await onSave(formData, isModifying);
+            } catch (error) {
+                console.error("Erreur lors de l'enregistrement:", error);
+            } finally {
+                setIsSaving(false);
+            }
         }
     };
 
@@ -267,51 +278,16 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
         updatePatientField('numero_identification_nationale', formatted);
     };
 
-    const formatTelephone = (value: string): string => {
-        const cleaned = value.replace(/\D/g, '');
-
-        // Si +509 est déjà présent, s'assurer qu'il y a 8 chiffres après
-        if (cleaned.startsWith('509')) {
-            const numbersAfter509 = cleaned.slice(3);
-            if (numbersAfter509.length <= 8) {
-                const formatted = numbersAfter509.replace(/(\d{2})(?=\d)/g, '$1 ');
-                return `+509 ${formatted}`.trim();
-            }
-        }
-
-        // Si seulement 8 chiffres, ajouter +509
-        if (cleaned.length === 8) {
-            const formatted = cleaned.replace(/(\d{2})(?=\d)/g, '$1 ');
-            return `+509 ${formatted}`.trim();
-        }
-
-        return value;
-    };
-
     const handleTelephoneChange = (value: string) => {
-        let formatted = value;
-
-        // Si l'utilisateur efface, ne pas formater
-        if (value.length < 6) {
-            updatePatientField('telephone', value);
-            return;
-        }
-
-        // Formatage cohérent
-        if (!value.startsWith('+509')) {
-            const cleaned = value.replace(/\D/g, '');
-            if (cleaned.length <= 8) {
-                formatted = `+509 ${cleaned.replace(/(\d{2})(?=\d)/g, '$1 ')}`.trim();
-            } else {
-                // Supposer que +509 est déjà dans les données
-                formatted = `+509 ${cleaned.slice(-8).replace(/(\d{2})(?=\d)/g, '$1 ')}`.trim();
-            }
-        } else {
-            formatted = formatTelephone(value);
-        }
-
+        const formatted = validation.formatHaitiPhone(value);
         updatePatientField('telephone', formatted);
     };
+
+    const handleEmergencyPhoneChange = (index: number, value: string) => {
+        const formatted = validation.formatHaitiPhone(value);
+        updateListField('contacts', index, 'telephone', formatted);
+    };
+
 
     const validateDate = (date: string, field: string): boolean => {
         if (!date) return true;
@@ -330,8 +306,11 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
 
     // Gestion des dates
     const handleDateChange = (value: string, field: string, callback: (value: string) => void) => {
+        // Toujours mettre à jour la valeur pour que l'input ne soit pas bloqué
+        callback(value);
+
+        // Valider la date pour afficher/effacer l'erreur
         if (validateDate(value, field)) {
-            callback(value);
             // Effacer les erreurs s'il y en avait
             if (errors[field]) {
                 setErrors(prev => {
@@ -340,11 +319,11 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                     return newErrors;
                 });
             }
-        } else {
-            // Afficher l'erreur immédiatement
+        } else if (value) {
+            // Afficher l'erreur s'il y a une valeur mais qu'elle est invalide
             setErrors(prev => ({
                 ...prev,
-                [field]: field === 'date_naissance' ? 'Date de naissance invalide' : 'Date expiration invalide'
+                [field]: field === 'date_naissance' ? 'Date de naissance invalide' : 'Date d\'expiration invalide'
             }));
         }
     };
@@ -711,9 +690,9 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                     <input
                                                         type="tel"
                                                         value={contact.telephone}
-                                                        onChange={(e) => updateListField('contacts', index, 'telephone', e.target.value)}
+                                                        onChange={(e) => handleEmergencyPhoneChange(index, e.target.value)}
                                                         className={inputClass}
-                                                        placeholder="+509 00 00 00 00"
+                                                        placeholder="+509 0000-0000"
                                                     />
                                                 </div>
 
@@ -1014,13 +993,23 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                 <button
                                     type="button"
                                     onClick={handleSubmit}
-                                    disabled={!isStep1Valid()}
-                                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${isStep1Valid()
-                                            ? 'bg-green-600 text-white hover:bg-green-700'
+                                    disabled={!isStep1Valid() || isSaving}
+                                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${isStep1Valid() && !isSaving
+                                            ? 'bg-green-600 text-white hover:bg-green-700 shadow-md active:scale-95'
                                             : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                                         }`}
                                 >
-                                    {isModifying ? 'Modifier' : 'Enregistrer'}
+                                    {isSaving ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Enregistrement...
+                                        </>
+                                    ) : (
+                                        isModifying ? 'Modifier' : 'Enregistrer'
+                                    )}
                                 </button>
                             ) : (
                                 <button

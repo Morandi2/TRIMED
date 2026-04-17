@@ -3,11 +3,48 @@ import { djangoAuthApi } from '../../../../api/djangoAuthApi';
 import { AuditLog, AuditLogFilters } from '../types/AuditTypes';
 
 class AuditService {
+  private findField(obj: any, targetField: string | string[]): any {
+    if (!obj || typeof obj !== 'object') return null;
+
+    if (Array.isArray(targetField)) {
+        for (const field of targetField) {
+            const found = this.findField(obj, field);
+            if (found !== undefined && found !== null) return found;
+        }
+        return null;
+    }
+
+    if (obj[targetField] !== undefined) return obj[targetField];
+
+    for (const key in obj) {
+      if (typeof obj[key] === 'object') {
+        const found = this.findField(obj[key], targetField);
+        if (found !== undefined && found !== null) return found;
+      }
+    }
+    return null;
+  }
+
+  public normaliserLog(l: any): AuditLog {
+    const find = (field: string | string[]) => this.findField(l, field);
+    
+    return {
+      id: l.id || find('log_id') || 0,
+      utilisateur: l.utilisateur || find(['user', 'username', 'user_email', 'actor', 'email']) || 'Inconnu',
+      action: l.action || find(['event_type', 'action_name', 'event', 'operation']) || 'Action standard',
+      module: l.module || find(['resource_type', 'category', 'module_name']) || 'Système',
+      date: l.date || find(['timestamp', 'created_at', 'date_joined', 'event_time']) || new Date().toISOString(),
+      ip_address: l.ip_address || find(['ip', 'remote_addr', 'client_ip']) || 'N/A',
+      details: l.details || find(['extra_data', 'metadata', 'payload']) || {}
+    };
+  }
+
   async obtenirTousLogs(filters?: AuditLogFilters): Promise<AuditLog[]> {
     try {
       // 1. Essayer de récupérer les logs réels du backend
       const logsReelsResponse = await apiClient.get('/comptes/audit-logs/').catch(() => ({ data: [] }));
-      const logsReels = Array.isArray(logsReelsResponse.data) ? logsReelsResponse.data : (logsReelsResponse.data?.results || []);
+      const logsReelsRaw = Array.isArray(logsReelsResponse.data) ? logsReelsResponse.data : (logsReelsResponse.data?.results || []);
+      const logsReels = logsReelsRaw.map((l: any) => this.normaliserLog(l));
 
       // 2. Toujours inclure les informations réelles de session (Outstanding/Blacklisted)
       const [outstanding, blacklisted] = await Promise.all([

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Medecin, MedecinFormData, medecinService } from '../services/MedecinService';
+import { validation } from '../../../../utils/validation';
 
 interface MedecinProgressFormProps {
   hopitalId: number;
@@ -35,10 +36,16 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
   const [selectedSpecialite, setSelectedSpecialite] = useState<number | ''>('');
   const [dragActive, setDragActive] = useState(false);
   const [identificationType, setIdentificationType] = useState<'CIN' | 'NIF'>('CIN');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [specialites, setSpecialites] = useState<any[]>([]);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const isModifying = !!medecinId;
+  const [isLoadingData, setIsLoadingData] = useState(isModifying); // loading si mode édition
 
   // Fonksyon pou kalkile date minimim ak maksimim
   const getDateConstraints = () => {
@@ -67,12 +74,50 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
     }
   };
 
-  // Fonksyon pou valide nimewo telefòn ayisyen
-  const validateTelephone = (value: string): boolean => {
-    // Fòma: +509 3123 4567 oubyen 50931234567
-    const phoneRegex = /^(?:\+509|509)\s?\d{2}\s?\d{2}\s?\d{4}$/;
-    return phoneRegex.test(value.replace(/\s/g, ''));
-  };
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        if (medecinId) setIsLoadingData(true);
+        
+        // Load specialites
+        const specs = await medecinService.obtenirSpecialites();
+        setSpecialites(specs);
+
+        if (medecinId) {
+          const medecin = await medecinService.obtenirMedecin(medecinId);
+          if (medecin) {
+            setFormData({
+              medecin: {
+                nom: medecin.nom || '',
+                prenom: medecin.prenom || '',
+                sexe: medecin.sexe || 'M',
+                date_naissance: medecinService.formaterDatePourInput(medecin.date_naissance),
+                telephone: medecin.telephone || '',
+                email_professionnel: medecin.email_professionnel || '',
+                numero_identification: medecin.numero_identification || '',
+                numero_matricule_professionnel: medecin.numero_matricule_professionnel || '',
+                specialite_principale_id: medecin.specialite_principale_id,
+                specialites_secondaires: medecin.specialites_secondaires || [],
+                photo: medecin.photo || ''
+              }
+            });
+            setSelectedSpecialites(medecin.specialites_secondaires || []);
+
+            if (medecin.photo) {
+              setPhotoPreview(medecin.photo);
+            }
+          }
+        }
+      } catch (error: any) {
+        console.error('[MedecinProgressForm] Erreur init:', error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    init();
+  }, [medecinId]);
+
 
   // Fonksyon pou valide email
   const validateEmail = (value: string): boolean => {
@@ -82,90 +127,14 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
 
   // Fonksyon pou fòmate CIN/NIF otomatikman
   const formatNumeroIdentification = (value: string, type: 'CIN' | 'NIF'): string => {
-    // Retire tout karaktè ki pa chif
     const numericValue = value.replace(/\D/g, '');
-
     if (type === 'CIN') {
-      // Fòma CIN: 1234-5678-9012
-      if (numericValue.length <= 4) {
-        return numericValue;
-      } else if (numericValue.length <= 8) {
-        return `${numericValue.slice(0, 4)}-${numericValue.slice(4)}`;
-      } else {
-        return `${numericValue.slice(0, 4)}-${numericValue.slice(4, 8)}-${numericValue.slice(8, 12)}`;
-      }
-    } else {
-      // NIF: 10 chif san fòma
-      return numericValue.slice(0, 10);
+      if (numericValue.length <= 4) return numericValue;
+      if (numericValue.length <= 8) return `${numericValue.slice(0, 4)}-${numericValue.slice(4)}`;
+      return `${numericValue.slice(0, 4)}-${numericValue.slice(4, 8)}-${numericValue.slice(8, 12)}`;
     }
+    return numericValue.slice(0, 10);
   };
-
-  // Fonksyon pou fòmate telefòn otomatikman
-  const formatTelephone = (value: string): string => {
-    // Retire tout karaktè ki pa chif
-    const numericValue = value.replace(/\D/g, '');
-
-    // Si kòmanse ak 509, retire li epi ajoute +509
-    let formattedValue = numericValue;
-    if (numericValue.startsWith('509')) {
-      formattedValue = numericValue.slice(3);
-    }
-
-    // Limite a 8 chif (apre +509)
-    formattedValue = formattedValue.slice(0, 8);
-
-    // Fòmate: +509 XX XX XXXX
-    if (formattedValue.length <= 2) {
-      return `+509 ${formattedValue}`;
-    } else if (formattedValue.length <= 4) {
-      return `+509 ${formattedValue.slice(0, 2)} ${formattedValue.slice(2)}`;
-    } else if (formattedValue.length <= 6) {
-      return `+509 ${formattedValue.slice(0, 2)} ${formattedValue.slice(2, 4)} ${formattedValue.slice(4)}`;
-    } else {
-      return `+509 ${formattedValue.slice(0, 2)} ${formattedValue.slice(2, 4)} ${formattedValue.slice(4, 8)}`;
-    }
-  };
-
-  useEffect(() => {
-    const init = async () => {
-      // Load specialites
-      const specs = await medecinService.obtenirSpecialites();
-      setSpecialites(specs);
-
-      if (medecinId) {
-        const medecin = await medecinService.obtenirMedecin(medecinId);
-        if (medecin) {
-          setFormData({
-            medecin: {
-              nom: medecin.nom,
-              prenom: medecin.prenom,
-              sexe: medecin.sexe,
-              date_naissance: medecin.date_naissance || '',
-              telephone: medecin.telephone || '',
-              email_professionnel: medecin.email_professionnel || '',
-              numero_identification: medecin.numero_identification || '',
-              numero_matricule_professionnel: medecin.numero_matricule_professionnel || '',
-              specialite_principale_id: medecin.specialite_principale_id,
-              specialites_secondaires: medecin.specialites_secondaires || [],
-              photo: medecin.photo || ''
-            }
-          });
-          setSelectedSpecialites(medecin.specialites_secondaires || []);
-
-          // Detèmine type idantifikasyon selon fòma
-          if (medecin.numero_identification) {
-            if (medecin.numero_identification.includes('-')) {
-              setIdentificationType('CIN');
-            } else {
-              setIdentificationType('NIF');
-            }
-          }
-        }
-      }
-    };
-    init();
-  }, [medecinId]);
-
   const totalSteps = 3;
 
   const nextStep = () => {
@@ -180,28 +149,101 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
     }
   };
 
-  const validateStep = (step: number): boolean => {
-    switch (step) {
-      case 1:
-        return !!(formData.medecin.nom.trim() &&
-          formData.medecin.prenom.trim() &&
-          formData.medecin.date_naissance &&
-          validateNumeroIdentification(formData.medecin.numero_identification || '', identificationType));
-      case 2:
-        return !!((formData.medecin.telephone || '').trim() &&
-          (formData.medecin.email_professionnel || '').trim() &&
-          validateTelephone(formData.medecin.telephone || '') &&
-          validateEmail(formData.medecin.email_professionnel || ''));
-      case 3:
-        return !!formData.medecin.specialite_principale_id;
-      default:
-        return true;
+  const validateStep = (step: number, updateState: boolean = true): boolean => {
+    let newErrors: Record<string, string> = {};
+    let isValid = true;
+    const { nom, prenom, sexe, date_naissance, numero_identification, telephone, email_professionnel, specialite_principale_id } = formData.medecin;
+
+    if (step === 1) {
+      if (!nom || !nom.trim()) newErrors.nom = "Le nom est obligatoire";
+      if (!prenom || !prenom.trim()) newErrors.prenom = "Le prénom est obligatoire";
+      if (!sexe) newErrors.sexe = "Le sexe est obligatoire";
+      if (!date_naissance) newErrors.date_naissance = "La date de naissance est obligatoire";
+      if (!numero_identification) newErrors.numero_identification = `Le ${identificationType} est obligatoire`;
+      else if (!validateNumeroIdentification(numero_identification || '', identificationType)) newErrors.numero_identification = `Le format de ${identificationType} est invalide`;
+
+      isValid = Object.keys(newErrors).length === 0;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => {
+          const e = { ...prev };
+          delete e.nom; delete e.prenom; delete e.sexe; delete e.date_naissance; delete e.numero_identification;
+          return e;
+        });
+      }
+      return isValid;
     }
+    
+    if (step === 2) {
+      if (!telephone || !telephone.trim()) newErrors.telephone = "Le téléphone est obligatoire";
+      else if (!validation.validateHaitiPhone(telephone).valid) newErrors.telephone = "Le format du téléphone est invalide";
+      
+      if (!email_professionnel || !email_professionnel.trim()) newErrors.email_professionnel = "L'email est obligatoire";
+      else if (!validateEmail(email_professionnel)) newErrors.email_professionnel = "Format d'email invalide";
+
+      isValid = Object.keys(newErrors).length === 0;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => {
+          const e = { ...prev };
+          delete e.telephone; delete e.email_professionnel;
+          return e;
+        });
+      }
+      return isValid;
+    }
+
+    if (step === 3) {
+      if (!specialite_principale_id) newErrors.specialite_principale_id = "La spécialité principale est obligatoire";
+      isValid = Object.keys(newErrors).length === 0;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => {
+          const e = { ...prev };
+          delete e.specialite_principale_id;
+          return e;
+        });
+      }
+      return isValid;
+    }
+
+    return true;
+  };
+ 
+  // Memoize validities to prevent computation in render and potential loop triggers
+  const isStep1Valid = React.useMemo(() => validateStep(1, false), [formData.medecin, identificationType]);
+  const isStep2Valid = React.useMemo(() => validateStep(2, false), [formData.medecin.telephone, formData.medecin.email_professionnel]);
+  const isStep3Valid = React.useMemo(() => validateStep(3, false), [formData.medecin.specialite_principale_id]);
+  
+  const allStepsValid = isStep1Valid && isStep2Valid && isStep3Valid;
+  const isCurrentStepValid = currentStep === 1 ? isStep1Valid : currentStep === 2 ? isStep2Valid : isStep3Valid;
+
+  const handleFieldBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateStep(currentStep);
   };
 
-  const handleSubmit = () => {
-    if (validateStep(1) && validateStep(2) && validateStep(3)) {
-      onSave(formData, isModifying);
+  const handleSubmit = async () => {
+    setTouched({
+      nom: true, prenom: true, sexe: true, date_naissance: true, numero_identification: true,
+      telephone: true, email_professionnel: true, specialite_principale_id: true
+    });
+    if (validateStep(1) && validateStep(2) && validateStep(3) && !isSaving) {
+      setIsSaving(true);
+      try {
+        const finalFormData = {
+          ...formData,
+          medecin: {
+            ...formData.medecin,
+            photo: photoFile || formData.medecin.photo
+          }
+        };
+        await onSave(finalFormData, isModifying);
+      } catch (error) {
+        console.error("Erreur lors de l'enregistrement:", error);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -213,6 +255,13 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
         [field]: value
       }
     }));
+    if (errors[field]) {
+      setErrors(prev => {
+        const e = { ...prev };
+        delete e[field];
+        return e;
+      });
+    }
   };
 
   const handleNumeroIdentificationChange = (value: string) => {
@@ -221,7 +270,7 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
   };
 
   const handleTelephoneChange = (value: string) => {
-    const formattedValue = formatTelephone(value);
+    const formattedValue = validation.formatHaitiPhone(value);
     handleInputChange('telephone', formattedValue);
   };
 
@@ -231,13 +280,67 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
     handleInputChange('numero_identification', '');
   };
 
-  const handleFileUpload = (file: File) => {
+  // Fonksyon pou konpese imaj
+  const compressImage = useCallback((file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Maksimòm 800px pou pa twò lou
+          const MAX_SIZE = 800;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          }, 'image/jpeg', 0.7); // 0.7 kalite pou l lejè
+        };
+      };
+    });
+  }, []);
+
+  const handleFileUpload = async (file: File) => {
+    // Premyeman, konpese imaj la
+    const compressedFile = await compressImage(file);
+    setPhotoFile(compressedFile);
+
+    // Kreye yon preview pou UI a
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
-      handleInputChange('photo', result);
+      setPhotoPreview(result);
+      // Nou pa mete l nan formData.medecin.photo kounye a pou n evite voye Base64 lou nan API
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(compressedFile);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -330,7 +433,9 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
     </div>
   );
 
-  const inputClass = "w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500";
+  const inputClass = "w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all duration-200";
+  const errorInputClass = "w-full px-4 py-3 border-2 border-red-500 dark:border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-all duration-200";
+  const errorTextClass = "text-red-500 dark:text-red-400 text-sm mt-1";
 
   return (
     <div className="fixed inset-0 z-[99999] overflow-hidden">
@@ -359,6 +464,20 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
 
           {/* Body scrollable */}
           <div className="flex-1 overflow-y-auto">
+            {isLoadingData ? (
+              <div className="flex flex-col items-center justify-center h-full py-20">
+                <div className="relative">
+                  <div className="w-16 h-16 border-4 border-blue-200 dark:border-blue-900 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Chargement des données...</p>
+                <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">Veuillez patienter</p>
+              </div>
+            ) : (
             <div className="p-6">
               {currentStep === 1 && (
                 <div className="space-y-6">
@@ -381,10 +500,10 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                           onDragOver={handleDrag}
                           onDrop={handleDrop}
                         >
-                          {formData.medecin.photo ? (
+                          {photoPreview ? (
                             <div className="space-y-2">
                               <img
-                                src={formData.medecin.photo.startsWith('data:image/') ? formData.medecin.photo : ''}
+                                src={photoPreview}
                                 alt="Photo médecin"
                                 className="w-20 h-20 rounded-full mx-auto object-cover"
                                 onError={(e) => {
@@ -393,7 +512,11 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                               />
                               <button
                                 type="button"
-                                onClick={() => handleInputChange('photo', '')}
+                                onClick={() => {
+                                  setPhotoPreview('');
+                                  setPhotoFile(null);
+                                  handleInputChange('photo', '');
+                                }}
                                 className="text-red-600 hover:text-red-800 text-sm"
                               >
                                 Supprimer
@@ -433,10 +556,12 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                             type="text"
                             value={formData.medecin.nom}
                             onChange={(e) => handleInputChange('nom', e.target.value)}
-                            className={inputClass}
+                            onBlur={() => handleFieldBlur('nom')}
+                            className={errors.nom && touched.nom ? errorInputClass : inputClass}
                             placeholder="Entrez le nom de famille"
                             required
                           />
+                          {errors.nom && touched.nom && <div className={errorTextClass}>{errors.nom}</div>}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -446,10 +571,12 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                             type="text"
                             value={formData.medecin.prenom}
                             onChange={(e) => handleInputChange('prenom', e.target.value)}
-                            className={inputClass}
+                            onBlur={() => handleFieldBlur('prenom')}
+                            className={errors.prenom && touched.prenom ? errorInputClass : inputClass}
                             placeholder="Entrez le prénom"
                             required
                           />
+                          {errors.prenom && touched.prenom && <div className={errorTextClass}>{errors.prenom}</div>}
                         </div>
                       </div>
 
@@ -461,13 +588,15 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                           <select
                             value={formData.medecin.sexe}
                             onChange={(e) => handleInputChange('sexe', e.target.value)}
-                            className={inputClass}
+                            onBlur={() => handleFieldBlur('sexe')}
+                            className={errors.sexe && touched.sexe ? errorInputClass : inputClass}
                             required
                           >
                             <option value="M">Masculin</option>
                             <option value="F">Féminin</option>
                             <option value="Autre">Autre</option>
                           </select>
+                          {errors.sexe && touched.sexe && <div className={errorTextClass}>{errors.sexe}</div>}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -477,14 +606,19 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                             type="date"
                             value={formData.medecin.date_naissance}
                             onChange={(e) => handleInputChange('date_naissance', e.target.value)}
-                            className={inputClass}
+                            onBlur={() => handleFieldBlur('date_naissance')}
+                            className={errors.date_naissance && touched.date_naissance ? errorInputClass : inputClass}
                             min={dateConstraints.min}
                             max={dateConstraints.max}
                             required
                           />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Doit être entre {dateConstraints.min} et {dateConstraints.max}
-                          </p>
+                          {errors.date_naissance && touched.date_naissance ? (
+                            <p className={errorTextClass}>{errors.date_naissance}</p>
+                          ) : (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Doit être entre {dateConstraints.min} et {dateConstraints.max}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -524,7 +658,8 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                             type="text"
                             value={formData.medecin.numero_identification}
                             onChange={(e) => handleNumeroIdentificationChange(e.target.value)}
-                            className={inputClass}
+                            onBlur={() => handleFieldBlur('numero_identification')}
+                            className={errors.numero_identification && touched.numero_identification ? errorInputClass : inputClass}
                             placeholder={
                               identificationType === 'CIN'
                                 ? "Ex: 1234-5678-9012"
@@ -533,22 +668,16 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                             required
                           />
 
-                          {/* Mesaj gid */}
-                          <p className="text-xs text-gray-500">
-                            {identificationType === 'CIN'
-                              ? "Format: 12 chiffres avec tirets (1234-5678-9012)"
-                              : "Format: 10 chiffres sans tirets (1234567890)"}
-                          </p>
-
-                          {/* Mesaj erè */}
-                          {formData.medecin.numero_identification &&
-                            !validateNumeroIdentification(formData.medecin.numero_identification, identificationType) && (
-                              <p className="text-red-500 text-xs">
-                                {identificationType === 'CIN'
-                                  ? "Le CIN doit être au format 1234-5678-9012"
-                                  : "Le NIF doit contenir exactement 10 chiffres"}
-                              </p>
-                            )}
+                          {/* Mesaj gid / erè */}
+                          {errors.numero_identification && touched.numero_identification ? (
+                            <p className={errorTextClass}>{errors.numero_identification}</p>
+                          ) : (
+                             <p className="text-xs text-gray-500">
+                               {identificationType === 'CIN'
+                                 ? "Format: 12 chiffres avec tirets (1234-5678-9012)"
+                                 : "Format: 10 chiffres sans tirets (1234567890)"}
+                             </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -571,20 +700,18 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                             type="tel"
                             value={formData.medecin.telephone}
                             onChange={(e) => handleTelephoneChange(e.target.value)}
-                            className={inputClass}
+                            onBlur={() => handleFieldBlur('telephone')}
+                            className={errors.telephone && touched.telephone ? errorInputClass : inputClass}
                             placeholder="Ex: +509 31 23 4567"
                             required
                           />
-                          {formData.medecin.telephone && !validateTelephone(formData.medecin.telephone) && (
-                            <p className="text-red-500 text-xs mt-1">
-                              Format: +509 suivi de 8 chiffres (ex: +509 31 23 4567)
-                            </p>
-                          )}
-                          {formData.medecin.telephone && validateTelephone(formData.medecin.telephone) && (
-                            <p className="text-green-500 text-xs mt-1">
-                              Format téléphone valide
-                            </p>
-                          )}
+                          {errors.telephone && touched.telephone ? (
+                            <p className={errorTextClass}>{errors.telephone}</p>
+                          ) : (formData.medecin.telephone && validation.validateHaitiPhone(formData.medecin.telephone).valid ? (
+                            <p className="text-green-500 text-xs mt-1">Format téléphone valide</p>
+                          ) : (
+                            <p className="text-xs text-gray-500 mt-1">Format: +509 XXXX-XXXX</p>
+                          ))}
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -594,20 +721,16 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                             type="email"
                             value={formData.medecin.email_professionnel}
                             onChange={(e) => handleInputChange('email_professionnel', e.target.value)}
-                            className={inputClass}
+                            onBlur={() => handleFieldBlur('email_professionnel')}
+                            className={errors.email_professionnel && touched.email_professionnel ? errorInputClass : inputClass}
                             placeholder="dr.nom@hopital.ht"
                             required
                           />
-                          {formData.medecin.email_professionnel && !validateEmail(formData.medecin.email_professionnel) && (
-                            <p className="text-red-500 text-xs mt-1">
-                              Format email invalide (ex: nom@domaine.com)
-                            </p>
-                          )}
-                          {formData.medecin.email_professionnel && validateEmail(formData.medecin.email_professionnel) && (
-                            <p className="text-green-500 text-xs mt-1">
-                              Format email valide
-                            </p>
-                          )}
+                          {errors.email_professionnel && touched.email_professionnel ? (
+                            <p className={errorTextClass}>{errors.email_professionnel}</p>
+                          ) : (formData.medecin.email_professionnel && validateEmail(formData.medecin.email_professionnel) ? (
+                            <p className="text-green-500 text-xs mt-1">Format email valide</p>
+                          ) : null)}
                         </div>
                       </div>
 
@@ -711,6 +834,7 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                 </div>
               )}
             </div>
+            )}
           </div>
 
           {/* Footer fixe */}
@@ -741,20 +865,30 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                   <button
                     type="button"
                     onClick={handleSubmit}
-                    disabled={!validateStep(1) || !validateStep(2) || !validateStep(3)}
-                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${validateStep(1) && validateStep(2) && validateStep(3)
-                      ? 'bg-green-600 text-white hover:bg-green-700'
+                    disabled={!allStepsValid || isSaving}
+                    className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${allStepsValid && !isSaving
+                      ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg active:transform active:scale-95'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                       }`}
                   >
-                    {isModifying ? 'Modifier' : 'Enregistrer'}
+                    {isSaving ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Traitement...
+                      </>
+                    ) : (
+                      isModifying ? 'Modifier' : 'Enregistrer'
+                    )}
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={nextStep}
-                    disabled={!validateStep(currentStep)}
-                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${validateStep(currentStep)
+                    disabled={!isCurrentStepValid}
+                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${isCurrentStepValid
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                       }`}

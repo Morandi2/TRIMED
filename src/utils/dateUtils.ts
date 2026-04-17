@@ -30,3 +30,37 @@ export const formatDateFR = (dateStr: string | undefined | null): string => {
   if (isNaN(date.getTime())) return 'N/A';
   return date.toLocaleDateString('fr-FR');
 };
+
+/**
+ * Formate une date et heure en format français (DD/MM/YYYY HH:mm)
+ */
+export const formatDateTimeFR = (dateStr: string | undefined | null): string => {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+/**
+ * Retourne une chaîne relative (ex: "Il y a 2 jours", "Aujourd'hui")
+ */
+export const formatRelativeDate = (dateStr: string | undefined | null): string => {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return 'N/A';
+  
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  
+  if (diffInDays === 0) return "Aujourd'hui";
+  if (diffInDays === 1) return "Hier";
+  if (diffInDays < 7) return `Il y a ${diffInDays} jours`;
+  return formatDateFR(dateStr);
+};

@@ -72,13 +72,13 @@ export const MedicamentModal: React.FC<MedicamentModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  const handleSave = (formData: MedicamentFormData, isModifying: boolean) => {
+  const handleSave = async (formData: MedicamentFormData, isModifying: boolean): Promise<void> => {
     try {
       let result;
       if (isModifying && medicament) {
-        result = medicamentService.modifierMedicament(medicament.medicament_id, formData);
+        result = await medicamentService.modifierMedicament(medicament.medicament_id, formData, tenantId);
       } else {
-        result = medicamentService.creerMedicament(formData, tenantId);
+        result = await medicamentService.creerMedicament(formData, tenantId);
       }
 
       if (result.success && result.data) {

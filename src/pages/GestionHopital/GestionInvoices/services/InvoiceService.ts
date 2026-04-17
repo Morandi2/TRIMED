@@ -8,12 +8,31 @@ class InvoiceService {
     { statut_id: 3, nom: 'Annulé', description: 'Facture annulée' }
   ];
 
+  private invoicesCache: { data: Invoice[], tenantId: number, fetchedAt: number } | null = null;
+  private CACHE_TTL = 30 * 60 * 1000;
+
   async obtenirToutesInvoices(tenantId: number): Promise<Invoice[]> {
+    if (this.invoicesCache && this.invoicesCache.tenantId === tenantId) {
+      if (Date.now() - this.invoicesCache.fetchedAt < this.CACHE_TTL) {
+        return this.invoicesCache.data;
+      }
+    }
+
     const response = await hospitalApi.facturation.invoices.getAll({ tenant: tenantId });
     if (response.success) {
-      return response.data.results || response.data;
+      const data = response.data.results || response.data;
+      this.invoicesCache = {
+        data,
+        tenantId,
+        fetchedAt: Date.now()
+      };
+      return data;
     }
     return [];
+  }
+
+  public invalidateCache() {
+    this.invoicesCache = null;
   }
 
   async obtenirInvoice(id: number): Promise<Invoice | null> {
@@ -24,10 +43,18 @@ class InvoiceService {
     return null;
   }
 
-  async creerInvoice(data: InvoiceFormData): Promise<{ success: boolean; data?: any; message?: string }> {
-    // Note: Le backend gère la création via InvoiceViewSet si implémenté
-    // Pour l'instant on utilise le point d'entrée générique
+  async creerInvoice(data: InvoiceFormData, tenantId?: number): Promise<{ success: boolean; data?: any; message?: string }> {
     const response = await (hospitalApi.facturation.invoices as any).create(data);
+    
+    if (response.success && response.data) {
+      this.invalidateCache();
+      
+      // Optimistic update
+      if (this.invoicesCache && (!tenantId || this.invoicesCache.tenantId === tenantId)) {
+        this.invoicesCache.data.unshift(response.data);
+      }
+    }
+    
     return response;
   }
 
