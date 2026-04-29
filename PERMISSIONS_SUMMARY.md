@@ -1,99 +1,75 @@
-# 📋 Rezime Pèmisyon ak Chanjman yo
+# 📋 Rezime Pèmisyon ak Chanjman yo (Sync Backend)
 
 ## ✅ Chanjman Ki Fèt
 
-### 1. **Sistèm Pèmisyon Konplè**
+### 1. **Senkronizasyon ak Django Backend**
 - Fichye: `src/types/userRoles.ts`
-- 9 wòl total: Administrateur, Médecin, Infirmier, Réceptionniste, Pharmacien, Manager, Technicien, Finance, Auditeur
-- 23 pèmisyon diferan
+- Wòl yo kounye a baze sou pèmisyon Django yo: `admin-systeme`, `proprietaire-hopital`, `medecin`, `infirmier`, `secretaire`, `personnel`, `patient`.
+- Ajoute pèmisyon granulè: `canModifierStock`, `canGererSalles`, `canGererHospitalisation`.
 
-### 2. **Paj Akèy pou Chak Wòl**
+### 2. **Paj Akèy (Dashboards)**
 - Fichye: `src/pages/Dashboard/RoleBasedHome.tsx`
-- Chak wòl gen paj akèy pa yo
-- Administrateur sèlman wè dashboard konplè ak statistik
-
-### 3. **Sidebar Dinamik**
-- Fichye: `src/layout/AppSidebar.tsx`
-- Modil parèt selon pèmisyon
-- "Utilisateurs" sèlman pou Admin ak Manager
-
-### 4. **Bouton Kondisyonèl**
-- Fichye: `src/pages/GestionHopital/GestionPatients/GestionPatiens.tsx`
-- Bouton "Nouveau Patient" kache si pa gen `canEditPatients`
-- Fichye: `src/pages/GestionHopital/GestionPatients/components/PatientTable.tsx`
-- Bouton "Modifier" ak "Supprimer" kache si pa gen pèmisyon
+- Chak wòl gen paj akèy pa yo, enkli nouvo wòl `patient`.
+- `admin-systeme` ak `proprietaire-hopital` wè Dashboard konplè a.
 
 ---
 
-## 🎭 Pèmisyon pa Wòl
+## 🎭 Pèmisyon pa Wòl (Nouvo Definisyon)
 
-### **Administrateur** ✅ Tout Aksè
+### **Admin Système** (admin-systeme) ✅ Tout Aksè
 ```
-✅ Tout modil
-✅ Tout fonksyon
-✅ Jere itilizatè ak wòl
-✅ Dashboard konplè ak statistik
-```
-
-### **Médecin** 👨‍⚕️
-```
-✅ Wè: Patients, Consultations, Ordonnances, Rendez-vous, Calendrier
-✅ Edite: Ordonnances (bay preskripsyon)
-❌ Pa ka: Kreye patient, Wè Medecin, Wè Medicament, Kreye konsiltasyon
-❌ Dashboard: Paj akèy senp (pa statistik)
+✅ Aksè illimité sou tout resous (san restriksyon tenant)
+✅ Jere tout itilizatè, tout lopital (tenants)
+✅ Jere facturation, medikaman (CRUD + Stock), hospitalisation
+✅ Jere Salles ak Journal d'Audit
 ```
 
-### **Infirmier** 👩‍⚕️
+### **Propriétaire Hôpital** (proprietaire-hopital) 🏥
 ```
-✅ Wè: Tout modil (Patients, Medecins, Consultations, Ordonnances, Medicaments, Rendez-vous, Calendrier)
-❌ Pa ka modifye anyen (sèlman wè)
-❌ Dashboard: Paj akèy senp
-```
-
-### **Réceptionniste** 📋
-```
-✅ Jere: Patients, Rendez-vous
-✅ Wè: Medecins, Calendrier
-❌ Pa wè: Consultations, Ordonnances, Medicaments, Paiement
-❌ Dashboard: Paj akèy senp
+✅ Jere pwòp lopital li sèlman (restriction tenant)
+✅ Jere itilizatè lopital li a
+✅ Jere Facturation, Medikaman (CRUD + Stock), Hospitalisation
+✅ Jere Salles ak Journal d'Audit
 ```
 
-### **Pharmacien** 💊
+### **Médecin** (medecin) 👨‍⚕️
 ```
-✅ Jere: Medicaments
-✅ Wè: Patients, Ordonnances
-❌ Pa wè: Tout lòt modil
-❌ Dashboard: Paj akèy senp
-```
-
-### **Manager** 👔
-```
-✅ Wè: Patients, Medecins, Calendrier
-✅ Jere: Medicaments, Rendez-vous, Utilisateurs (chanje status)
-❌ Pa ka: Ajoute Medecin, Kreye Consultation/Ordonnance, Wè Paiement
-❌ Dashboard: Paj akèy senp
+✅ Wè ak Modifye Patients (dòsye medikal)
+✅ Jere Medikaman (CRUD) - ❌ Men li PA KA chanje Stock
+✅ Jere Hospitalisation ak Salles
+✅ Jere pwòp Rendez-vous li yo
 ```
 
-### **Technicien** 🔬
+### **Infirmier** (infirmier) 🩺
 ```
-✅ Wè: Patients, Consultations, Ordonnances
-❌ Pa ka modifye anyen
-❌ Dashboard: Paj akèy senp
-```
-
-### **Finance** 💰
-```
-✅ Jere: Paiements
-✅ Wè: Patients (enfòmasyon debaz)
-❌ Pa wè done medikal detaye
-❌ Dashboard: Paj akèy senp
+✅ Wè ak Modifye Patients
+✅ Jere Medikaman (CRUD) epi ✅ Modifye Stock (gran pèmisyon)
+✅ Jere Hospitalisation
+❌ Pa gen aksè nan Salles
 ```
 
-### **Auditeur** 🔒
+### **Secrétaire** (secretaire) 📋
 ```
-✅ Wè: Log aktivite, Rapò sekirite
-❌ Pa gen aksè done medikal
-❌ Dashboard: Paj akèy senp
+✅ Wè ak Modifye Patients
+✅ Jere Medikaman (CRUD) - ❌ Men li PA KA chanje Stock
+✅ Jere Salles ak Rendez-vous
+❌ Pa gen aksè nan Hospitalisation
+```
+
+### **Personnel** (personnel) 🧑💼
+```
+✅ Wè ak Modifye Patients
+✅ Jere Medikaman (CRUD) epi ✅ Modifye Stock
+✅ Jere Rendez-vous
+❌ Pa gen aksè nan Hospitalisation ni nan Salles
+```
+
+### **Patient** (patient) 🧑⚕️
+```
+✅ Wè pwòp dosye pa li sèlman (canViewOwnFolderOnly)
+✅ Kreye epi modifye pwòp Rendez-vous li yo
+✅ Wè Factures ak Medikaman lopital li a
+❌ Pa ka modifye anyen lòt bagay
 ```
 
 ---
@@ -101,42 +77,17 @@
 ## 🧪 Pou Teste
 
 1. **Ouvri aplikasyon an** (http://localhost:5173)
-2. **Klike sou dropdown "Rôle:"** nan header anlè adwat
-3. **Chwazi yon wòl** epi gade:
-   - Sidebar chanje (modil disparèt/parèt)
-   - Dashboard chanje (statistik oswa paj akèy senp)
-   - Bouton "Ajouter/Modifier/Supprimer" disparèt/parèt
-
-### Egzanp Test:
-
-**Test 1: Médecin**
-- Sidebar: ❌ Pa wè "Medecin", "Medicament", "Paiement"
-- Dashboard: ✅ Wè "Bienvenue Dr." ak 5 modil
-- Patient: ❌ Pa gen bouton "Nouveau Patient"
-
-**Test 2: Infirmier**
-- Sidebar: ✅ Wè tout modil
-- Dashboard: ✅ Wè "Bienvenue Infirmier(e)" ak 7 modil
-- Patient: ❌ Pa gen bouton "Modifier" ak "Supprimer"
-
-**Test 3: Auditeur**
-- Sidebar: ❌ Sèlman "Dashboard"
-- Dashboard: ✅ Wè "Bienvenue Auditeur" ak 2 modil (Rapports, Logs)
+2. **Klike sou dropdown "Rôle:"** nan header (si disponib nan dev) oswa konekte ak yon kont ki gen bon wòl la.
+3. **Verifye**:
+   - Sidebar a kache/montre modil yo selon pèmisyon an.
+   - Paj akèy la chanje selon wòl la.
+   - Pèmisyon stock la (ex: Medikaman) pèmèt ou wè/kache bouton pou ajiste stock.
 
 ---
 
 ## 📁 Fichye Ki Modifye
 
-1. `src/types/userRoles.ts` - Pèmisyon
-2. `src/context/UserContext.tsx` - Context itilizatè
-3. `src/App.tsx` - Route pou RoleBasedHome
-4. `src/layout/AppSidebar.tsx` - Sidebar dinamik
-5. `src/layout/AppHeader.tsx` - RoleSwitcher
-6. `src/pages/Dashboard/RoleBasedHome.tsx` - Router paj akèy
-7. `src/pages/GestionHopital/GestionPatients/GestionPatiens.tsx` - Bouton kondisyonèl
-8. `src/pages/GestionHopital/GestionPatients/components/PatientTable.tsx` - Bouton kondisyonèl
-9. `src/pages/GestionHopital/GestionUtilisateur/pages/*.tsx` - 9 paj akèy
-
----
-
-#
+1. `src/types/userRoles.ts` - Nouvo definisyon wòl ak pèmisyon.
+2. `src/pages/Dashboard/RoleBasedHome.tsx` - Mapping paj akèy yo.
+3. `src/layout/AppSidebar.tsx` - Filtraj menu a.
+4. `src/App.tsx` - Sekirite sou wout (routes).

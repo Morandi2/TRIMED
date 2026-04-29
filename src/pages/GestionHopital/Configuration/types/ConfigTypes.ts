@@ -35,6 +35,19 @@ export interface Department {
   lits_icu?: number;
   lits_pediatrie?: number;
   chambres_privees?: number;
+  rooms?: Room[];
+}
+
+export interface Room {
+  room_id?: string;
+  nom: string; // e.g. "Chambre 101"
+  type: 'standard' | 'icu' | 'pediatrie' | 'vip';
+  beds: Bed[];
+}
+
+export interface Bed {
+  bed_id: string; // e.g. "B1-101"
+  status: 'disponible' | 'occupe' | 'maintenance';
 }
 
 export interface ConfigStep {

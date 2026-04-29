@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
@@ -6,20 +6,34 @@ import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { InscriptionData } from "../../api/types/auth.types";
-import { Building2, MapPin, Phone, User, Settings, CreditCard, ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { Building2, MapPin, Phone, User, Settings, CreditCard, ChevronRight, ChevronLeft, CheckCircle2, Mail, ArrowRight } from "lucide-react";
 import { validation } from "../../utils/validation";
+import DragDropUpload from "../form/input/DragDropUpload";
+import Button from "../ui/button/Button";
+import { useAuth } from "../../context/AuthContext";
 
 export default function SignUpForm() {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  // État du formulaire avec tous les nouveaux champs
+  // Rediriger si déjà connecté
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/home", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // État du formulaire avec tous les nouveaux champs (Sync Backend)
   const [formData, setFormData] = useState<InscriptionData>({
     // ÉTAPE 1
-    nomHopital: "",
+    nom: "", // Replaces nomHopital
+    nomHopital: "", // Keep for legacy
     raisonSociale: "",
     numeroEnregistrement: "",
     nif: "",
@@ -27,6 +41,7 @@ export default function SignUpForm() {
     logo: null,
     siteWeb: "",
     description: "",
+    documentsJustificatifs: [],
 
     // ÉTAPE 2
     pays: "Haïti",
@@ -39,7 +54,7 @@ export default function SignUpForm() {
     // ÉTAPE 3
     telephone: "",
     telephoneUrgence: "",
-    email: "",
+    email: "", // email_professionnel
     emailSupport: "",
 
     // ÉTAPE 4
@@ -51,6 +66,7 @@ export default function SignUpForm() {
 
     // ÉTAPE 5
     nombreLits: "",
+    directeur: "",
     urgenceDisponible: false,
     laboratoireDisponible: false,
     pharmacieDisponible: false,
@@ -64,33 +80,99 @@ export default function SignUpForm() {
 
     // Legacy/Internal
     adresse: "",
-    directeur: "",
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoadingLocal, setIsLoadingLocal] = useState(false);
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // Removed as unused
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     const val = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
 
     let finalValue = val;
-    if (typeof finalValue === 'string' && (name === 'telephone' || name === 'telephoneUrgence' || name === 'adminTelephone')) {
-      finalValue = validation.formatHaitiPhone(finalValue);
+    if (typeof finalValue === 'string') {
+      if (name === 'telephone' || name === 'telephoneUrgence' || name === 'adminTelephone') {
+        finalValue = validation.formatHaitiPhone(finalValue);
+      } else if (name === 'nif') {
+        finalValue = validation.formatNIF(finalValue);
+      } else if (name === 'nombreLits') {
+        finalValue = finalValue.replace(/\D/g, '').slice(0, 5);
+      } else if (name === 'codePostal') {
+        finalValue = finalValue.toUpperCase().slice(0, 10);
+      } else if (name === 'numeroEnregistrement') {
+        finalValue = finalValue.toUpperCase();
+      } else if (['nomHopital', 'prenomAdmin', 'nomAdmin', 'ville', 'province', 'raisonSociale'].includes(name)) {
+        finalValue = validation.capitalize(finalValue);
+      } else if (name === 'siteWeb' || name === 'email' || name === 'adminEmail') {
+        finalValue = finalValue.trim().toLowerCase();
+      }
     }
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: finalValue,
-      // Keep legacy fields in sync
-      adresse: name === 'adresseLigne1' ? (typeof finalValue === 'string' ? finalValue : prev.adresse) : prev.adresse,
-      directeur: (name === 'prenomAdmin' || name === 'nomAdmin')
-        ? `${name === 'prenomAdmin' ? (typeof finalValue === 'string' ? finalValue : prev.prenomAdmin) : prev.prenomAdmin} ${name === 'nomAdmin' ? (typeof finalValue === 'string' ? finalValue : prev.nomAdmin) : prev.nomAdmin}`.trim()
-        : prev.directeur
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [name]: finalValue,
+        // Keep legacy fields in sync
+        adresse: name === 'adresseLigne1' ? (typeof finalValue === 'string' ? finalValue : prev.adresse) : prev.adresse,
+        directeur: (name === 'prenomAdmin' || name === 'nomAdmin')
+          ? `${name === 'prenomAdmin' ? (typeof finalValue === 'string' ? finalValue : prev.prenomAdmin) : prev.prenomAdmin} ${name === 'nomAdmin' ? (typeof finalValue === 'string' ? finalValue : prev.nomAdmin) : prev.nomAdmin}`.trim()
+          : prev.directeur
+      };
+
+      // Sync nom and nomHopital
+      if (name === 'nom') updated.nomHopital = finalValue as string;
+      if (name === 'nomHopital') updated.nom = finalValue as string;
+
+      return updated;
+    });
+  };
+
+  // Fonction pour remplir rapidement les champs (Test Uniquement)
+  const fillTestData = () => {
+    const randomSuffix = Math.floor(Math.random() * 10000);
+    setFormData({
+      nom: `Hôpital Test ${randomSuffix}`,
+      nomHopital: `Hôpital Test ${randomSuffix}`,
+      raisonSociale: "Santé Test S.A.",
+      numeroEnregistrement: `HT-MSPP-${randomSuffix}`,
+      nif: "111-111-111-1",
+      typeEtablissement: "Privé",
+      logo: null,
+      siteWeb: "https://www.test-hopital.ht",
+      description: "Hôpital de test généré automatiquement pour vérifier l'inscription.",
+      documentsJustificatifs: [],
+      pays: "Haïti",
+      province: "Ouest",
+      ville: "Port-au-Prince",
+      adresseLigne1: "123 Rue de Test",
+      adresseLigne2: "Suite 4B",
+      codePostal: "HT-6110",
+      telephone: "+509 3000-0000",
+      telephoneUrgence: "+509 4000-0000",
+      email: `contact${randomSuffix}@test.ht`,
+      emailSupport: `support${randomSuffix}@test.ht`,
+      prenomAdmin: "Admin",
+      nomAdmin: "Testeur",
+      adminEmail: `admin${randomSuffix}@test.ht`,
+      adminTelephone: "+509 3000-0001",
+      password: "Password123!",
+      nombreLits: "50",
+      directeur: "Dr. Admin Testeur",
+      urgenceDisponible: true,
+      laboratoireDisponible: true,
+      pharmacieDisponible: true,
+      radiologieDisponible: false,
+      heureOuverture: "08:00",
+      heureFermeture: "18:00",
+      planAbonnement: "Pro",
+      cycleFacturation: "Mensuel",
+      adresse: "123 Rue de Test, Port-au-Prince"
+    });
+    setConfirmPassword("Password123!");
+    setIsChecked(true);
   };
 
   const nextStep = () => {
@@ -163,7 +245,7 @@ export default function SignUpForm() {
       const result = await djangoAuthApi.inscription(formData);
 
       if (result.success) {
-        setIsSubmitted(true);
+        setIsVerifying(true);
       } else {
         setError(result.message);
       }
@@ -184,62 +266,89 @@ export default function SignUpForm() {
     { id: 6, title: "Forfait", icon: CreditCard },
   ];
 
-  if (isSubmitted) {
+  if (isVerifying) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[600px] text-center p-8 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl">
-        <div className="w-20 h-20 bg-success-500 rounded-full flex items-center justify-center mb-6 animate-bounce">
-          <CheckCircle2 className="text-white size-12" />
+      <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-8 bg-white/10 dark:bg-brand-900/20 backdrop-blur-2xl rounded-3xl border border-white/20 shadow-2xl animate-in zoom-in-95 duration-700 relative overflow-hidden group">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 via-indigo-500 to-brand-500 animate-shimmer" />
+        <div className="w-24 h-24 bg-brand-500/10 rounded-3xl flex items-center justify-center mb-8 border border-brand-500/20 group-hover:scale-110 transition-transform duration-500 text-brand-500">
+          <Mail className="size-12 animate-bounce-slow" />
         </div>
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">Inscription réussie !</h2>
-        <p className="text-lg text-gray-600 dark:text-gray-300 max-w-md mb-8">
-          Félicitations ! L'hôpital <strong>{formData.nomHopital}</strong> a été créé avec succès.
-          Actuellement, le compte est <span className="text-warning-500 font-bold">inactif</span>.
-          Il sera activé dans moins de deux jours après la fin de notre vérification.
-        </p>
-        <button
-          onClick={() => navigate("/signin")}
-          className="px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-brand-500/30"
-        >
-          Retourner à la page de connexion
-        </button>
+        <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">Vérifiez votre boîte mail !</h2>
+        <div className="space-y-6 max-w-lg">
+          <p className="text-xl text-gray-700 dark:text-brand-100/80 leading-relaxed">
+            Un lien d'activation a été envoyé à <br/>
+            <span className="font-bold text-brand-600 dark:text-brand-400 select-all">{formData.adminEmail}</span>
+          </p>
+          <div className="p-6 bg-white/5 dark:bg-black/20 rounded-2xl border border-white/10 text-sm text-gray-500 dark:text-gray-400 flex items-start gap-4 text-left italic">
+            <span className="text-brand-500 font-bold text-xl mt-[-4px]">ℹ</span>
+            <p>Vérifiez vos spams si vous ne voyez rien après 2 minutes. Le lien expirera dans 24 heures.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6">
+            <Link to="/signin" className="w-full">
+              <Button className="w-full py-4 text-base font-bold shadow-xl shadow-brand-500/10 flex items-center justify-center gap-2">
+                Aller à la connexion
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <button onClick={() => setIsVerifying(false)} className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-brand-500 transition-colors">
+              Retour au formulaire
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col flex-1 w-full overflow-y-auto lg:w-3/5 no-scrollbar">
-      <div className="flex flex-col justify-center flex-1 w-full max-w-2xl mx-auto py-10 px-4">
+    <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full py-4">
         {/* Progress Bar */}
-        <div className="mb-10">
-          <div className="flex justify-between items-center mb-4">
+        <div className="mb-12 relative">
+          <div className="absolute top-5 left-0 w-full h-[2px] bg-gray-100 dark:bg-gray-800 -z-10" />
+          <div 
+            className="absolute top-5 left-0 h-[2px] bg-brand-500 transition-all duration-500 -z-10" 
+            style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+          />
+          <div className="flex justify-between items-start">
             {steps.map((step) => (
-              <div key={step.id} className="flex flex-col items-center relative z-10">
+              <div key={step.id} className="flex flex-col items-center group">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2 ${currentStep >= step.id
-                    ? "bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20"
-                    : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-400"
+                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-500 border-2 z-10 ${currentStep >= step.id
+                    ? "bg-brand-500 border-brand-500 text-white shadow-xl shadow-brand-500/30 scale-110"
+                    : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 group-hover:border-brand-300"
                     }`}
                 >
-                  <step.icon size={18} />
+                  <step.icon size={20} />
                 </div>
-                <span className={`text-[10px] mt-2 font-medium uppercase tracking-wider hidden sm:block ${currentStep >= step.id ? "text-brand-600 dark:text-brand-400" : "text-gray-400"
-                  }`}>
-                  {step.title}
-                </span>
+                <div className="h-0 flex justify-center">
+                  <span className={`text-[10px] sm:text-[11px] mt-5 font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-500 ${currentStep >= step.id ? "text-brand-600 dark:text-brand-400 translate-y-1" : "text-gray-400"
+                    }`}>
+                    {step.title}
+                  </span>
+                </div>
               </div>
             ))}
-            {/* Progress Bar Background (Removed) */}
           </div>
         </div>
 
-        <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-xl">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-              {steps[currentStep - 1].title}
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Étape {currentStep} sur {steps.length} — Remplissez les informations pour inscrire votre hôpital.
-            </p>
+        <div className="mt-6">
+          <div className="mb-10 flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3 tracking-tight">
+                {steps[currentStep - 1].title}
+              </h1>
+              <p className="text-base text-gray-500 dark:text-gray-400 max-w-2xl">
+                Étape {currentStep} sur {steps.length} — Remplissez les informations pour inscrire votre hôpital.
+              </p>
+            </div>
+            {/* Bouton de remplissage auto (affiché en développement ou pour les tests) */}
+            <button 
+              type="button" 
+              onClick={fillTestData}
+              className="flex items-center gap-1 text-xs font-bold bg-brand-100/50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 hover:bg-brand-100 hover:scale-105 transition-all px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-800 shadow-sm"
+            >
+              <span className="text-lg leading-none">⚡</span> Auto-Fill
+            </button>
           </div>
 
           {error && (
@@ -254,20 +363,23 @@ export default function SignUpForm() {
               {currentStep === 1 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
-                    <Label>Nom de l'hôpital<span className="text-error-500">*</span></Label>
-                    <Input name="nomHopital" placeholder="Hôpital de l'Espoir" value={formData.nomHopital} onChange={handleChange} required />
+                    <Label>Nom de l'hôpital<span className="text-brand-500 font-bold ml-1">*</span></Label>
+                    <Input name="nom" placeholder="Ex: Hôpital JCC de Carrefour" value={formData.nom} onChange={handleChange} required />
                   </div>
                   <div>
-                    <Label>Raison Sociale</Label>
-                    <Input name="raisonSociale" placeholder="S.A., Association, etc." value={formData.raisonSociale} onChange={handleChange} />
+                    <Label>NIF<span className="text-brand-500 font-bold ml-1">*</span></Label>
+                    <Input name="nif" placeholder="000-000-000-0" value={formData.nif} onChange={handleChange} required />
                   </div>
                   <div>
-                    <Label>Numéro d'Enregistrement (MSPP)<span className="text-error-500">*</span></Label>
-                    <Input name="numeroEnregistrement" placeholder="REG-123456" value={formData.numeroEnregistrement} onChange={handleChange} required />
+                    <Label>Enregistrement MSPP<span className="text-brand-500 font-bold ml-1">*</span></Label>
+                    <Input name="numeroEnregistrement" placeholder="Ex: HT-MSPP-001" value={formData.numeroEnregistrement} onChange={handleChange} required />
                   </div>
-                  <div>
-                    <Label>Numéro Fiscal (NIF)</Label>
-                    <Input name="nif" placeholder="000-000-000-0" value={formData.nif} onChange={handleChange} />
+                  <div className="md:col-span-2">
+                    <Label>Documents Justificatifs (Patente, Licence, etc.)<span className="text-brand-500 font-bold ml-1">*</span></Label>
+                    <DragDropUpload 
+                      files={formData.documentsJustificatifs || []}
+                      onFilesSelected={(files) => setFormData(prev => ({ ...prev, documentsJustificatifs: files }))}
+                    />
                   </div>
                   <div>
                     <Label>Type d'Établissement<span className="text-error-500">*</span></Label>
@@ -403,7 +515,11 @@ export default function SignUpForm() {
               {/* STEP 5: Operational Config */}
               {currentStep === 5 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
+                  <div>
+                    <Label>Directeur de l'Établissement<span className="text-brand-500 font-bold ml-1">*</span></Label>
+                    <Input name="directeur" placeholder="Dr. Jean Dupont" value={formData.directeur} onChange={handleChange} required />
+                  </div>
+                  <div>
                     <Label>Nombre de lits</Label>
                     <Input type="number" name="nombreLits" placeholder="0" value={formData.nombreLits} onChange={handleChange} />
                   </div>
@@ -446,7 +562,7 @@ export default function SignUpForm() {
                     {["Basic", "Pro", "Enterprise"].map((plan) => (
                       <div
                         key={plan}
-                        onClick={() => setFormData(p => ({ ...p, planAbonnement: plan as any }))}
+                        onClick={() => setFormData(p => ({ ...p, planAbonnement: plan as "Basic" | "Pro" | "Enterprise" }))}
                         className={`cursor-pointer p-6 rounded-2xl border-2 transition-all text-center ${formData.planAbonnement === plan
                           ? "border-brand-500 bg-brand-50/50 dark:bg-brand-900/20"
                           : "border-gray-100 dark:border-gray-700 hover:border-brand-200"

@@ -7,6 +7,7 @@ import {
   InscriptionResponse,
   AuthUser
 } from './types/auth.types';
+import { validation } from '../utils/validation';
 
 /**
  * API pour l'authentification Django
@@ -89,45 +90,91 @@ export const djangoAuthApi = {
    */
   inscription: async function (data: InscriptionData): Promise<ApiResponse<InscriptionResponse>> {
     try {
-      console.log('🏥 Inscription hôpital Django:', data.nomHopital);
+      console.log('🏥 Inscription hôpital Django:', data.nom);
 
-      const payload = {
-        admin_email: data.adminEmail,
-        password: data.password,
-        prenom_admin: data.prenomAdmin,
-        nom_admin: data.nomAdmin,
-        admin_telephone: data.adminTelephone,
-        nom_hopital: data.nomHopital,
-        raison_sociale: data.raisonSociale,
-        numero_enregistrement: data.numeroEnregistrement,
-        nif: data.nif,
-        type_etablissement: data.typeEtablissement,
-        site_web: data.siteWeb,
-        description: data.description,
-        pays: data.pays,
-        province: data.province,
-        ville: data.ville,
-        adresse_ligne1: data.adresseLigne1,
-        adresse_ligne2: data.adresseLigne2,
-        code_postal: data.codePostal,
-        telephone: data.telephone,
-        telephone_urgence: data.telephoneUrgence,
-        email_hospital: data.email,
-        email_support: data.emailSupport,
-        nombre_lits: data.nombreLits,
-        urgence_disponible: data.urgenceDisponible,
-        laboratoire_disponible: data.laboratoireDisponible,
-        pharmacie_disponible: data.pharmacieDisponible,
-        radiologie_disponible: data.radiologieDisponible,
-        heure_ouverture: data.heureOuverture,
-        heure_fermeture: data.heureFermeture,
-        plan_abonnement: data.planAbonnement,
-        cycle_facturation: data.cycleFacturation
+      const formData = new FormData();
+      
+      // Informations Administrateur (Comptes)
+      formData.append('email', data.adminEmail);
+      formData.append('nom_complet', `${data.prenomAdmin} ${data.nomAdmin}`.trim());
+      formData.append('password', data.password);
+      formData.append('confirm_password', data.password); // Requis par le backend
+      formData.append('admin_telephone', validation.cleanPhone(data.adminTelephone || ''));
+      formData.append('role', 'proprietaire-hopital'); // CRITIQUE: Sans ça, le backend l'ignore et met "Patient"
+      formData.append('is_active', 'false');
+
+      // Informations Hôpital (Tenant) - Format Plat (Supporté par DRF Serializer direct)
+      const hospitalName = data.nom || data.nomHopital;
+      formData.append('nom', hospitalName);
+      formData.append('raison_sociale', data.raisonSociale || '');
+      formData.append('numero_enregistrement', data.numeroEnregistrement);
+      formData.append('nif', (data.nif || '').replace(/\D/g, ''));
+      formData.append('type_etablissement', data.typeEtablissement);
+      
+      const fullAdresse = `${data.adresseLigne1}, ${data.ville}${data.province ? ', ' + data.province : ''}${data.codePostal ? ' (' + data.codePostal + ')' : ''}`;
+      formData.append('adresse', fullAdresse);
+      
+      formData.append('telephone', validation.cleanPhone(data.telephone));
+      formData.append('telephone_urgence', validation.cleanPhone(data.telephoneUrgence || ''));
+      formData.append('email_professionnel', data.email);
+      formData.append('email_support', data.emailSupport || '');
+      
+      formData.append('directeur', data.directeur || '');
+      formData.append('nombre_de_lits', data.nombreLits ? data.nombreLits.toString() : '1');
+
+      // Mapping du plan d'abonnement pour le backend
+      let typeAbo = 'basic';
+      if (data.planAbonnement === 'Pro') typeAbo = 'standard';
+      if (data.planAbonnement === 'Enterprise') typeAbo = 'premium';
+
+      // État & Système
+      formData.append('statut', 'inactif');
+      formData.append('type_abonnement', typeAbo);
+      formData.append('statut_verification_document', 'en_attente');
+      
+      const schemaName = `tenant_${hospitalName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}`;
+      formData.append('nom_schema_base_de_donnees', schemaName);
+
+      // On ajoute aussi l'objet complet au cas où le backend l'extrait littéralement via request.data.get('hopital_data')
+      const hopitalDataObj = {
+        nom: hospitalName,
+        adresse: fullAdresse,
+        telephone: validation.cleanPhone(data.telephone),
+        email_professionnel: data.email,
+        directeur: data.directeur || '',
+        nombre_de_lits: data.nombreLits ? parseInt(data.nombreLits.toString(), 10) : 1,
+        numero_enregistrement: data.numeroEnregistrement || '',
+        statut: 'inactif',
+        type_abonnement: typeAbo,
+        statut_verification_document: 'en_attente',
+        nom_schema_base_de_donnees: schemaName
       };
+      // Le backend devra faire json.loads(hopital_data) si c'est stringifié, sinon DRF parse le JSON plat.
+      formData.append('hopital_data', JSON.stringify(hopitalDataObj));
 
-      const response = await apiClient.post('/comptes/inscription/', payload);
+      // Ajout des documents justificatifs
+      if (data.documentsJustificatifs && data.documentsJustificatifs.length > 0) {
+        data.documentsJustificatifs.forEach((file) => {
+          formData.append('documents_justificatifs', file);
+        });
+      }
 
-      console.log(' Inscription réussie');
+      // Autres infos techniques (Flat)
+      formData.append('site_web', data.siteWeb || '');
+      formData.append('description', data.description || '');
+      formData.append('pays', data.pays || 'Haïti');
+      formData.append('province', data.province || '');
+      formData.append('ville', data.ville || '');
+      formData.append('code_postal', data.codePostal || '');
+      formData.append('urgence_disponible', String(data.urgenceDisponible));
+      formData.append('laboratoire_disponible', String(data.laboratoireDisponible));
+      formData.append('pharmacie_disponible', String(data.pharmacieDisponible));
+      formData.append('radiologie_disponible', String(data.radiologieDisponible));
+      formData.append('heure_ouverture', data.heureOuverture || '08:00');
+      formData.append('heure_fermeture', data.heureFermeture || '17:00');
+      formData.append('cycle_facturation', data.cycleFacturation);
+
+      const response = await apiClient.post('/comptes/inscription/', formData);
 
       const respData = response.data;
       const authUser = this.mapUserResponse(respData.user || respData, respData.tenant);
@@ -143,10 +190,105 @@ export const djangoAuthApi = {
         }
       };
     } catch (error: any) {
-      console.error(' Erreur inscription Django:', error.response?.data || error.message);
+      console.error('❌ Erreur inscription Django (FULL):', error);
+      console.error('❌ Erreur inscription Django (RAW):', error.response?.data);
+      if (error.response?.data) {
+        console.error('❌ Erreur inscription Django (STRING):', JSON.stringify(error.response.data, null, 2));
+      }
+      
+      let message = 'Une erreur est survenue lors de l\'inscription';
+      const errorData = error.response?.data;
+      
+      if (!error.response) {
+        message = `Erreur de connexion : ${error.message || 'Le serveur ne répond pas'}`;
+      } else if (errorData) {
+        if (typeof errorData === 'string') {
+          message = errorData;
+        } else if (errorData.detail) {
+          message = errorData.detail;
+        } else if (typeof errorData === 'object') {
+          const firstField = Object.keys(errorData)[0];
+          const fieldError = errorData[firstField];
+          if (Array.isArray(fieldError)) {
+            message = `${firstField}: ${fieldError[0]}`;
+          } else if (typeof fieldError === 'string') {
+            message = `${firstField}: ${fieldError}`;
+          }
+        }
+      }
+      
       return {
         success: false,
-        message: error.response?.data?.detail || 'Une erreur est survenue lors de l\'inscription',
+        message,
+        error: errorData
+      };
+    }
+  },
+
+  /**
+   * Valide la vérification d'email via Token (POST)
+   */
+  confirmEmailVerification: async function (token: string): Promise<ApiResponse<any>> {
+    try {
+      console.log('🔗 Confirmation email avec token:', token);
+      const response = await apiClient.post(`/comptes/verify-email/${token}/`);
+
+      return {
+        success: true,
+        message: response.data.message || 'Email vérifié avec succès',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('❌ Erreur confirmation email:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.error || error.response?.data?.detail || 'Le lien est invalide ou a expiré',
+        error: error.response?.data
+      };
+    }
+  },
+
+  /**
+   * Vérifier l'email via Link (UIDB64 + Token) - Gardé pour compatibilité temporaire
+   */
+  verifyEmailLink: async function (uidb64: string, token: string): Promise<ApiResponse<any>> {
+    try {
+      console.log('🔗 Vérification email via lien (Legacy) pour UUID:', uidb64);
+      const response = await apiClient.get('/comptes/verify-email/', {
+        params: { uidb64, token }
+      });
+
+      return {
+        success: true,
+        message: response.data.message || 'Email vérifié avec succès',
+        data: response.data
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.error || 'Le lien est invalide',
+        error: error.response?.data
+      };
+    }
+  },
+
+  /**
+   * Renvoyer le code OTP
+   */
+  renvoyerOTP: async function (email: string): Promise<ApiResponse<any>> {
+    try {
+      console.log('🔄 Demande de renvoi OTP pour:', email);
+      const response = await apiClient.post('/comptes/renvoyer_otp/', { email });
+      return {
+        success: true,
+        message: 'Nouveau code envoyé avec succès',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('❌ Erreur renvoi OTP:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.detail || 'Impossible de renvoyer le code',
         error: error.response?.data
       };
     }

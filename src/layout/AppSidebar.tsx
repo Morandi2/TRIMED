@@ -87,7 +87,7 @@ const navItems: NavItem[] = [
     icon: <ShieldCheck />,
     name: "Journal d'Audit",
     path: "/admin/audit-logs",
-    permission: 'canManageSystem',
+    permission: 'canViewAuditLogs',
   },
   // {
   //   icon: <Pill />,

@@ -9,9 +9,7 @@ import { InfirmierDashboard } from '../GestionHopital/GestionUtilisateur/pages/I
 import { ReceptionnisteDashboard } from '../GestionHopital/GestionUtilisateur/pages/ReceptionnisteDashboard';
 import { PharmacienDashboard } from '../GestionHopital/GestionUtilisateur/pages/PharmacienDashboard';
 import { ManagerDashboard } from '../GestionHopital/GestionUtilisateur/pages/ManagerDashboard';
-import { TechnicienDashboard } from '../GestionHopital/GestionUtilisateur/pages/TechnicienDashboard';
-import { FinanceDashboard } from '../GestionHopital/GestionUtilisateur/pages/FinanceDashboard';
-import { AuditeurDashboard } from '../GestionHopital/GestionUtilisateur/pages/AuditeurDashboard';
+import { PatientDashboard } from '../GestionHopital/GestionUtilisateur/pages/PatientDashboard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 export default function RoleBasedHome() {
@@ -37,23 +35,19 @@ export default function RoleBasedHome() {
   const role = currentUserRole;
 
   switch (role) {
-    case 'Médecin':
+    case 'medecin':
       return <MedecinDashboard />;
-    case 'Infirmier':
+    case 'infirmier':
       return <InfirmierDashboard />;
-    case 'Réceptionniste':
+    case 'secretaire':
       return <ReceptionnisteDashboard />;
-    case 'Pharmacien':
+    case 'personnel':
       return <PharmacienDashboard />;
-    case 'Manager':
+    case 'proprietaire-hopital':
       return <ManagerDashboard />;
-    case 'Technicien':
-      return <TechnicienDashboard />;
-    case 'Finance':
-      return <FinanceDashboard />;
-    case 'Auditeur':
-      return <AuditeurDashboard />;
-    case 'Administrateur':
+    case 'patient':
+      return <PatientDashboard />;
+    case 'admin-systeme':
     default:
       return <Home />;
   }

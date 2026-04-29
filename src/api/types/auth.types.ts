@@ -4,6 +4,7 @@
 export interface InscriptionData {
   // ÉTAPE 1 — Informations Générales
   nomHopital: string;
+  nom?: string; // Sync avec backend
   raisonSociale?: string;
   numeroEnregistrement: string;
   nif?: string;
@@ -11,6 +12,7 @@ export interface InscriptionData {
   logo?: any;
   siteWeb?: string;
   description?: string;
+  documentsJustificatifs?: File[];
 
   // ÉTAPE 2 — Adresse & Localisation
   pays: string; // "Haiti" par défaut

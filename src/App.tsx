@@ -27,6 +27,7 @@ import PolitiqueConfidentialite from "./pages/index/PolitiqueConfidentialite";
 import ConditionsUtilisation from "./pages/index/ConditionsUtilisation";
 import CentreAide from "./pages/index/CentreAide";
 import { AuditLogPage } from "./pages/GestionHopital/GestionUtilisateur/pages";
+import VerifyEmailPage from "./pages/AuthPages/VerifyEmailPage";
 
 export default function App() {
   return (
@@ -46,6 +47,8 @@ export default function App() {
               <Route path="/politique-de-confidentialite" element={<PolitiqueConfidentialite />} />
               <Route path="/conditions-utilisation" element={<ConditionsUtilisation />} />
               <Route path="/centre-aide" element={<CentreAide />} />
+              <Route path="/verifier-email" element={<VerifyEmailPage />} />
+              <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
 
               {/* Espace Protégé */}
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -61,7 +64,7 @@ export default function App() {
                 <Route path="/paiement" element={<ProtectedRoute requiredPermission="canViewPaiements"><Paiement /></ProtectedRoute>} />
                 <Route path="/rendezvous" element={<ProtectedRoute requiredPermission="canViewRendezVous"><RendezVous /></ProtectedRoute>} />
                 <Route path="/configuration" element={<ProtectedRoute requiredPermission="canManageSystem"><Configuration /></ProtectedRoute>} />
-                <Route path="/admin/audit-logs" element={<ProtectedRoute requiredPermission="canManageSystem"><AuditLogPage /></ProtectedRoute>} />
+                <Route path="/admin/audit-logs" element={<ProtectedRoute requiredPermission="canViewAuditLogs"><AuditLogPage /></ProtectedRoute>} />
 
                 {/* Autres Pages */}
                 <Route path="/profile" element={<UserProfiles />} />

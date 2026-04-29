@@ -185,6 +185,98 @@ export const validation = {
   },
 
   /**
+   * Formatage du NIF (10 chiffres)
+   */
+  formatNIF(value: string): string {
+    // Retire tout ce qui n'est pas chiffre
+    const cleaned = value.replace(/\D/g, '');
+    
+    // Limite à 10 chiffres
+    return cleaned.slice(0, 10);
+  },
+
+  /**
+   * Formatage du Numéro MSPP (HT-MSPP-DEP-TYPE-NUM)
+   */
+  formatMSPP(value: string): string {
+    // Force majuscules et remplace les espaces par des tirets
+    let val = value.toUpperCase().replace(/\s/g, '-');
+    
+    // Supprime les caractères non autorisés (uniquement lettres, chiffres et tirets)
+    val = val.replace(/[^A-Z0-9-]/g, '');
+    
+    // Supprime les doubles tirets
+    val = val.replace(/-+/g, '-');
+
+    // Aide au préfixe si l'utilisateur commence à taper sans le préfixe
+    if (val.length > 0 && !val.startsWith('H')) {
+        val = 'HT-MSPP-' + val;
+    } else if (val === 'H') {
+        val = 'HT-';
+    } else if (val === 'HT') {
+        val = 'HT-';
+    } else if (val === 'HT-M') {
+        val = 'HT-MSPP-';
+    }
+
+    return val;
+  },
+
+  /**
+   * Validation de NIF
+   */
+  validateNIF(nif: string): { valid: boolean; message?: string } {
+    if (!nif) return { valid: false, message: 'Le NIF est obligatoire' };
+    
+    const cleaned = nif.replace(/\D/g, '');
+    const isValid = cleaned.length === 10;
+    
+    return {
+      valid: isValid,
+      message: isValid ? undefined : 'Le NIF doit contenir exactement 10 chiffres'
+    };
+  },
+
+  /**
+   * Validation du Numéro MSPP (Strict)
+   */
+  validateMSPP(mspp: string): { valid: boolean; message?: string } {
+    if (!mspp) return { valid: false, message: 'Le numéro MSPP est obligatoire' };
+    
+    // Format attendu: HT-MSPP-[REGION]-[TYPE]-[NUMERO]
+    // Exemple: HT-MSPP-OUEST-HOP-0001
+    const parts = mspp.split('-');
+    
+    // Au moins 5 parties: HT, MSPP, REGION, TYPE, NUM
+    if (parts.length < 5) {
+      return { valid: false, message: 'Format MSPP invalide (ex: HT-MSPP-OUEST-HOP-0001)' };
+    }
+
+    if (parts[0] !== 'HT' || parts[1] !== 'MSPP') {
+      return { valid: false, message: 'Le numéro doit commencer par HT-MSPP-' };
+    }
+
+    // Le dernier segment doit être numérique (4 chiffres idéalement)
+    const lastPart = parts[parts.length - 1];
+    if (!/^\d{4}$/.test(lastPart)) {
+      return { valid: false, message: 'Le numéro final doit avoir 4 chiffres (ex: 0001)' };
+    }
+
+    return { valid: true };
+  },
+
+  /**
+   * Capitalize first letter of each word
+   */
+  capitalize(value: string): string {
+    return value
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  },
+
+  /**
    * Validation complète pour le formulaire d'inscription
    */
   validateInscriptionForm(data: {

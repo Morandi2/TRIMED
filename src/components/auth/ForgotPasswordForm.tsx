@@ -30,81 +30,85 @@ export default function ForgotPasswordForm() {
 
     if (isSubmitted) {
         return (
-            <div className="flex flex-col flex-1">
-                <div className="w-full max-w-md pt-10 mx-auto">
-                    <Link
-                        to="/signin"
-                        className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                    >
-                        <ChevronLeftIcon className="size-5" />
-                        Retour à la connexion
-                    </Link>
-                </div>
-                <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto text-center">
-                    <div className="mb-6">
-                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Email envoyé !</h1>
-                        <p className="text-gray-600 dark:text-gray-400">
-                            Si un compte existe pour <strong>{email}</strong>, vous recevrez un lien pour réinitialiser votre mot de passe sous peu.
-                        </p>
+            <div className="flex flex-col w-full text-center">
+                 <div className="mb-6 flex justify-center">
+                    <div className="w-16 h-16 bg-brand-50 dark:bg-brand-900/20 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
                     </div>
-                    <Link to="/signin" className="w-full">
-                        <Button className="w-full" size="sm">
-                            Retourner à la connexion
-                        </Button>
-                    </Link>
                 </div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Email envoyé !</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+                    Si un compte existe pour <strong className="text-gray-900 dark:text-white">{email}</strong>, 
+                    vous recevrez un lien de réinitialisation sous peu.
+                </p>
+                <Link to="/signin" className="w-full">
+                    <Button className="w-full py-3.5 font-bold text-sm" size="sm">
+                        Retourner à la connexion
+                    </Button>
+                </Link>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col flex-1">
-            <div className="w-full max-w-md pt-10 mx-auto">
-                <Link
-                    to="/signin"
-                    className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                >
-                    <ChevronLeftIcon className="size-5" />
-                    Retour à la connexion
-                </Link>
+        <div className="flex flex-col w-full">
+            <div className="mb-8">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    Mot de passe oublié ?
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Entrez votre e-mail pour recevoir un lien de réinitialisation.
+                </p>
             </div>
-            <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Mot de passe oublié ?</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Entrez votre adresse e-mail pour recevoir un lien de réinitialisation.
-                    </p>
+
+            {error && (
+                <div className="mb-6 p-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl dark:bg-red-900/20 dark:border-red-800/50 dark:text-red-400 animate-in fade-in zoom-in-95 duration-300">
+                    {error}
                 </div>
+            )}
 
-                {error && (
-                    <div className="mb-4 p-3 text-sm text-red-600 bg-red-100 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
-                        {error}
-                    </div>
-                )}
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                    <Label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                        Votre adresse e-mail
+                    </Label>
+                    <Input
+                        type="email"
+                        placeholder="docteur@trimed.ht"
+                        className="w-full text-sm"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+                
+                <Button
+                    className="w-full py-3.5 text-sm font-bold shadow-xl shadow-brand-500/10 hover:shadow-brand-500/20 transform active:scale-[0.98] transition-all"
+                    type="submit"
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                         <span className="flex items-center justify-center">
+                            <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Envoi...
+                        </span>
+                    ) : "Envoyer le lien"}
+                </Button>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="space-y-6">
-                        <div>
-                            <Label>Adresse e-mail <span className="text-error-500">*</span></Label>
-                            <Input
-                                type="email"
-                                placeholder="votre-email@exemple.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <Button
-                            className="w-full"
-                            size="sm"
-                            type="submit"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? "Envoi en cours..." : "Envoyer le lien"}
-                        </Button>
-                    </div>
-                </form>
-            </div>
+                 <div className="text-center mt-6">
+                    <Link
+                        to="/signin"
+                        className="text-sm font-bold text-gray-500 hover:text-brand-500 transition-colors"
+                    >
+                        Annuler et retourner
+                    </Link>
+                </div>
+            </form>
         </div>
     );
 }

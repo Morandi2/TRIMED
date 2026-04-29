@@ -5,9 +5,17 @@ import { UserRole } from '../../types/userRoles';
 export const RoleSwitcher: React.FC = () => {
   const { currentUserRole, setCurrentUserRole } = useUser();
 
-  if (currentUserRole !== 'Administrateur') return null;
+  if (currentUserRole !== 'admin-systeme') return null;
 
-  const roles: UserRole[] = ['Administrateur', 'Médecin', 'Infirmier', 'Réceptionniste', 'Pharmacien', 'Manager', 'Technicien', 'Finance', 'Auditeur'];
+  const roles: UserRole[] = [
+    'admin-systeme', 
+    'proprietaire-hopital', 
+    'medecin', 
+    'infirmier', 
+    'secretaire', 
+    'personnel', 
+    'patient'
+  ];
 
   return (
     <div className="flex items-center gap-2">

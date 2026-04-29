@@ -1,264 +1,248 @@
-export type UserRole = 'Administrateur' | 'Médecin' | 'Infirmier' | 'Réceptionniste' | 'Pharmacien' | 'Manager' | 'Technicien' | 'Finance' | 'Auditeur';
+export type UserRole = 
+  | 'admin-systeme' 
+  | 'proprietaire-hopital' 
+  | 'medecin' 
+  | 'infirmier' 
+  | 'secretaire' 
+  | 'personnel' 
+  | 'patient';
 
+/**
+ * Normalise le rôle reçu du backend vers les types officiels du frontend
+ */
 export const normalizeRole = (role: string | null | undefined): UserRole => {
-  if (!role) return 'Administrateur'; // Fallback par défaut
+  if (!role) return 'personnel'; 
   
   const r = role.toLowerCase().trim();
   
-  // Mapping des slugs ou noms variés vers les types UI officiels
-  if (r.includes('admin') || r.includes('proprietaire')) return 'Administrateur';
-  if (r.includes('medecin') || r.includes('docteur')) return 'Médecin';
-  if (r.includes('infirmier')) return 'Infirmier';
-  if (r.includes('receptionniste') || r.includes('secretaire')) return 'Réceptionniste';
-  if (r.includes('pharmacien')) return 'Pharmacien';
-  if (r.includes('manager') || r.includes('gestionnaire')) return 'Manager';
-  if (r.includes('technicien') || r.includes('laborantin')) return 'Technicien';
-  if (r.includes('finance') || r.includes('comptable')) return 'Finance';
-  if (r.includes('auditeur')) return 'Auditeur';
+  // Mapping direct avec les slugs backend
+  if (r === 'admin-systeme' || r === 'superadmin') return 'admin-systeme';
+  if (r === 'proprietaire-hopital' || r === 'proprietaire') return 'proprietaire-hopital';
+  if (r === 'medecin' || r === 'docteur') return 'medecin';
+  if (r === 'infirmier') return 'infirmier';
+  if (r === 'secretaire') return 'secretaire';
+  if (r === 'personnel') return 'personnel';
+  if (r === 'patient') return 'patient';
   
-  return 'Administrateur'; // Fallback final
+  // Mapping des alias courants
+  if (r.includes('admin')) return 'admin-systeme';
+  if (r.includes('owner')) return 'proprietaire-hopital';
+  if (r.includes('doc')) return 'medecin';
+  if (r.includes('nurse')) return 'infirmier';
+  
+  return 'personnel'; // Fallback par défaut sécurisé
 };
 
 export interface UserPermissions {
+  // Patients
   canViewPatients: boolean;
   canEditPatients: boolean;
-  canViewMedecins: boolean;
-  canEditMedecins: boolean;
+  canViewOwnFolderOnly: boolean;
+  
+  // Médical
   canViewConsultations: boolean;
   canEditConsultations: boolean;
   canViewOrdonnances: boolean;
   canEditOrdonnances: boolean;
+  canGererHospitalisation: boolean;
+  
+  // Médicaments & Stock
   canViewMedicaments: boolean;
-  canEditMedicaments: boolean;
+  canGererMedicaments: boolean;
+  canModifierStock: boolean;
+  
+  // Opérations & Logistique
   canViewRendezVous: boolean;
   canEditRendezVous: boolean;
-  canViewPaiements: boolean;
-  canEditPaiements: boolean;
+  canGererSalles: boolean;
   canViewCalendar: boolean;
-  canViewDashboard: boolean;
+  
+  // Administration & Finance
+  canViewPaiements: boolean;
+  canGererFacturation: boolean;
   canManageUsers: boolean;
-  canManageRoles: boolean;
+  canViewDashboard: boolean;
   canViewReports: boolean;
   canManageSystem: boolean;
-  canViewFinancial: boolean;
   canViewAuditLogs: boolean;
+  canModifierTenant: boolean;
 }
 
 export const rolePermissions: Record<UserRole, UserPermissions> = {
-  Administrateur: {
+  'admin-systeme': {
     canViewPatients: true,
     canEditPatients: true,
-    canViewMedecins: true,
-    canEditMedecins: true,
+    canViewOwnFolderOnly: false,
     canViewConsultations: true,
     canEditConsultations: true,
     canViewOrdonnances: true,
     canEditOrdonnances: true,
+    canGererHospitalisation: true,
     canViewMedicaments: true,
-    canEditMedicaments: true,
+    canGererMedicaments: true,
+    canModifierStock: true,
     canViewRendezVous: true,
     canEditRendezVous: true,
-    canViewPaiements: true,
-    canEditPaiements: true,
+    canGererSalles: true,
     canViewCalendar: true,
-    canViewDashboard: true,
+    canViewPaiements: true,
+    canGererFacturation: true,
     canManageUsers: true,
-    canManageRoles: true,
+    canViewDashboard: true,
     canViewReports: true,
     canManageSystem: true,
-    canViewFinancial: true,
     canViewAuditLogs: true,
+    canModifierTenant: true,
   },
-  Médecin: {
+  'proprietaire-hopital': {
     canViewPatients: true,
     canEditPatients: true,
-    canViewMedecins: false,
-    canEditMedecins: false,
+    canViewOwnFolderOnly: false,
     canViewConsultations: true,
     canEditConsultations: true,
     canViewOrdonnances: true,
     canEditOrdonnances: true,
+    canGererHospitalisation: true,
     canViewMedicaments: true,
-    canEditMedicaments: false,
+    canGererMedicaments: true,
+    canModifierStock: true,
     canViewRendezVous: true,
     canEditRendezVous: true,
-    canViewPaiements: false,
-    canEditPaiements: false,
+    canGererSalles: true,
     canViewCalendar: true,
+    canViewPaiements: true,
+    canGererFacturation: true,
+    canManageUsers: true,
     canViewDashboard: true,
-    canManageUsers: false,
-    canManageRoles: false,
-    canViewReports: false,
+    canViewReports: true,
     canManageSystem: false,
-    canViewFinancial: false,
-    canViewAuditLogs: false,
+    canViewAuditLogs: true,
+    canModifierTenant: false,
   },
-  Infirmier: {
+  'medecin': {
     canViewPatients: true,
     canEditPatients: true,
-    canViewMedecins: true,
-    canEditMedecins: false,
+    canViewOwnFolderOnly: false,
+    canViewConsultations: true,
+    canEditConsultations: true,
+    canViewOrdonnances: true,
+    canEditOrdonnances: true,
+    canGererHospitalisation: true,
+    canViewMedicaments: true,
+    canGererMedicaments: true,
+    canModifierStock: false, // Médecin ❌ ne peut pas modifier le stock
+    canViewRendezVous: true,
+    canEditRendezVous: true,
+    canGererSalles: true,
+    canViewCalendar: true,
+    canViewPaiements: false,
+    canGererFacturation: false,
+    canManageUsers: false,
+    canViewDashboard: true,
+    canViewReports: false,
+    canManageSystem: false,
+    canViewAuditLogs: false,
+    canModifierTenant: false,
+  },
+  'infirmier': {
+    canViewPatients: true,
+    canEditPatients: true,
+    canViewOwnFolderOnly: false,
     canViewConsultations: true,
     canEditConsultations: true,
     canViewOrdonnances: true,
     canEditOrdonnances: false,
+    canGererHospitalisation: true,
     canViewMedicaments: true,
-    canEditMedicaments: false,
+    canGererMedicaments: true,
+    canModifierStock: true, // Infirmier ✅ peut modifier le stock
     canViewRendezVous: true,
     canEditRendezVous: true,
-    canViewPaiements: false,
-    canEditPaiements: false,
+    canGererSalles: false,
     canViewCalendar: true,
-    canViewDashboard: true,
+    canViewPaiements: false,
+    canGererFacturation: false,
     canManageUsers: false,
-    canManageRoles: false,
+    canViewDashboard: true,
     canViewReports: false,
     canManageSystem: false,
-    canViewFinancial: false,
     canViewAuditLogs: false,
+    canModifierTenant: false,
   },
-  Réceptionniste: {
+  'secretaire': {
     canViewPatients: true,
     canEditPatients: true,
-    canViewMedecins: true,
-    canEditMedecins: false,
-    canViewConsultations: true,
+    canViewOwnFolderOnly: false,
+    canViewConsultations: false,
     canEditConsultations: false,
     canViewOrdonnances: false,
     canEditOrdonnances: false,
-    canViewMedicaments: false,
-    canEditMedicaments: false,
+    canGererHospitalisation: false,
+    canViewMedicaments: true,
+    canGererMedicaments: true,
+    canModifierStock: false, // Secrétaire ❌ stock
     canViewRendezVous: true,
     canEditRendezVous: true,
-    canViewPaiements: true,
-    canEditPaiements: true,
+    canGererSalles: true,
     canViewCalendar: true,
-    canViewDashboard: true,
+    canViewPaiements: false, // Peut voir factures tenant mais pas gérer facturation (selon résumé)
+    canGererFacturation: false,
     canManageUsers: false,
-    canManageRoles: false,
+    canViewDashboard: true,
     canViewReports: false,
     canManageSystem: false,
-    canViewFinancial: false,
     canViewAuditLogs: false,
+    canModifierTenant: false,
   },
-  Pharmacien: {
+  'personnel': {
     canViewPatients: true,
-    canEditPatients: false,
-    canViewMedecins: false,
-    canEditMedecins: false,
-    canViewConsultations: false,
-    canEditConsultations: false,
-    canViewOrdonnances: true,
-    canEditOrdonnances: false,
-    canViewMedicaments: true,
-    canEditMedicaments: true,
-    canViewRendezVous: false,
-    canEditRendezVous: false,
-    canViewPaiements: false,
-    canEditPaiements: false,
-    canViewCalendar: false,
-    canViewDashboard: true,
-    canManageUsers: false,
-    canManageRoles: false,
-    canViewReports: false,
-    canManageSystem: false,
-    canViewFinancial: false,
-    canViewAuditLogs: false,
-  },
-  Manager: {
-    canViewPatients: true,
-    canEditPatients: false,
-    canViewMedecins: true,
-    canEditMedecins: false,
+    canEditPatients: true,
+    canViewOwnFolderOnly: false,
     canViewConsultations: false,
     canEditConsultations: false,
     canViewOrdonnances: false,
     canEditOrdonnances: false,
+    canGererHospitalisation: false,
     canViewMedicaments: true,
-    canEditMedicaments: true,
+    canGererMedicaments: true,
+    canModifierStock: true, // Personnel ✅ peut modifier le stock
     canViewRendezVous: true,
     canEditRendezVous: true,
-    canViewPaiements: false,
-    canEditPaiements: false,
+    canGererSalles: false,
     canViewCalendar: true,
-    canViewDashboard: true,
-    canManageUsers: true,
-    canManageRoles: false,
-    canViewReports: true,
-    canManageSystem: false,
-    canViewFinancial: false,
-    canViewAuditLogs: false,
-  },
-  Technicien: {
-    canViewPatients: true,
-    canEditPatients: false,
-    canViewMedecins: false,
-    canEditMedecins: false,
-    canViewConsultations: true,
-    canEditConsultations: false,
-    canViewOrdonnances: true,
-    canEditOrdonnances: false,
-    canViewMedicaments: false,
-    canEditMedicaments: false,
-    canViewRendezVous: false,
-    canEditRendezVous: false,
     canViewPaiements: false,
-    canEditPaiements: false,
-    canViewCalendar: false,
-    canViewDashboard: true,
+    canGererFacturation: false,
     canManageUsers: false,
-    canManageRoles: false,
+    canViewDashboard: true,
     canViewReports: false,
     canManageSystem: false,
-    canViewFinancial: false,
     canViewAuditLogs: false,
+    canModifierTenant: false,
   },
-  Finance: {
-    canViewPatients: true,
-    canEditPatients: false,
-    canViewMedecins: false,
-    canEditMedecins: false,
-    canViewConsultations: false,
-    canEditConsultations: false,
-    canViewOrdonnances: false,
-    canEditOrdonnances: false,
-    canViewMedicaments: false,
-    canEditMedicaments: false,
-    canViewRendezVous: false,
-    canEditRendezVous: false,
-    canViewPaiements: true,
-    canEditPaiements: true,
-    canViewCalendar: false,
-    canViewDashboard: true,
-    canManageUsers: false,
-    canManageRoles: false,
-    canViewReports: true,
-    canManageSystem: false,
-    canViewFinancial: true,
-    canViewAuditLogs: false,
-  },
-  Auditeur: {
+  'patient': {
     canViewPatients: false,
     canEditPatients: false,
-    canViewMedecins: false,
-    canEditMedecins: false,
+    canViewOwnFolderOnly: true, // ✅ Accède uniquement à son propre dossier
     canViewConsultations: false,
     canEditConsultations: false,
     canViewOrdonnances: false,
     canEditOrdonnances: false,
-    canViewMedicaments: false,
-    canEditMedicaments: false,
-    canViewRendezVous: false,
-    canEditRendezVous: false,
-    canViewPaiements: false,
-    canEditPaiements: false,
+    canGererHospitalisation: false,
+    canViewMedicaments: true, // Peut voir médicaments hôpital
+    canGererMedicaments: false,
+    canModifierStock: false,
+    canViewRendezVous: true,
+    canEditRendezVous: true, // Ses propres RDV
+    canGererSalles: false,
     canViewCalendar: false,
-    canViewDashboard: true,
+    canViewPaiements: true, // Peut voir ses factures
+    canGererFacturation: false,
     canManageUsers: false,
-    canManageRoles: false,
-    canViewReports: true,
+    canViewDashboard: true,
+    canViewReports: false,
     canManageSystem: false,
-    canViewFinancial: false,
-    canViewAuditLogs: true,
+    canViewAuditLogs: false,
+    canModifierTenant: false,
   },
 };
+

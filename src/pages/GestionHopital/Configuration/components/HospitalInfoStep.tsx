@@ -1,152 +1,121 @@
 import React from 'react';
 import { HospitalConfig } from '../types/ConfigTypes';
 import { validation } from '../../../../utils/validation';
+import Label from '../../../../components/form/Label';
+import Input from '../../../../components/form/input/InputField';
+import { Building2, Mail, Phone, Globe, MapPin, Palette } from 'lucide-react';
 
 interface Props {
- config: Partial<HospitalConfig>;
- setConfig: React.Dispatch<React.SetStateAction<Partial<HospitalConfig>>>;
+  config: Partial<HospitalConfig>;
+  setConfig: React.Dispatch<React.SetStateAction<Partial<HospitalConfig>>>;
 }
 
 export const HospitalInfoStep: React.FC<Props> = ({ config, setConfig }) => {
- const handleChange = (field: keyof HospitalConfig, value: any) => {
- setConfig((prev) => ({ ...prev, [field]: value }));
- };
+  const handleChange = (field: keyof HospitalConfig, value: any) => {
+    setConfig((prev) => ({ ...prev, [field]: value }));
+  };
 
- return (
- <div className="space-y-6">
- <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
- Informations de l'Hôpital
- </h2>
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+        <div className="md:col-span-2">
+          <Label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Nom de l'Hôpital
+          </Label>
+          <Input
+            name="nom"
+            value={config.nom || ''}
+            onChange={(e) => handleChange('nom', e.target.value)}
+            placeholder="Hôpital de l'Espoir"
+            className="w-full"
+            required
+          />
+        </div>
 
- <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
- <div>
- <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
- Nom de l'Hôpital *
- </label>
- <input
- type="text"
- value={config.nom || ''}
- onChange={(e) => handleChange('nom', e.target.value)}
- className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
- placeholder="Hôpital Général de Port-au-Prince"
- required
- />
- </div>
+        <div>
+          <Label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Téléphone Professionnel
+          </Label>
+          <Input
+            name="telephone"
+            value={config.telephone || ''}
+            onChange={(e) => handleChange('telephone', e.target.value)}
+            placeholder="+509 2811-2233"
+            className="w-full"
+            required
+          />
+        </div>
 
- <div>
- <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
- Téléphone *
- </label>
- <input
- type="tel"
- value={config.telephone || ''}
- onChange={(e) => handleChange('telephone', e.target.value)}
- className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
- placeholder="+509 28 11 22 33"
- required
- />
- </div>
+        <div>
+          <Label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Email de Support
+          </Label>
+          <Input
+            name="email"
+            type="email"
+            value={config.email || ''}
+            onChange={(e) => handleChange('email', e.target.value)}
+            placeholder="support@hopital.ht"
+            className="w-full"
+            required
+          />
+        </div>
 
- <div>
- <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
- Email *
- </label>
- <input
- type="email"
- value={config.email || ''}
- onChange={(e) => handleChange('email', e.target.value)}
- className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
- placeholder="contact@hopital.ht"
- required
- />
- </div>
+        <div className="md:col-span-2">
+          <Label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Adresse Physique
+          </Label>
+          <Input
+            name="adresse"
+            value={config.adresse || ''}
+            onChange={(e) => handleChange('adresse', e.target.value)}
+            placeholder="123, Rue des Miracles, Port-au-Prince"
+            className="w-full"
+            required
+          />
+        </div>
 
- <div>
- <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
- Adresse *
- </label>
- <input
- type="text"
- value={config.adresse || ''}
- onChange={(e) => handleChange('adresse', e.target.value)}
- className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
- placeholder="Port-au-Prince, Haïti"
- required
- />
- </div>
+        <div>
+          <Label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Identité Visuelle (Couleur)
+          </Label>
+          <div className="flex gap-3">
+            <div 
+              className="w-12 h-12 rounded-xl border border-gray-200 dark:border-gray-800 shadow-inner flex-shrink-0"
+              style={{ backgroundColor: config.couleur_principale || '#2D32FF' }}
+            />
+            <Input
+              name="couleur_principale"
+              value={config.couleur_principale || '#2D32FF'}
+              onChange={(e) => handleChange('couleur_principale', e.target.value)}
+              className="flex-1"
+            />
+          </div>
+        </div>
 
- <div>
- <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
- Couleur Principale
- </label>
- <div className="flex gap-2">
- <input
- type="color"
- value={config.couleur_principale || '#0066CC'}
- onChange={(e) => handleChange('couleur_principale', e.target.value)}
- className="h-10 w-20 border border-gray-300 rounded cursor-pointer"
- />
- <input
- type="text"
- value={config.couleur_principale || '#0066CC'}
- onChange={(e) => handleChange('couleur_principale', e.target.value)}
- className="flex-1 px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
- />
- </div>
- </div>
+        <div>
+           <Label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Devise Locative
+          </Label>
+          <select
+            value={config.devise || 'HTG'}
+            onChange={(e) => handleChange('devise', e.target.value)}
+            className="w-full h-11 rounded-lg border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none dark:text-white"
+          >
+            <option value="HTG">Gourde Haïtienne (HTG)</option>
+            <option value="USD">Dollar US (USD)</option>
+          </select>
+        </div>
+      </div>
 
- <div>
- <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
- Langue par Défaut
- </label>
- <select
- value={config.langue_defaut || 'fr'}
- onChange={(e) => handleChange('langue_defaut', e.target.value)}
- className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
- >
- <option value="fr">Français</option>
- <option value="ht">Kreyòl</option>
- <option value="en">English</option>
- </select>
- </div>
-
- <div>
- <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
- Fuseau Horaire
- </label>
- <select
- value={config.fuseau_horaire || 'America/Port-au-Prince'}
- onChange={(e) => handleChange('fuseau_horaire', e.target.value)}
- className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
- >
- <option value="America/Port-au-Prince">Port-au-Prince (GMT-5)</option>
- <option value="America/New_York">New York (GMT-5)</option>
- <option value="Europe/Paris">Paris (GMT+1)</option>
- </select>
- </div>
-
- <div>
- <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
- Devise
- </label>
- <select
- value={config.devise || 'HTG'}
- onChange={(e) => handleChange('devise', e.target.value)}
- className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
- >
- <option value="HTG">Gourde Haïtienne (HTG)</option>
- <option value="USD">Dollar US (USD)</option>
- <option value="EUR">Euro (EUR)</option>
- </select>
- </div>
- </div>
-
- <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
- <p className="text-sm text-blue-800 dark:text-blue-300">
- <strong>Conseil:</strong> Ces informations seront affichées sur tous les documents officiels
- (factures, rapports, etc.). Assurez-vous qu'elles sont correctes.
- </p>
- </div>
- </div>
- );
+      <div className="p-4 bg-brand-500/5 border border-brand-500/10 rounded-2xl flex gap-4 items-center">
+        <div className="w-10 h-10 bg-brand-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+          <Globe className="text-brand-500 w-5 h-5" />
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          Ces informations serviront de base pour votre **Tenant ID** unique et seront affichées sur vos factures et documents officiels.
+        </p>
+      </div>
+    </div>
+  );
 };

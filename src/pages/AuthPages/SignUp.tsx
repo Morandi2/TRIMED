@@ -9,7 +9,7 @@ export default function SignUp() {
         title="TRIMEDH"
         description="TRIMEDH est une plateforme de gestion de santé visant à améliorer l'accès et l'efficacité des services de santé grâce à une technologie avancée."
       />
-      <AuthLayout>
+      <AuthLayout maxWidth="max-w-4xl">
         <SignUpForm />
       </AuthLayout>
     </>
