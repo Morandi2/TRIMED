@@ -11,6 +11,7 @@ import { validation } from "../../utils/validation";
 import DragDropUpload from "../form/input/DragDropUpload";
 import Button from "../ui/button/Button";
 import { useAuth } from "../../context/AuthContext";
+import { djangoAuthApi } from "../../api/djangoAuthApi";
 
 export default function SignUpForm() {
   const { isAuthenticated } = useAuth();
@@ -241,7 +242,6 @@ export default function SignUpForm() {
 
     setIsLoadingLocal(true);
     try {
-      const { djangoAuthApi } = await import("../../api/djangoAuthApi");
       const result = await djangoAuthApi.inscription(formData);
 
       if (result.success) {

@@ -24,6 +24,7 @@ import { ServicesConfigStep } from './components/ServicesConfigStep';
 import { HospitalConfig } from './types/ConfigTypes';
 import { useAuth } from '../../../context/AuthContext';
 import Button from '../../../components/ui/button/Button';
+import hospitalApi from '../../../api/hospitalApi';
 
 const steps = [
   { id: 1, title: 'Hôpital', icon: Building2, description: 'Identité visuelle' },
@@ -87,7 +88,6 @@ export const ConfigurationWizard: React.FC = () => {
       };
 
       setTenantConfig(tenantConfig);
-      const { hospitalApi } = await import('../../../api/hospitalApi');
       const result = await hospitalApi.config.saveConfig(config);
 
       if (result.success) {

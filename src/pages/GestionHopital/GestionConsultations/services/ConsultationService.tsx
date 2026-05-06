@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import hospitalApi from '../../../../api/hospitalApi';
+import apiClient from '../../../../api/apiConfig';
 import { patientService } from '../../GestionPatients/services/PatientService';
 import { medecinService } from '../../GestionMedecins/services/MedecinService';
 
@@ -141,7 +142,6 @@ export class ConsultationService {
 
       while (nextUrl) {
         try {
-          const { default: apiClient } = await import('../../../../api/apiConfig');
           const next = await apiClient.get(nextUrl);
           if (next.data.results && Array.isArray(next.data.results)) {
             results = [...results, ...next.data.results];

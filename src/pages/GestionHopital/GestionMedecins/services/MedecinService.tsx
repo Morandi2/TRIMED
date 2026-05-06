@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { djangoAuthApi } from '../../../../api/djangoAuthApi';
+import hospitalApi from '../../../../api/hospitalApi';
 
 export interface Specialite {
   specialite_id: number;
@@ -274,8 +275,6 @@ export class MedecinService {
     console.log('[MedecinService] 🔄 Cache miss — fetching fresh data for hopital', hopitalId);
 
     try {
-      const { default: hospitalApi } = await import('../../../../api/hospitalApi');
-
       // Fetch medecins list + specialites in parallel for speed
       const [profilesRes, specialitesData] = await Promise.all([
         hospitalApi.medecins.getAll({
@@ -344,7 +343,6 @@ export class MedecinService {
   // Fetch single doctor (always fresh for edit/view detail)
   // ----------------------------------------------------------------
   async obtenirMedecin(medecinId: number): Promise<Medecin | null> {
-    const { default: hospitalApi } = await import('../../../../api/hospitalApi');
     const response = await hospitalApi.medecins.getById(medecinId);
     if (response.success) {
       return this.normaliserMedecin(response.data);
@@ -360,7 +358,6 @@ export class MedecinService {
     tenantId: number
   ): Promise<{ success: boolean; data?: Medecin; errors?: string[] }> {
     try {
-      const { default: hospitalApi } = await import('../../../../api/hospitalApi');
       const date_nais = formData.medecin.date_naissance
         ? new Date(formData.medecin.date_naissance).toISOString().split('T')[0]
         : '';
@@ -402,7 +399,6 @@ export class MedecinService {
     formData: MedecinFormData
   ): Promise<{ success: boolean; data?: Medecin; errors?: string[] }> {
     try {
-      const { default: hospitalApi } = await import('../../../../api/hospitalApi');
       const date_nais = formData.medecin.date_naissance
         ? new Date(formData.medecin.date_naissance).toISOString().split('T')[0]
         : '';
@@ -448,7 +444,6 @@ export class MedecinService {
   // Delete — invalidates cache
   // ----------------------------------------------------------------
   async supprimerMedecin(medecinId: number): Promise<boolean> {
-    const { default: hospitalApi } = await import('../../../../api/hospitalApi');
     const response = await hospitalApi.medecins.delete(medecinId);
     if (response.success) {
       this.invalidateCache();
