@@ -992,9 +992,9 @@ export const hospitalApi = {
  return { success: false, message: 'Erreur récupération paiements', error: error.message };
  }
  },
-    async getStats() {
+    async getStats(params?: any) {
       try {
-        const response = await apiClient.get('/facturation/paiements/statistiques/');
+        const response = await apiClient.get('/facturation/paiements/statistiques/', { params });
         return { success: true, data: response.data };
       } catch (error: any) {
         if (error.response?.status === 404) {
@@ -1010,6 +1010,22 @@ export const hospitalApi = {
  return { success: true, data: response.data, message: 'Paiement créé avec succès' };
  } catch (error: any) {
  return { success: false, message: 'Erreur création paiement', error: error.response?.data || error.message };
+ }
+ },
+ async update(id: number, paiementData: any) {
+ try {
+ const response = await apiClient.patch(`/facturation/paiements/${id}/`, paiementData);
+ return { success: true, data: response.data, message: 'Paiement modifié avec succès' };
+ } catch (error: any) {
+ return { success: false, message: 'Erreur modification paiement', error: error.response?.data || error.message };
+ }
+ },
+ async delete(id: number) {
+ try {
+ await apiClient.delete(`/facturation/paiements/${id}/`);
+ return { success: true, message: 'Paiement supprimé avec succès' };
+ } catch (error: any) {
+ return { success: false, message: 'Erreur suppression paiement', error: error.message };
  }
  }
  },

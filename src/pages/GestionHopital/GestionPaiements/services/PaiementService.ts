@@ -138,7 +138,7 @@ class PaiementService {
   }
 
   async obtenirStatistiques(tenantId: number): Promise<PaiementStats> {
-    const response = await hospitalApi.facturation.paiements.getStats();
+    const response = await hospitalApi.facturation.paiements.getStats({ tenant: tenantId });
     if (response.success) {
       const stats = response.data;
       return {

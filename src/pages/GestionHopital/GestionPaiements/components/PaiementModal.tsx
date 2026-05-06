@@ -148,7 +148,15 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
               <select
                 required
                 value={formData.methode_paiement}
-                onChange={(e) => setFormData(prev => ({ ...prev, methode_paiement: e.target.value }))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const methode = methodes.find(m => m.nom === val);
+                  setFormData(prev => ({
+                    ...prev,
+                    methode_paiement: val,
+                    methode_id: methode ? methode.methode_id : prev.methode_id
+                  }));
+                }}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 {methodes.map(methode => (
@@ -166,7 +174,15 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
               <select
                 required
                 value={formData.statut}
-                onChange={(e) => setFormData(prev => ({ ...prev, statut: e.target.value }))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const statutObj = statuts.find(s => s.nom === val);
+                  setFormData(prev => ({
+                    ...prev,
+                    statut: val,
+                    statut_id: statutObj ? statutObj.statut_id : prev.statut_id
+                  }));
+                }}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 {statuts.map(statut => (

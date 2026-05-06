@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { paiementService } from './services/PaiementService';
 import { PaiementModal } from './components/PaiementModal';
 import {
@@ -17,24 +17,20 @@ import {
   TableHeader,
   TableRow,
 } from '../../../components/ui/table';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Wallet, 
-  DollarSign, 
-  CheckCircle, 
-  Clock, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Wallet,
+  DollarSign,
+  CheckCircle,
+  Clock,
   CreditCard,
   Pencil,
   Trash,
   ChevronLeft,
   ChevronRight,
-  BadgeCheck,
-  AlertTriangle,
-  X,
-  FileText,
-  Activity
+  FileText
 } from 'lucide-react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 
@@ -76,6 +72,17 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
 
   const itemsPerPage = 8;
 
+  const loadData = useCallback(async () => {
+    try {
+      const data = await paiementService.obtenirTousPaiements(tenantId);
+      const statistics = await paiementService.obtenirStatistiques(tenantId);
+      setPaiements(data);
+      setStats(statistics);
+    } catch (error) {
+      console.error('Erreur chargement données paiements:', error);
+    }
+  }, [tenantId]);
+
   useEffect(() => {
     const init = async () => {
       setIsLoading(true);
@@ -88,18 +95,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
       }
     };
     init();
-  }, [tenantId]);
-
-  const loadData = async () => {
-    try {
-      const data = await paiementService.obtenirTousPaiements(tenantId);
-      const statistics = await paiementService.obtenirStatistiques(tenantId);
-      setPaiements(data);
-      setStats(statistics);
-    } catch (error) {
-      console.error('Erreur chargement données paiements:', error);
-    }
-  };
+  }, [tenantId, loadData]);
 
   const handleSave = async (formData: PaiementFormData) => {
     let result;
@@ -113,6 +109,19 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
       await loadData();
       setShowModal(false);
       setEditingPaiement(null);
+      setNotification({
+        isOpen: true,
+        title: 'Opération réussie',
+        message: editingPaiement ? 'Le paiement a été modifié.' : 'Le paiement a été créé.',
+        type: 'success'
+      });
+    } else {
+      setNotification({
+        isOpen: true,
+        title: 'Erreur',
+        message: result.errors?.join(', ') || 'Une erreur est survenue lors de l\'enregistrement.',
+        type: 'error'
+      });
     }
   };
 
@@ -156,7 +165,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
       (paiement.reference && paiement.reference.toLowerCase().includes(filters.searchTerm.toLowerCase()));
     const matchesStatut = filters.statut === 'Tous' || (paiement.statut || '') === filters.statut;
     const matchesMethode = filters.methode === 'Tous' || (paiement.methode_paiement || '') === filters.methode;
-    
+
     return matchesSearch && matchesStatut && matchesMethode;
   });
 
@@ -187,7 +196,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
       <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-orange-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
-        
+
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -204,8 +213,11 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
             </p>
           </div>
 
-          <button 
-            onClick={() => setShowModal(true)}
+          <button
+            onClick={() => {
+              setEditingPaiement(null);
+              setShowModal(true);
+            }}
             className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="h-5 w-5" />
@@ -289,76 +301,78 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
           {isLoading ? (
             <TableSkeleton rows={8} columns={6} />
           ) : (
-            <Table>
-            <TableHeader className="bg-gray-50/50 dark:bg-white/[0.02]">
-              <TableRow>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Transaction</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Patient</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Montant</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Méthode</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">Status</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
-              {currentPaiements.map((paiement) => (
-                <TableRow key={paiement.paiement_id} className="group hover:bg-white/60 dark:hover:bg-white/[0.03] transition-all">
-                  <TableCell className="py-5 px-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100 dark:border-amber-900/30 transition-transform group-hover:scale-110">
-                        <DollarSign className="w-6 h-6" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black uppercase tracking-tight">#{paiement.paiement_id}</span>
-                        <span className="text-[10px] font-bold text-gray-400 italic">{paiement.reference || 'REF-GEN'}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-5 px-6">
-                    <span className="text-sm font-bold uppercase">Patient ID: {paiement.patient_id}</span>
-                  </TableCell>
-                  <TableCell className="py-5 px-6 font-black text-gray-900 dark:text-white italic">
-                    {formatMontant(paiement.montant)}
-                  </TableCell>
-                  <TableCell className="py-5 px-6">
-                    <span className="text-xs font-bold uppercase tracking-widest bg-gray-100 dark:bg-white/5 px-2.5 py-1 rounded-lg">
-                      {paiement.methode_paiement}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-5 px-6 text-center">
-                    <Badge size="sm" color={getStatutColor(paiement.statut || '')}>
-                      {paiement.statut}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-5 px-6 text-right">
-                    <div className="flex justify-end gap-2 transition-all duration-300">
-                      <button 
-                        onClick={() => handleEdit(paiement)}
-                        className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-sm"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(paiement.paiement_id)}
-                        className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all active:scale-95 shadow-sm"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          {filteredPaiements.length === 0 && !isLoading && (
-            <div className="py-24 text-center">
-              <div className="mx-auto w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mb-6">
-                <DollarSign className="w-10 h-10 text-gray-300" />
-              </div>
-              <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Aucun paiement</h3>
-              <p className="text-gray-500 dark:text-gray-400 italic font-medium">L'historique des transactions est vide.</p>
-            </div>
+            <>
+              <Table>
+                <TableHeader className="bg-gray-50/50 dark:bg-white/[0.02]">
+                  <TableRow>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Transaction</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Patient</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Montant</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Méthode</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">Status</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</TableCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
+                  {currentPaiements.map((paiement) => (
+                    <TableRow key={paiement.paiement_id} className="group hover:bg-white/60 dark:hover:bg-white/[0.03] transition-all">
+                      <TableCell className="py-5 px-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100 dark:border-amber-900/30 transition-transform group-hover:scale-110">
+                            <DollarSign className="w-6 h-6" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-black uppercase tracking-tight">#{paiement.paiement_id}</span>
+                            <span className="text-[10px] font-bold text-gray-400 italic">{paiement.reference || 'REF-GEN'}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-5 px-6">
+                        <span className="text-sm font-bold uppercase">Patient ID: {paiement.patient_id}</span>
+                      </TableCell>
+                      <TableCell className="py-5 px-6 font-black text-gray-900 dark:text-white italic">
+                        {formatMontant(paiement.montant)}
+                      </TableCell>
+                      <TableCell className="py-5 px-6">
+                        <span className="text-xs font-bold uppercase tracking-widest bg-gray-100 dark:bg-white/5 px-2.5 py-1 rounded-lg">
+                          {paiement.methode_paiement}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-5 px-6 text-center">
+                        <Badge size="sm" color={getStatutColor(paiement.statut || '')}>
+                          {paiement.statut}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-5 px-6 text-right">
+                        <div className="flex justify-end gap-2 transition-all duration-300">
+                          <button
+                            onClick={() => handleEdit(paiement)}
+                            className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-sm"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(paiement.paiement_id)}
+                            className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all active:scale-95 shadow-sm"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {filteredPaiements.length === 0 && !isLoading && (
+                <div className="py-24 text-center">
+                  <div className="mx-auto w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mb-6">
+                    <DollarSign className="w-10 h-10 text-gray-300" />
+                  </div>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Aucun paiement</h3>
+                  <p className="text-gray-500 dark:text-gray-400 italic font-medium">L'historique des transactions est vide.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -366,17 +380,17 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
         {totalPages > 1 && (
           <div className="p-6 border-t border-gray-100 dark:border-white/[0.05] bg-gray-50/30 dark:bg-transparent flex items-center justify-between">
             <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">
-               Page {currentPage} sur {totalPages}
+              Page {currentPage} sur {totalPages}
             </p>
             <div className="flex gap-2">
-               <button 
+              <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => p - 1)}
                 className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <button 
+              <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(p => p + 1)}
                 className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-all shadow-sm"
@@ -404,7 +418,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
       {/* Shared Modals & Toast */}
       <DeleteConfirmModal
         isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
+        onCancel={() => setShowDeleteModal(false)}
         onConfirm={confirmDelete}
         title="Supprimer Transaction"
         message={`Cette opération annulera le paiement #${deletingId}. Confirmer ?`}
@@ -414,8 +428,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
 
       <NotificationToast
         isOpen={notification.isOpen}
-        title={notification.title}
-        message={notification.message}
+        message={`${notification.title} — ${notification.message}`}
         type={notification.type}
         onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
       />
