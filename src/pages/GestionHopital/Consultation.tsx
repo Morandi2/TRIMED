@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import GestionConsultations from "./GestionConsultations/GestionConsultations";
@@ -6,7 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function Consultation() {
   const { user } = useAuth();
-  
+
   return (
     <div>
       <PageMeta
@@ -17,9 +17,9 @@ export default function Consultation() {
 
       <div className="">
         <div>
-          <GestionConsultations 
-            tenantId={user?.hopital_id || 0} 
-            hopitalNom={user?.hopital_nom || ""} 
+          <GestionConsultations
+            tenantId={user?.hopital_id || 0}
+            hopitalNom={user?.hopital_nom || ""}
           />
         </div>
       </div>
