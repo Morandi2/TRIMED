@@ -205,7 +205,7 @@ export class ConsultationService {
     if (c.rendez_vous_id) payload.rendez_vous = c.rendez_vous_id;
 
     console.log('[ConsultationService] creerConsultation payload:', payload);
-    const response = await hospitalApi.consultations.create(payload);
+    const response = await hospitalApi.consultations.create(payload) as any;
 
     let newConsultation = undefined;
     if (response.success && response.data) {

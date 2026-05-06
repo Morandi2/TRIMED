@@ -38,6 +38,7 @@ export interface UserPermissions {
   canViewPatients: boolean;
   canEditPatients: boolean;
   canViewOwnFolderOnly: boolean;
+  canViewMedecins: boolean;
   
   // Médical
   canViewConsultations: boolean;
@@ -73,6 +74,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewPatients: true,
     canEditPatients: true,
     canViewOwnFolderOnly: false,
+    canViewMedecins: true,
     canViewConsultations: true,
     canEditConsultations: true,
     canViewOrdonnances: true,
@@ -98,6 +100,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewPatients: true,
     canEditPatients: true,
     canViewOwnFolderOnly: false,
+    canViewMedecins: true,
     canViewConsultations: true,
     canEditConsultations: true,
     canViewOrdonnances: true,
@@ -123,6 +126,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewPatients: true,
     canEditPatients: true,
     canViewOwnFolderOnly: false,
+    canViewMedecins: true,
     canViewConsultations: true,
     canEditConsultations: true,
     canViewOrdonnances: true,
@@ -148,6 +152,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewPatients: true,
     canEditPatients: true,
     canViewOwnFolderOnly: false,
+    canViewMedecins: true,
     canViewConsultations: true,
     canEditConsultations: true,
     canViewOrdonnances: true,
@@ -173,6 +178,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewPatients: true,
     canEditPatients: true,
     canViewOwnFolderOnly: false,
+    canViewMedecins: true,
     canViewConsultations: false,
     canEditConsultations: false,
     canViewOrdonnances: false,
@@ -198,6 +204,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewPatients: true,
     canEditPatients: true,
     canViewOwnFolderOnly: false,
+    canViewMedecins: true,
     canViewConsultations: false,
     canEditConsultations: false,
     canViewOrdonnances: false,
@@ -223,6 +230,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewPatients: false,
     canEditPatients: false,
     canViewOwnFolderOnly: true, // ✅ Accède uniquement à son propre dossier
+    canViewMedecins: true,
     canViewConsultations: false,
     canEditConsultations: false,
     canViewOrdonnances: false,

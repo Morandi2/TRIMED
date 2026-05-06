@@ -470,18 +470,18 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
                           {new Date(mvt.date_mouvement).toLocaleString('fr-FR')}
                         </TableCell>
                         <TableCell className="py-4 px-6 font-black uppercase text-xs tracking-tight">
-                          {medicaments.find(m => m.medicament_id === mvt.medicament)?.nom || 'Inconnu'}
+                          {medicaments.find(m => m.medicament_id === mvt.medicament_id)?.nom || 'Inconnu'}
                         </TableCell>
                         <TableCell className="py-4 px-6">
-                          <Badge color={mvt.type_mouvement === 'Entrée' ? 'success' : 'warning'} size="sm">
-                            {mvt.type_mouvement.toUpperCase()}
+                          <Badge color={mvt.type === 'Entrée' ? 'success' : 'warning'} size="sm">
+                            {mvt.type.toUpperCase()}
                           </Badge>
                         </TableCell>
                         <TableCell className="py-4 px-6 font-black italic text-emerald-600">
-                          {mvt.type_mouvement === 'Entrée' ? '+' : '-'}{mvt.quantite}
+                          {mvt.type === 'Entrée' ? '+' : '-'}{mvt.quantite}
                         </TableCell>
                         <TableCell className="py-4 px-6 text-xs font-bold text-gray-500">
-                          Utilisateur #{mvt.cree_par}
+                          Utilisateur #{mvt.utilisateur}
                         </TableCell>
                       </TableRow>
                     )) : (
@@ -579,7 +579,7 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
       {/* Shared Modals & Toast */}
       <DeleteConfirmModal
         isOpen={modalType === 'delete'}
-        onClose={closeModal}
+        onCancel={closeModal}
         onConfirm={handleDeleteConfirm}
         title="Supprimer Médicament"
         message={`Voulez-vous vraiment retirer "${selectedMedicament?.nom}" de l'inventaire ?`}
@@ -589,8 +589,7 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
 
       <NotificationToast
         isOpen={notification.isOpen}
-        title={notification.title}
-        message={notification.message}
+        message={`${notification.title} — ${notification.message}`}
         type={notification.type}
         onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
       />

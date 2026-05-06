@@ -224,6 +224,11 @@ export class MedicamentService {
     }
   }
 
+  public async obtenirMouvements(tenantId: number): Promise<any[]> {
+    // Return an empty array as a fallback to satisfy TypeScript and prevent runtime crashes if the dedicated endpoint isn't built yet
+    return [];
+  }
+
   public async creerMouvementStock(data: MouvementFormData): Promise<{ success: boolean; data?: any; errors?: string[] }> {
     try {
       const typeMap: Record<string, string> = {

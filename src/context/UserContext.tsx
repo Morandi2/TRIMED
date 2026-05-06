@@ -20,10 +20,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error("Erreur init role context:", e);
       }
     }
-    return 'Administrateur';
+    return 'personnel';
   });
 
-  const permissions = rolePermissions[currentUserRole] || rolePermissions.Administrateur;
+  const permissions = rolePermissions[currentUserRole] || rolePermissions['personnel'];
 
   return (
     <UserContext.Provider value={{ currentUserRole, setCurrentUserRole, permissions }}>

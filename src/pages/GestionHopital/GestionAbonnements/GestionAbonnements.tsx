@@ -475,7 +475,7 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
 
       <DeleteConfirmModal
         isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
+        onCancel={() => setShowDeleteModal(false)}
         onConfirm={confirmDelete}
         title="Supprimer Abonnement"
         message="Voulez-vous vraiment supprimer cet abonnement ? Cette action est irréversible."
@@ -485,8 +485,7 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
 
       <NotificationToast
         isOpen={notification.isOpen}
-        title={notification.title}
-        message={notification.message}
+        message={`${notification.title} — ${notification.message}`}
         type={notification.type}
         onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
       />
