@@ -11,6 +11,7 @@ import { PharmacienDashboard } from '../GestionHopital/GestionUtilisateur/pages/
 import { ManagerDashboard } from '../GestionHopital/GestionUtilisateur/pages/ManagerDashboard';
 import { PatientDashboard } from '../GestionHopital/GestionUtilisateur/pages/PatientDashboard';
 import TrimedAdminDashboard from './TrimedAdminDashboard';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 export default function RoleBasedHome() {
   const { currentUserRole, setCurrentUserRole } = useUser();
