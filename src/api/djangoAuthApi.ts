@@ -80,7 +80,7 @@ export const djangoAuthApi = {
       // Détection intelligente des comptes inactifs pour afficher le message personnalisé en Créole
       const errorStr = JSON.stringify(errorData || '').toLowerCase();
       if (errorStr.includes('inactif') || errorStr.includes('inactive') || errorStr.includes('non actif') || errorStr.includes('pas actif')) {
-        message = 'Kont sa pa aktif pou kounye a. Tanpri rete tann yon administratè aktive l.';
+        message = 'Ce compte n\'est pas encore actif. Veuillez patienter jusqu\'à ce qu\'un administrateur l\'active.';
       }
 
       return {
