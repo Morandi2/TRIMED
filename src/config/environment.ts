@@ -10,7 +10,7 @@ interface EnvironmentConfig {
 
 // Configuration par défaut (développement)
 const defaultConfig: EnvironmentConfig = {
-  API_BASE_URL: 'https://trimedh-service.onrender.com/api',
+  API_BASE_URL: 'https://trimedh-service.onrender.com',
   ENVIRONMENT: 'development',
   DEBUG: true,
   TOKEN_REFRESH_INTERVAL: 60000, // 1 minute
@@ -19,7 +19,7 @@ const defaultConfig: EnvironmentConfig = {
 
 // Configuration de production
 const productionConfig: EnvironmentConfig = {
-  API_BASE_URL: 'https://trimedh-service.onrender.com/api',
+  API_BASE_URL: 'https://trimedh-service.onrender.com',
   ENVIRONMENT: 'production',
   DEBUG: false,
   TOKEN_REFRESH_INTERVAL: 300000, // 5 minutes
@@ -61,7 +61,7 @@ const getConfig = (): EnvironmentConfig => {
   
   // Sécurité supplémentaire: Si l'URL finit par se retrouver à '/api' sur production, forcer le full path
   if (config.API_BASE_URL === '/api' || config.API_BASE_URL === 'api') {
-     config.API_BASE_URL = 'https://trimedh-service.onrender.com/api';
+     config.API_BASE_URL = 'https://trimedh-service.onrender.com';
   }
 
   return config;
