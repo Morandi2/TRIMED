@@ -16,7 +16,7 @@ export const normalizeRole = (role: string | null | undefined): UserRole => {
   const r = role.toLowerCase().trim();
   
   // Mapping direct avec les slugs backend
-  if (r === 'admin-systeme' || r === 'superadmin') return 'admin-systeme';
+  if (r === 'admin-systeme' || r === 'superadmin' || r === 'administrateur-trimed') return 'admin-systeme';
   if (r === 'proprietaire-hopital' || r === 'proprietaire') return 'proprietaire-hopital';
   if (r === 'medecin' || r === 'docteur') return 'medecin';
   if (r === 'infirmier') return 'infirmier';

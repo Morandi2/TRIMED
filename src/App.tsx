@@ -28,6 +28,7 @@ import ConditionsUtilisation from "./pages/index/ConditionsUtilisation";
 import CentreAide from "./pages/index/CentreAide";
 import { AuditLogPage } from "./pages/GestionHopital/GestionUtilisateur/pages";
 import VerifyEmailPage from "./pages/AuthPages/VerifyEmailPage";
+import GestionTenants from "./pages/AdminPortal/GestionTenants";
 
 export default function App() {
   return (
@@ -54,6 +55,9 @@ export default function App() {
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/home" element={<RoleBasedHome />} />
                 <Route path="/Utilisateur" element={<ProtectedRoute requiredPermission="canManageUsers"><Utilisateur /></ProtectedRoute>} />
+
+                {/* Portail Administrateur TRIMED */}
+                <Route path="/admin/tenants" element={<ProtectedRoute requiredPermission="canManageSystem"><GestionTenants /></ProtectedRoute>} />
 
                 {/* Gestion de l'Hôpital */}
                 <Route path="/patient" element={<ProtectedRoute requiredPermission="canViewPatients"><Patient /></ProtectedRoute>} />

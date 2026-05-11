@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Asterisk, CalendarPlus2, CreditCard, Pill, ScanHeart, ShieldCheck, Stethoscope, UserRound, Users } from 'lucide-react';
+import { Asterisk, Building2, CalendarPlus2, CreditCard, Pill, ScanHeart, ShieldCheck, Stethoscope, UserRound, Users } from 'lucide-react';
 import { useUser } from "../context/UserContext";
 
 // Supposons que ces icônes sont importées d'une bibliothèque d'icônes
@@ -19,15 +19,28 @@ type NavItem = {
   path?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
   permission?: keyof import('../types/userRoles').UserPermissions;
+  globalAdminOnly?: boolean;
 };
 
 // Menu
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
+    name: "Tableau de Bord",
     path: "/home",
-    permission: 'canViewDashboard',
+    // Partagé par tous
+  },
+  {
+    icon: <Building2 className="w-5 h-5" />,
+    name: "Gestion Hôpitaux",
+    path: "/admin/tenants",
+    globalAdminOnly: true,
+  },
+  {
+    icon: <CreditCard />,
+    name: "Abonnements",
+    path: "/admin/abonnements",
+    globalAdminOnly: true,
   },
   {
     icon: <Users />,
@@ -120,7 +133,7 @@ const navItems: NavItem[] = [
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
-  const { permissions } = useUser();
+  const { permissions, currentUserRole } = useUser();
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
@@ -189,6 +202,19 @@ const AppSidebar: React.FC = () => {
 
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => {
     const filteredItems = items.filter(nav => {
+      const isAdminGlobal = currentUserRole === 'admin-systeme';
+
+      // Si c'est un super admin, on n'affiche QUE les modules globaux
+      if (isAdminGlobal) {
+         // Autoriser Tableau de Bord (partagé), Audit logs et les items explicitement globaux
+         if (nav.globalAdminOnly) return true;
+         if (nav.name === "Tableau de Bord" || nav.name === "Journal d'Audit") return true;
+         return false; // Masquer tout le reste (Pasyan, Medsen, etc.)
+      } else {
+         // Si utilisateur normal : Interdire l'accès aux liens globaux
+         if (nav.globalAdminOnly) return false;
+      }
+
       if (!nav.permission) return true;
       return permissions[nav.permission];
     });

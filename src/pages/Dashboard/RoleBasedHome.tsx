@@ -10,7 +10,7 @@ import { ReceptionnisteDashboard } from '../GestionHopital/GestionUtilisateur/pa
 import { PharmacienDashboard } from '../GestionHopital/GestionUtilisateur/pages/PharmacienDashboard';
 import { ManagerDashboard } from '../GestionHopital/GestionUtilisateur/pages/ManagerDashboard';
 import { PatientDashboard } from '../GestionHopital/GestionUtilisateur/pages/PatientDashboard';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import TrimedAdminDashboard from './TrimedAdminDashboard';
 
 export default function RoleBasedHome() {
   const { currentUserRole, setCurrentUserRole } = useUser();
@@ -48,6 +48,7 @@ export default function RoleBasedHome() {
     case 'patient':
       return <PatientDashboard />;
     case 'admin-systeme':
+      return <TrimedAdminDashboard />;
     default:
       return <Home />;
   }
