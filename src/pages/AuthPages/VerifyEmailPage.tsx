@@ -24,7 +24,7 @@ const VerifyEmailPage = () => {
           const result = await djangoAuthApi.confirmEmailVerification(token);
           if (result.success) {
             setStatus('success');
-            setMessage(result.message || 'Votre email a été vérifié avec succès !');
+            setMessage('Kont ou an byen kreye men li pa aktif pou kounye a. Administratè yo ap aktive l apre verifikasyon.');
           } else {
             setStatus('error');
             setMessage(result.message || 'Le lien est invalide ou a expiré.');
@@ -42,7 +42,7 @@ const VerifyEmailPage = () => {
           const result = await djangoAuthApi.verifyEmailLink(uidb64, queryToken);
           if (result.success) {
             setStatus('success');
-            setMessage(result.message || 'Votre email a été vérifié avec succès !');
+            setMessage('Kont ou an byen kreye men li pa aktif pou kounye a. Administratè yo ap aktive l apre verifikasyon.');
           } else {
             setStatus('error');
             setMessage(result.message || 'Le lien est invalide.');
@@ -89,7 +89,7 @@ const VerifyEmailPage = () => {
 
             <h1 className="text-3xl font-bold text-white mb-4 tracking-tight">
               {status === 'loading' ? 'Vérification...' : 
-               status === 'success' ? 'Email Vérifié !' : 
+               status === 'success' ? 'Imel Valide !' : 
                'Échec Vérification'}
             </h1>
             

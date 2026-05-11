@@ -72,9 +72,15 @@ export const djangoAuthApi = {
         else if (typeof errorData === 'object') {
           const firstKey = Object.keys(errorData)[0];
           if (Array.isArray(errorData[firstKey])) {
-            message = `${firstKey}: ${errorData[firstKey][0]}`;
+            message = `${errorData[firstKey][0]}`; // Just output the message part
           }
         }
+      }
+
+      // Détection intelligente des comptes inactifs pour afficher le message personnalisé en Créole
+      const errorStr = JSON.stringify(errorData || '').toLowerCase();
+      if (errorStr.includes('inactif') || errorStr.includes('inactive') || errorStr.includes('non actif') || errorStr.includes('pas actif')) {
+        message = 'Kont sa pa aktif pou kounye a. Tanpri rete tann yon administratè aktive l.';
       }
 
       return {
