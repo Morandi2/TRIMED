@@ -54,8 +54,14 @@ const getConfig = (): EnvironmentConfig => {
   }
 
   // Permettre de surcharger l'URL de l'API via les variables d'environnement
-  if (customApiUrl) {
+  // On ignore si c'est juste '/api' pour éviter les problèmes de redirection Vercel, ou on utilise la valeur absolue
+  if (customApiUrl && customApiUrl !== '/api') {
     config.API_BASE_URL = customApiUrl;
+  }
+  
+  // Sécurité supplémentaire: Si l'URL finit par se retrouver à '/api' sur production, forcer le full path
+  if (config.API_BASE_URL === '/api' || config.API_BASE_URL === 'api') {
+     config.API_BASE_URL = 'https://trimedh-service.onrender.com/api';
   }
 
   return config;
