@@ -18,7 +18,7 @@ const jwtDecode = (token: string): any => {
 
 export const authService = {
   async login(email: string, password: string) {
-    const response = await axiosInstance.post('/auth/login/', { email, password });
+    const response = await axiosInstance.post('/comptes/login/', { email, password });
     const { access, refresh, user } = response.data;
 
     localStorage.setItem('access_token', access);
@@ -36,7 +36,7 @@ export const authService = {
 
   async logout() {
     const refreshToken = localStorage.getItem('refresh_token');
-    await axiosInstance.post('/auth/logout/', { refresh: refreshToken });
+    await axiosInstance.post('/comptes/logout/', { refresh: refreshToken });
     localStorage.clear();
   },
 

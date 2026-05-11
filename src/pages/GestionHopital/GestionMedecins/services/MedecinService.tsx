@@ -267,12 +267,12 @@ export class MedecinService {
   async obtenirMedecinsParHopital(hopitalId: number): Promise<Medecin[]> {
     // --- Return from cache if still fresh ---
     if (this.isMedecinsValid(hopitalId)) {
-      console.log('[MedecinService] ✅ Returning cached medecins');
+      console.log('[MedecinService] Returning cached medecins');
       this.enrichMedecinsDeUtilisateur(this.medecinsCache!.data); // Dynamically enrich
       return this.medecinsCache!.data;
     }
 
-    console.log('[MedecinService] 🔄 Cache miss — fetching fresh data for hopital', hopitalId);
+    console.log('[MedecinService] Cache miss — fetching fresh data for hopital', hopitalId);
 
     try {
       // Fetch medecins list + specialites in parallel for speed
@@ -331,7 +331,7 @@ export class MedecinService {
       
       this.saveCacheToStorage();
 
-      console.log(`[MedecinService] ✅ Cached ${sorted.length} medecins et sauvegardé dans localStorage`);
+      console.log(`[MedecinService] Cached ${sorted.length} medecins et sauvegardé dans localStorage`);
       return sorted;
     } catch (error) {
       console.error('[MedecinService] Erreur fetch:', error);

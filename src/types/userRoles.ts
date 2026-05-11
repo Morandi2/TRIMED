@@ -134,7 +134,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canGererHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
-    canModifierStock: false, // Médecin ❌ ne peut pas modifier le stock
+    canModifierStock: false, // Médecin ne peut pas modifier le stock
     canViewRendezVous: true,
     canEditRendezVous: true,
     canGererSalles: true,
@@ -160,7 +160,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canGererHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
-    canModifierStock: true, // Infirmier ✅ peut modifier le stock
+    canModifierStock: true, // Infirmier peut modifier le stock
     canViewRendezVous: true,
     canEditRendezVous: true,
     canGererSalles: false,
@@ -186,7 +186,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canGererHospitalisation: false,
     canViewMedicaments: true,
     canGererMedicaments: true,
-    canModifierStock: false, // Secrétaire ❌ stock
+    canModifierStock: false, // Secrétaire pas de stock
     canViewRendezVous: true,
     canEditRendezVous: true,
     canGererSalles: true,
@@ -212,7 +212,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canGererHospitalisation: false,
     canViewMedicaments: true,
     canGererMedicaments: true,
-    canModifierStock: true, // Personnel ✅ peut modifier le stock
+    canModifierStock: true, // Personnel peut modifier le stock
     canViewRendezVous: true,
     canEditRendezVous: true,
     canGererSalles: false,
@@ -229,7 +229,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
   'patient': {
     canViewPatients: false,
     canEditPatients: false,
-    canViewOwnFolderOnly: true, // ✅ Accède uniquement à son propre dossier
+    canViewOwnFolderOnly: true, // Accède uniquement à son propre dossier
     canViewMedecins: true,
     canViewConsultations: false,
     canEditConsultations: false,

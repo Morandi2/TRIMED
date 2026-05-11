@@ -15,11 +15,11 @@ export const debugLogin = async (email, password) => {
         
         console.log('2. Réponse reçue:', response.data);
         console.log('3. Statut:', response.status);
-        console.log('✅ Connexion réussie!');
+        console.log('Connexion réussie!');
         
         return response.data;
     } catch (error) {
-        console.error('❌ Erreur de connexion:');
+        console.error('Erreur de connexion:');
         console.error('   Statut:', error.response?.status);
         console.error('   Données:', error.response?.data);
         console.error('   Requête envoyée:', error.config?.data);

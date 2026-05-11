@@ -10,7 +10,7 @@ interface EnvironmentConfig {
 
 // Configuration par défaut (développement)
 const defaultConfig: EnvironmentConfig = {
-  API_BASE_URL: '/api',
+  API_BASE_URL: 'https://trimedh-service.onrender.com/api',
   ENVIRONMENT: 'development',
   DEBUG: true,
   TOKEN_REFRESH_INTERVAL: 60000, // 1 minute
@@ -19,7 +19,7 @@ const defaultConfig: EnvironmentConfig = {
 
 // Configuration de production
 const productionConfig: EnvironmentConfig = {
-  API_BASE_URL: 'https://api.TRIMEDH.com/api',
+  API_BASE_URL: 'https://trimedh-service.onrender.com/api',
   ENVIRONMENT: 'production',
   DEBUG: false,
   TOKEN_REFRESH_INTERVAL: 300000, // 5 minutes

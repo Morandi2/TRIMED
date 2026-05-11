@@ -179,12 +179,12 @@ class UtilisateurService {
         const isDeleted = rawUser ? (rawUser.deleted === true || rawUser.is_deleted === true || String(rawUser.deleted) === 'true' || String(rawUser.is_deleted) === 'true') : false;
 
         if (!tenantMatch) {
-          console.log(`[UtilisateurService] ❌ Filtre Tenant: "${u.nom_complet}"`);
+          console.log(`[UtilisateurService] Filtre Tenant: "${u.nom_complet}"`);
           return false;
         }
         
         if (isDeleted) {
-          console.log(`[UtilisateurService] ❌ Filtre Effacé: "${u.nom_complet}"`);
+          console.log(`[UtilisateurService] Filtre Effacé: "${u.nom_complet}"`);
           return false;
         }
 
