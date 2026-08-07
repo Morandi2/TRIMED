@@ -43,7 +43,6 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
   const [selectedPatientName, setSelectedPatientName] = useState('');
   const [selectedMedecinName, setSelectedMedecinName] = useState('');
   const [selectedSalleName, setSelectedSalleName] = useState('');
-  const [dateError] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -104,7 +103,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
   };
 
   const validateStep = (step: number, updateState: boolean = true): boolean => {
-    let newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {};
     let isValid = true;
     
     if (step === 1) {

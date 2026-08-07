@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { ModalMessage } from '../api/types/auth.types';

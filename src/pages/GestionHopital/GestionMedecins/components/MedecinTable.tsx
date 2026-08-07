@@ -1,7 +1,7 @@
 import React from 'react';
 import { Medecin, medecinService, Specialite } from '../services/MedecinService';
 import { Tooltip } from '../../GestionPatients/components/Tooltip';
-import { calculateAge as getAge, formatDateFR } from '../../../../utils/dateUtils';
+import { formatDateFR } from '../../../../utils/dateUtils';
 
 interface MedecinTableProps {
   medecins: Medecin[];
@@ -29,11 +29,6 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
 
   const formatDate = (dateString?: string) => {
     return formatDateFR(dateString);
-  };
-
-  const calculateAge = (dateString?: string, age?: number): string | number => {
-    if (age) return age;
-    return getAge(dateString);
   };
 
   return (

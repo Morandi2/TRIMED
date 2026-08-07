@@ -85,7 +85,6 @@ const ConnexionHopital = () => {
     const handleResetPassword = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm('reset')) {
-            console.log('Réinitialisation pour:', email);
             alert(`Un e-mail de réinitialisation a été envoyé à ${email}`);
             setShowResetForm(false);
             setErrors({});
@@ -95,18 +94,6 @@ const ConnexionHopital = () => {
     const handleInscription = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm('inscription')) {
-            // Logique d'inscription de l'hôpital
-            const nouvelHopital = {
-                nomHopital,
-                adresse,
-                telephone,
-                directeur,
-                specialites: specialites.split(',').map(s => s.trim()),
-                nombreLits: nombreLits ? parseInt(nombreLits) : null,
-                email,
-                password
-            };
-            console.log('Nouvel hôpital inscrit:', nouvelHopital);
             alert(`Hôpital ${nomHopital} inscrit avec succès!`);
             setShowInscriptionForm(false);
             resetInscriptionForm();
@@ -128,7 +115,6 @@ const ConnexionHopital = () => {
     const handleConnexion = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm('connexion')) {
-            console.log('Connexion avec:', { email, password });
             // Logique de connexion
             setErrors({});
         }

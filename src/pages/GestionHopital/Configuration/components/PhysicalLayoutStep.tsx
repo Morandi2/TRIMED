@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BedDouble, Box, Plus, Trash2, Hash, Layers } from 'lucide-react';
-import { HospitalConfig, Room, Bed, Branch, Department } from '../types/ConfigTypes';
+import { HospitalConfig, Room, Bed } from '../types/ConfigTypes';
 import Button from '../../../../components/ui/button/Button';
 
 interface Props {

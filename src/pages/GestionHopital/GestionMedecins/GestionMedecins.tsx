@@ -6,6 +6,7 @@ import { MedecinStats } from './components/MedecinStats';
 import { MedecinViewModal } from './components/MedecinViewModal';
 import { MedecinPrintPage } from './components/MedecinPrintPage';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
+import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { 
   Stethoscope, 
   Plus, 
@@ -43,8 +44,10 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
   const hopitalId = tenantId;
 
   useEffect(() => {
-    loadMedecins();
+    const controller = new AbortController();
+    loadMedecins(controller.signal);
     loadSpecialites();
+    return () => controller.abort();
   }, [hopitalId]);
 
   useEffect(() => {
@@ -59,15 +62,17 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
     };
   }, [modalType]);
 
-  const loadMedecins = async () => {
+  const loadMedecins = async (signal?: AbortSignal) => {
     setIsLoading(true);
     try {
-      const medecinsData = await medecinService.obtenirMedecinsParHopital(hopitalId);
+      const medecinsData = await medecinService.obtenirMedecinsParHopital(hopitalId, signal);
+      if (signal?.aborted) return;
       setMedecins(medecinsData);
     } catch (e) {
-      console.error('[GestionMedecins] Erreur chargement:', e);
+      if (signal?.aborted || isCanceledError(e)) return;
+      setSuccessModal({ isOpen: true, title: 'Erreur de chargement', message: getApiErrorMessage(e), type: 'error' });
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   };
 

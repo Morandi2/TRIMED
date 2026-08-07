@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import hospitalApi, { Medicament, MedicamentCategorie, MedicamentStatistiques } from '../../../../api/hospitalApi';
+import { collectAllPages } from '../../../../api/paginationHelper';
 import {
   MedicamentFormData,
   MouvementFormData,
@@ -62,29 +62,13 @@ export class MedicamentService {
     return MedicamentService.instance;
   }
 
-  /**
-   * Helper pou jwenn yon valè nan yon objè kèlkeswa kote l ye (Omni-Search)
-   */
   private findField(obj: any, targetField: string | string[]): any {
     if (!obj || typeof obj !== 'object') return null;
-    
-    if (Array.isArray(targetField)) {
-        for (const field of targetField) {
-            const found = this.findField(obj, field);
-            if (found !== undefined && found !== null) return found;
-        }
-        return null;
-    }
 
-    if (obj[targetField] !== undefined) return obj[targetField];
-
-    // On évite de chercher les noms dans des objets qui ne sont pas le profil lui-même
-    const restrictedKeys = ['hopital', 'user', 'tenant', 'pharmacie'];
-    for (const key in obj) {
-      if (typeof obj[key] === 'object' && !restrictedKeys.includes(key)) {
-        const found = this.findField(obj[key], targetField);
-        if (found !== undefined && found !== null) return found;
-      }
+    const fields = Array.isArray(targetField) ? targetField : [targetField];
+    for (const field of fields) {
+      const value = obj[field];
+      if (value !== undefined && value !== null) return value;
     }
     return null;
   }
@@ -181,7 +165,7 @@ export class MedicamentService {
     return response.success ? this.normaliserMedicament(response.data) : null;
   }
 
-  public async obtenirTousMedicaments(params?: any): Promise<Medicament[]> {
+  public async obtenirTousMedicaments(params?: any, signal?: AbortSignal): Promise<Medicament[]> {
     const paramsStr = params ? JSON.stringify(params) : '';
     if (this.medicamentsCache && this.medicamentsCache.paramsStr === paramsStr) {
       if (Date.now() - this.medicamentsCache.fetchedAt < CACHE_TTL_MS) {
@@ -194,12 +178,17 @@ export class MedicamentService {
         ordering: '-date_creation',
         page_size: 1000,
         ...params
-      });
-      if (!response.success || !response.data) return [];
+      }, { signal });
+      if (!response.success || !response.data) {
+        if (this.medicamentsCache && this.medicamentsCache.paramsStr === paramsStr) {
+          return this.medicamentsCache.data;
+        }
+        throw new Error((response as any).message || 'Erreur lors du chargement des médicaments');
+      }
 
       let results: any[] = [];
       const rawData = response.data;
-      if (rawData.results) results = rawData.results;
+      if (rawData.results) results = rawData.next ? await collectAllPages(rawData, signal) : rawData.results;
       else if (rawData.data?.results) results = rawData.data.results;
       else if (Array.isArray(rawData.data)) results = rawData.data;
       else if (Array.isArray(rawData)) results = rawData;
@@ -220,7 +209,10 @@ export class MedicamentService {
 
       return sorted;
     } catch (error) {
-      return [];
+      if (this.medicamentsCache && this.medicamentsCache.paramsStr === paramsStr) {
+        return this.medicamentsCache.data;
+      }
+      throw error;
     }
   }
 

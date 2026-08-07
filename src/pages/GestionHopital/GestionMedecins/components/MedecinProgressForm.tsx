@@ -150,7 +150,7 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
   };
 
   const validateStep = (step: number, updateState: boolean = true): boolean => {
-    let newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {};
     let isValid = true;
     const { nom, prenom, sexe, date_naissance, numero_identification, telephone, email_professionnel, specialite_principale_id } = formData.medecin;
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { medicamentService } from '../services/MedicamentService';
 import {
   MedicamentFormData,
-  Medicament,
   FORMES_PHARMACEUTIQUES,
   UNITES_STOCK,
   CLASSES_THERAPEUTIQUES,
@@ -109,7 +108,7 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
   };
 
   const validateStep = (step: number, updateState: boolean = true): boolean => {
-    let newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {};
     let isValid = true;
 
     if (step === 1) {
@@ -150,13 +149,6 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
 
     return true;
   };
-
-  // Memoize validities to prevent computation in render and potential loop triggers
-  const isStep1Valid = React.useMemo(() => validateStep(1, false), [formData.nom, formData.forme_pharmaceutique, formData.dosage_standard]);
-  const isStep2Valid = React.useMemo(() => validateStep(2, false), [formData.stock_minimum, formData.stock_maximum]);
-  const isStep3Valid = React.useMemo(() => validateStep(3, false), [formData.prix_unitaire]);
-  
-  const isCurrentStepValid = currentStep === 1 ? isStep1Valid : currentStep === 2 ? isStep2Valid : true;
 
   const handleFieldBlur = (field: string) => {
     setTouched(prev => ({ ...prev, [field]: true }));

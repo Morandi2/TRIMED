@@ -25,7 +25,7 @@ export const useDjangoAuth = (): UseAuthReturn => {
       const u = sessionCheck.user;
       
       // Si les données sont incomplètes, on tente de récupérer le profil
-      if (!u.hopital_id || u.nom_complet.includes('undefined')) {
+      if (!u.hopital_id || (u.nom_complet ?? '').includes('undefined')) {
         console.warn('Session valide mais profil incomplet, récupération du profil...');
         const profileRes = await djangoAuthApi.getProfile();
         if (profileRes.success && profileRes.data) {
@@ -74,7 +74,6 @@ export const useDjangoAuth = (): UseAuthReturn => {
           const needsProfile = !finalUser.hopital_id || finalUser.role === 'personnel' || finalUser.nom_complet === finalUser.email || finalUser.nom_complet === 'Utilisateur';
           
           if (needsProfile) {
-            console.log('Récupération du profil complet après login...');
             const profileRes = await djangoAuthApi.getProfile();
             if (profileRes.success && profileRes.data) {
               finalUser = djangoAuthApi.mapUserResponse(profileRes.data);
@@ -202,7 +201,6 @@ export const useDjangoAuth = (): UseAuthReturn => {
 
           // Rafraîchir si le token expire dans moins de 10 minutes (plus proactif)
           if (timeUntilExpiry < 600) {
-            console.log(`Rafraîchissement proactif du token (${Math.round(timeUntilExpiry)}s restantes)...`);
             const success = await refreshToken();
             if (!success) {
               console.warn('Échec du rafraîchissement proactif, déconnexion forcée.');

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
+import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { rendezVousService } from './services/RendezVousService';
 import { RendezVousProgressForm } from './components/RendezVousProgressForm';
 import { 
@@ -28,8 +29,8 @@ import {
   Trash,
   ChevronLeft,
   ChevronRight,
-  BadgeCheck,
-  CalendarDays
+  CalendarDays,
+  AlertTriangle
 } from 'lucide-react';
 
 interface GestionRendezVousProps {
@@ -65,13 +66,15 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [deletingId, setDeletingId] = useState<number | undefined>();
-  const [types, setTypes] = useState<RendezVousType[]>([]);
+  const [, setTypes] = useState<RendezVousType[]>([]);
   const [statuts, setStatuts] = useState<RendezVousStatut[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [configReady, setConfigReady] = useState(true);
 
   const itemsPerPage = 8;
 
   useEffect(() => {
+    const controller = new AbortController();
     const init = async () => {
       setIsLoading(true);
       try {
@@ -81,19 +84,28 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
         ]);
         setTypes(rendezVousService.obtenirTypes());
         setStatuts(rendezVousService.obtenirStatuts());
-        await loadData();
+        setConfigReady(rendezVousService.referentielsRendezVousDisponibles());
+        await loadData(controller.signal);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
     init();
+    return () => controller.abort();
   }, [tenantId]);
 
-  const loadData = async () => {
-    const data = await rendezVousService.obtenirTousRendezVous({ tenant: tenantId });
-    const statistics = await rendezVousService.obtenirStatistiques(tenantId);
-    setRendezVous(data as any);
-    setStats(statistics);
+  const loadData = async (signal?: AbortSignal) => {
+    try {
+      const data = await rendezVousService.obtenirTousRendezVous({ tenant: tenantId }, signal);
+      const statistics = await rendezVousService.obtenirStatistiques(tenantId);
+      if (signal?.aborted) return;
+      setRendezVous(data as any);
+      setStats(statistics);
+    } catch (e) {
+      if (signal?.aborted || isCanceledError(e)) return;
+      setSuccessMessage(`Erreur : ${getApiErrorMessage(e)}`);
+      setShowSuccessModal(true);
+    }
   };
 
   const handleSave = async (formData: RendezVousFormData, isModifying: boolean) => {
@@ -226,15 +238,28 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
             </p>
           </div>
 
-          <button 
+          <button
             onClick={() => { setEditingRendezVous(null); setShowModal(true); }}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            disabled={!configReady}
+            title={configReady ? undefined : "Configuration des rendez-vous indisponible côté serveur"}
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="h-5 w-5" />
             Ajouter Rendez-vous
           </button>
         </div>
       </div>
+
+      {!configReady && (
+        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <p className="text-sm font-medium">
+            Les <strong>types</strong> et <strong>statuts</strong> de rendez-vous ne sont pas encore configurés sur le serveur.
+            La création de rendez-vous est désactivée jusqu'à ce qu'un administrateur système les ajoute
+            (tables <code>rendez-vous/types</code> et <code>rendez-vous/statuts</code>). La consultation de la liste reste disponible.
+          </p>
+        </div>
+      )}
 
       <RendezVousStats stats={stats} />
 

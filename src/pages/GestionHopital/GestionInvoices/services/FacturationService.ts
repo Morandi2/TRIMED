@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import hospitalApi from '../../../../api/hospitalApi';
 
 export const facturationService = {

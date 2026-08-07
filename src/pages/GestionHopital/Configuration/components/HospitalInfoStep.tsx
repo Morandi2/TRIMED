@@ -1,9 +1,8 @@
 import React from 'react';
 import { HospitalConfig } from '../types/ConfigTypes';
-import { validation } from '../../../../utils/validation';
 import Label from '../../../../components/form/Label';
 import Input from '../../../../components/form/input/InputField';
-import { Building2, Mail, Phone, Globe, MapPin, Palette } from 'lucide-react';
+import { Globe } from 'lucide-react';
 
 interface Props {
   config: Partial<HospitalConfig>;

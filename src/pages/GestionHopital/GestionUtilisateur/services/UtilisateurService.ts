@@ -120,7 +120,7 @@ class UtilisateurService {
     };
   }
 
-  async obtenirTousUtilisateurs(tenantId: number): Promise<Utilisateur[]> {
+  async obtenirTousUtilisateurs(tenantId: number, signal?: AbortSignal): Promise<Utilisateur[]> {
     if (this.utilisateursCache && this.utilisateursCache.tenantId === tenantId) {
       if (Date.now() - this.utilisateursCache.fetchedAt < this.CACHE_TTL_MS) {
         return this.utilisateursCache.data;
@@ -138,8 +138,7 @@ class UtilisateurService {
         const separator = nextUrl.includes('?') ? '&' : '?';
         const urlWithCacheBuster = nextUrl.includes('_t=') ? nextUrl : `${nextUrl}${separator}_t=${Date.now()}`;
         
-        const response: any = await djangoAuthApi.getUtilisateurs(urlWithCacheBuster);
-        console.log(`[UtilisateurService] Page ${pageCount + 1} de réponse API:`, response);
+        const response: any = await djangoAuthApi.getUtilisateurs(urlWithCacheBuster, { signal });
 
         if (response.success && response.data) {
           const data = response.data as any;
@@ -158,14 +157,19 @@ class UtilisateurService {
           // Si le backend renvoie tout d'un coup (pas de pagination results/next)
           if (!data.next && !data.results) break;
         } else {
+          // Échec de la première page: on signale l'erreur (ou on retombe sur le cache).
+          if (pageCount === 0) {
+            if (this.utilisateursCache && this.utilisateursCache.tenantId === tenantId) {
+              return this.utilisateursCache.data;
+            }
+            throw new Error((response as any).message || 'Erreur lors du chargement des utilisateurs');
+          }
           break;
         }
       }
 
       const allMappedUsers = allRawResults.map((u: any) => this.mapDjangoUserToLocal(u));
       
-      console.log(`[UtilisateurService] Total itilizatè yo jwenn (tout paj): ${allMappedUsers.length}`);
-      console.log(`[UtilisateurService] Lopital ID n ap chèche: ${tenantId}`);
       
       const filtered = allMappedUsers.filter(u => {
         // Enforce tenant isolation
@@ -179,19 +183,16 @@ class UtilisateurService {
         const isDeleted = rawUser ? (rawUser.deleted === true || rawUser.is_deleted === true || String(rawUser.deleted) === 'true' || String(rawUser.is_deleted) === 'true') : false;
 
         if (!tenantMatch) {
-          console.log(`[UtilisateurService] Filtre Tenant: "${u.nom_complet}"`);
           return false;
         }
         
         if (isDeleted) {
-          console.log(`[UtilisateurService] Filtre Effacé: "${u.nom_complet}"`);
           return false;
         }
 
         return true;
       });
 
-      console.log(`[UtilisateurService] Kantite itilizatè k ap parèt aprè filtraj: ${filtered.length}`);
 
       this.utilisateursCache = {
         data: filtered,
@@ -202,8 +203,10 @@ class UtilisateurService {
 
       return filtered;
     } catch (error) {
-      console.error('[UtilisateurService] Erreur lors de la récupération des utilisateurs:', error);
-      return [];
+      if (this.utilisateursCache && this.utilisateursCache.tenantId === tenantId) {
+        return this.utilisateursCache.data;
+      }
+      throw error;
     }
   }
 
@@ -212,10 +215,9 @@ class UtilisateurService {
     
     // Normalisation pour gérer les accents, espaces et majuscules
     const normalized = String(roleName).toLowerCase()
-      .normalize("NFD").replace(/[-\u0300-\u036f]/g, "") // Enlève accents et tirets
+      .normalize("NFD").replace(/[\u0300-\u036f]/gu, "") // Enlève accents et tirets
       .replace(/[^a-z0-9]/g, ''); // Enlève caractères spéciaux
     
-    console.log(`[UtilisateurService] Mapping role: "${roleName}" -> normalized: "${normalized}"`);
 
     switch (normalized) {
       case 'adminsysteme': 
@@ -287,10 +289,8 @@ class UtilisateurService {
       telephone: data.telephone,
     };
 
-    console.log('[UtilisateurService] Envoi création utilisateur:', apiData);
 
     const response = await djangoAuthApi.creerUtilisateur(apiData);
-    console.log('[UtilisateurService] Réponse création utilisateur:', response);
     
     if (response.success && response.data) {
       const newUser = this.mapDjangoUserToLocal(response.data);
@@ -327,10 +327,8 @@ class UtilisateurService {
       apiData.email = data.email;
     }
 
-    console.log('[UtilisateurService] Envoi modification utilisateur:', apiData);
 
     const response = await djangoAuthApi.updateUtilisateur(id, apiData);
-    console.log('[UtilisateurService] Réponse modification utilisateur:', response);
     
     if (response.success && response.data) {
       this.invalidateCache();
@@ -345,7 +343,6 @@ class UtilisateurService {
   }
 
   async supprimerUtilisateur(id: number): Promise<{ success: boolean; fieldErrors?: Record<string, string>; message?: string }> {
-    console.log('[UtilisateurService] Envoi suppression utilisateur ID:', id);
     const response = await djangoAuthApi.deleteUtilisateur(id);
     
     if (response.success) {

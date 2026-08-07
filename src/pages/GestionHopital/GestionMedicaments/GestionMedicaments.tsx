@@ -24,24 +24,20 @@ import {
   Filter, 
   Package, 
   History, 
-  AlertCircle, 
-  Eye, 
-  Pencil, 
+  AlertCircle,
+  Pencil,
   Trash, 
   PlusCircle, 
   MinusCircle, 
   ChevronLeft, 
   ChevronRight,
-  TrendingDown,
-  TrendingUp,
   Clock,
   CheckCircle,
   AlertTriangle,
-  X,
-  FileText,
-  Activity
+  FileText
 } from 'lucide-react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
+import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 
 type MedicamentStatsType = {
   total: number;
@@ -79,7 +75,7 @@ interface GestionMedicamentsProps {
 export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedicamentsProps) {
   const [medicaments, setMedicaments] = useState<Medicament[]>([]);
   const [mouvements, setMouvements] = useState<MouvementStock[]>([]);
-  const [stats, setStats] = useState<MedicamentStatsType>({
+  const [, setStats] = useState<MedicamentStatsType>({
     total: 0,
     disponible: 0,
     rupture: 0,
@@ -100,7 +96,7 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
   const [currentPage, setCurrentPage] = useState(1);
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | "mouvement" | null>(null);
   const [selectedMedicament, setSelectedMedicament] = useState<Medicament | null>(null);
-  const [selectedMouvementType, setSelectedMouvementType] = useState<TypeMouvement>("Entrée");
+  const [, setSelectedMouvementType] = useState<TypeMouvement>("Entrée");
   const [isLoading, setIsLoading] = useState(true);
 
   const [notification, setNotification] = useState<{
@@ -113,33 +109,40 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
   const itemsPerPage = 10;
 
   useEffect(() => {
+    const controller = new AbortController();
     const init = async () => {
       await medicamentService.loadCategories(tenantId);
-      await loadData();
+      await loadData(controller.signal);
     };
     init();
+    return () => controller.abort();
   }, [tenantId]);
 
-  const loadData = async () => {
+  const loadData = async (signal?: AbortSignal) => {
     setIsLoading(true);
     try {
       const [medicamentsData, statsData, alertesData] = await Promise.all([
-        medicamentService.obtenirTousMedicaments({ tenant: tenantId }),
+        medicamentService.obtenirTousMedicaments({ tenant: tenantId }, signal),
         medicamentService.obtenirStatistiques(tenantId),
         medicamentService.obtenirAlertes(tenantId)
       ]);
 
+      if (signal?.aborted) return;
+
       setMedicaments(medicamentsData as unknown as Medicament[]);
       setStats(statsData);
       setAlertes(alertesData as unknown as Medicament[]);
-      
+
       // Load movements if on movements tab
       if (activeTab === 'mouvements') {
         const mvts = await medicamentService.obtenirMouvements(tenantId);
         setMouvements(mvts);
       }
+    } catch (e) {
+      if (signal?.aborted || isCanceledError(e)) return;
+      setNotification({ isOpen: true, title: 'Erreur de chargement', message: getApiErrorMessage(e), type: 'error' });
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   };
 
@@ -170,11 +173,6 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
   const handleEdit = (medicament: Medicament) => {
     setSelectedMedicament(medicament);
     setModalType("edit");
-  };
-
-  const handleView = (medicament: Medicament) => {
-    setSelectedMedicament(medicament);
-    setModalType("view");
   };
 
   const handleDeleteClick = (medicament: Medicament) => {

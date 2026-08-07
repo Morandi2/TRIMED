@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Building2, Search, Filter, MoreVertical, CheckCircle2, XCircle, AlertTriangle, Eye } from "lucide-react";
+import { Building2, Search, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { tenantService, Tenant } from "../../services/admin/tenantService";
 import PageMeta from "../../components/common/PageMeta";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
@@ -105,9 +105,9 @@ export default function GestionTenants() {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">Tous les statuts</option>
-              <option value="en_attente">📋 En Attente</option>
-              <option value="actif">✅ Actifs</option>
-              <option value="inactif">❌ Inactifs</option>
+              <option value="en_attente">En attente</option>
+              <option value="actif">Actifs</option>
+              <option value="inactif">Inactifs</option>
             </select>
           </div>
         </div>

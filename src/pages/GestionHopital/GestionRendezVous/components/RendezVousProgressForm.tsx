@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  RendezVousFormData, 
-  RendezVous,
-  STATUTS_RENDEZ_VOUS,
-  TYPES_CONSULTATION,
+  RendezVousFormData,
   MOYENS_PAIEMENT,
   SALLES_CONSULTATION,
   DUREES_CONSULTATION,
@@ -229,19 +226,16 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
   const handleSubmit = async () => {
     if (isSaving) return;
 
-    console.log('Soumission du formulaire avec données:', formData);
     
     // Valider tout les étapes avant de soumettre
     const step1Valid = validateStep(1);
     const step2Valid = validateStep(2);
     const step3Valid = validateStep(3);
 
-    console.log('Validation étapes:', { step1Valid, step2Valid, step3Valid });
 
     if (step1Valid && step2Valid && step3Valid) {
       setIsSaving(true);
       try {
-        console.log('Toutes les validations passent, appel de onSave');
         
         // Prepare data for service
         const submitData = {
@@ -261,8 +255,6 @@ export const RendezVousProgressForm: React.FC<RendezVousProgressFormProps> = ({
       } finally {
         setIsSaving(false);
       }
-    } else {
-      console.log('Validations échouées');
     }
   };
 

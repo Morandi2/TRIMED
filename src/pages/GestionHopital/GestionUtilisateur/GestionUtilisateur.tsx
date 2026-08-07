@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
+import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { utilisateurService } from './services/UtilisateurService';
 import { UtilisateurModal } from './components/UtilisateurModal';
 import { UtilisateurViewModal } from './components/UtilisateurViewModal';
@@ -22,9 +23,8 @@ import {
 import { 
   User, 
   Shield, 
-  CheckCircle, 
-  XCircle, 
-  Stethoscope, 
+  CheckCircle,
+  Stethoscope,
   Plus, 
   Search, 
   Filter,
@@ -33,8 +33,6 @@ import {
   Trash,
   ChevronLeft,
   ChevronRight,
-  BadgeCheck,
-  X,
   Mail,
   Phone,
   Layout
@@ -77,22 +75,27 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
   const [generalError, setGeneralError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadData();
+    const controller = new AbortController();
+    loadData(controller.signal);
     setRoles(utilisateurService.obtenirRoles());
     setStatuts(utilisateurService.obtenirStatuts());
+    return () => controller.abort();
   }, [tenantId]);
 
-  const loadData = async () => {
+  const loadData = async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const data = await utilisateurService.obtenirTousUtilisateurs(tenantId);
+      const data = await utilisateurService.obtenirTousUtilisateurs(tenantId, signal);
       const statistics = await utilisateurService.obtenirStatistiques(tenantId);
+      if (signal?.aborted) return;
       setUtilisateurs(data);
       setStats(statistics);
     } catch (error) {
-      console.error('Erreur chargement données:', error);
+      if (signal?.aborted || isCanceledError(error)) return;
+      setSuccessMessage(`Erreur : ${getApiErrorMessage(error)}`);
+      setShowSuccessModal(true);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
@@ -183,13 +186,6 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
-  const formatDate = (dateString: string | undefined | null) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '-';
-    return date.toLocaleDateString('fr-FR');
-  };
 
   const getRoleColor = (role: string) => {
     switch (role) {

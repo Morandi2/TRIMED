@@ -9,6 +9,7 @@ import {
 } from "../../../components/ui/table";
 import { abonnementService } from "../GestionAbonnements/services/AbonnementService";
 import { couponService } from "../GestionCoupons/services/CouponService";
+import { DemoModeBanner } from "../../../components/shared/DemoModeBanner";
 
 // Types pour tenant
 interface TenantSubscription {
@@ -119,7 +120,7 @@ export default function TenantPaiementModule({ tenantId, hopitalNom }: TenantPai
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [selectedMethod, setSelectedMethod] = useState<any>(null);
+  const [selectedMethod] = useState<any>(null);
   const [formData, setFormData] = useState<PaymentFormData>({ montant: 0, methode_id: 1 });
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -249,6 +250,11 @@ export default function TenantPaiementModule({ tenantId, hopitalNom }: TenantPai
 
   return (
     <div className="space-y-6">
+      <DemoModeBanner
+        module="Paiements & Abonnements"
+        message="Ce module utilise des données de démonstration : le backend n'expose pas encore les endpoints de facturation. Les paiements ne sont pas réellement enregistrés."
+      />
+
       {/* En-tête avec info abonnement */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">

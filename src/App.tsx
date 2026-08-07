@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { TenantProvider } from "./context/TenantContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -17,6 +17,9 @@ import Consultation from "./pages/GestionHopital/Consultation";
 import Medecin from "./pages/GestionHopital/Medecin";
 import Medicament from "./pages/GestionHopital/Medicament";
 import Ordonnance from "./pages/GestionHopital/Ordonnance";
+import Examen from "./pages/GestionHopital/Examen";
+import Hospitalisation from "./pages/GestionHopital/Hospitalisation";
+import SallesMedicales from "./pages/GestionHopital/SallesMedicales";
 import Paiement from "./pages/GestionHopital/Paiement";
 import RendezVous from "./pages/GestionHopital/RendezVous";
 import Configuration from "./pages/GestionHopital/Configuration";
@@ -65,6 +68,9 @@ export default function App() {
                 <Route path="/medecin" element={<ProtectedRoute requiredPermission="canViewMedecins"><Medecin /></ProtectedRoute>} />
                 <Route path="/medicament" element={<ProtectedRoute requiredPermission="canViewMedicaments"><Medicament /></ProtectedRoute>} />
                 <Route path="/ordonnance" element={<ProtectedRoute requiredPermission="canViewOrdonnances"><Ordonnance /></ProtectedRoute>} />
+                <Route path="/examen" element={<ProtectedRoute requiredPermission="canViewConsultations"><Examen /></ProtectedRoute>} />
+                <Route path="/hospitalisation" element={<ProtectedRoute requiredPermission="canViewConsultations"><Hospitalisation /></ProtectedRoute>} />
+                <Route path="/salles-medicales" element={<ProtectedRoute requiredPermission="canViewConsultations"><SallesMedicales /></ProtectedRoute>} />
                 <Route path="/paiement" element={<ProtectedRoute requiredPermission="canViewPaiements"><Paiement /></ProtectedRoute>} />
                 <Route path="/rendezvous" element={<ProtectedRoute requiredPermission="canViewRendezVous"><RendezVous /></ProtectedRoute>} />
                 <Route path="/configuration" element={<ProtectedRoute requiredPermission="canManageSystem"><Configuration /></ProtectedRoute>} />

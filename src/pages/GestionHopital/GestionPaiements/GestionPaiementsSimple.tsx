@@ -34,13 +34,11 @@ export const GestionPaiementsSimple: React.FC<{ tenantId: number }> = ({ tenantI
 
   const handleNewPaiement = () => {
     // TODO: Implement new payment modal
-    console.log('New payment for tenant:', tenantId);
     alert('Fonksyonalite pou nouvo pèman an ap vini');
   };
 
   const handleModifier = (id: number) => {
     // TODO: Implement edit payment
-    console.log('Edit payment:', id);
     alert('Fonksyonalite pou modifye pèman an ap vini');
   };
 

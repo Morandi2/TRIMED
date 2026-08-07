@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import { ChevronRight } from "lucide-react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
-import Button from "../ui/button/Button";
 import { useAuth } from "../../context/AuthContext";
 
 export default function SignInForm() {
@@ -155,27 +154,6 @@ export default function SignInForm() {
           )}
         </button>
       </form>
-
-      {/* Bouton Accès Démo (Développement) */}
-      <div className="mt-4">
-        <button
-          onClick={() => {
-            const demoUser = {
-              id: 999,
-              email: "demo@trimed.ht",
-              nom_complet: "Utilisateur Démo",
-              role: "admin-systeme",
-              hopital_id: 1
-            };
-            localStorage.setItem('access_token', 'demo_token');
-            localStorage.setItem('user_data', JSON.stringify(demoUser));
-            window.location.href = "/home";
-          }}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl text-xs font-bold transition-all border border-gray-200 dark:border-gray-700"
-        >
-          Accès Démo (Sauter la connexion)
-        </button>
-      </div>
 
       <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
         <p className="text-center text-sm text-gray-500 dark:text-gray-400">

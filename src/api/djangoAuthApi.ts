@@ -24,14 +24,9 @@ export const djangoAuthApi = {
         username: data.email
       };
       
-      console.log('Tentative de connexion Django:', data.email);
       const response = await apiClient.post('/comptes/login/', payload);
 
-      console.log('Data reçue du backend (KEYS):', Object.keys(response.data));
       const respData = response.data;
-      if (respData.user) console.log('User KEYS:', Object.keys(respData.user));
-      if (respData.tenant) console.log('Tenant KEYS:', Object.keys(respData.tenant));
-      if (respData.user && respData.user.hopital) console.log('User.hopital structure:', respData.user.hopital);
       const access = respData.access || respData.token;
       const refresh = respData.refresh;
 
@@ -46,8 +41,6 @@ export const djangoAuthApi = {
       if (respData.tenant || (respData.user && respData.user.hopital)) {
         localStorage.setItem('tenant_data', JSON.stringify(respData.tenant || respData.user.hopital));
       }
-
-      console.log('Connexion Django réussie, user:', authUser);
 
       return {
         success: true,
@@ -96,8 +89,6 @@ export const djangoAuthApi = {
    */
   inscription: async function (data: InscriptionData): Promise<ApiResponse<InscriptionResponse>> {
     try {
-      console.log('Inscription hôpital Django:', data.nom);
-
       const formData = new FormData();
       
       // Informations Administrateur (Comptes)
@@ -236,7 +227,6 @@ export const djangoAuthApi = {
    */
   confirmEmailVerification: async function (token: string): Promise<ApiResponse<any>> {
     try {
-      console.log('Confirmation email avec token:', token);
       const response = await apiClient.post(`/comptes/verify-email/${token}/`);
 
       return {
@@ -259,7 +249,6 @@ export const djangoAuthApi = {
    */
   verifyEmailLink: async function (uidb64: string, token: string): Promise<ApiResponse<any>> {
     try {
-      console.log('Vérification email via lien (Legacy) pour UUID:', uidb64);
       const response = await apiClient.get('/comptes/verify-email/', {
         params: { uidb64, token }
       });
@@ -283,7 +272,6 @@ export const djangoAuthApi = {
    */
   renvoyerOTP: async function (email: string): Promise<ApiResponse<any>> {
     try {
-      console.log('Demande de renvoi OTP pour:', email);
       const response = await apiClient.post('/comptes/renvoyer_otp/', { email });
       return {
         success: true,
@@ -305,7 +293,6 @@ export const djangoAuthApi = {
    */
   creerUtilisateur: async function (data: any): Promise<ApiResponse<any>> {
     try {
-      console.log('Tentative de création utilisateur sur: /comptes/utilisateurs/');
       const response = await apiClient.post('/comptes/utilisateurs/', data);
       return {
         success: true,
@@ -337,10 +324,10 @@ export const djangoAuthApi = {
   /**
    * Liste des utilisateurs (Supporte la pagination si une URL est fournie)
    */
-  getUtilisateurs: async function (url?: string): Promise<ApiResponse<any[]>> {
+  getUtilisateurs: async function (url?: string, opts?: { signal?: AbortSignal }): Promise<ApiResponse<any[]>> {
     try {
       const targetUrl = url || '/comptes/utilisateurs/';
-      const response = await apiClient.get(targetUrl);
+      const response = await apiClient.get(targetUrl, { signal: opts?.signal });
       return { success: true, message: 'Utilisateurs récupérés avec succès', data: response.data };
     } catch (error: any) {
       return { success: false, message: 'Erreur lors de la récupération des utilisateurs', error: error.response?.data };
@@ -441,13 +428,6 @@ export const djangoAuthApi = {
   },
 
   mapUserResponse: function (user: any, tenant: any = null): AuthUser {
-    console.log('Mapping user/tenant:', { user, tenant });
-    if (user) {
-      console.log('User keys:', Object.keys(user));
-      if (user.hopital) console.log('user.hopital type:', typeof user.hopital, user.hopital);
-      if (user.hopital_detail) console.log('user.hopital_detail:', user.hopital_detail);
-    }
-
     // Essayer de trouver le tenant (hôpital) dans plusieurs endroits possibles
     const activeTenant = tenant ||
       (user && user.hopital_detail) ||
@@ -474,8 +454,6 @@ export const djangoAuthApi = {
     } else {
       hopital_nom = user?.hopital_nom || user?.hospital_nom || '';
     }
-
-    console.log('Mapped IDs:', { user_id: user?.id || user?.pk, hopital_id });
 
     return {
       utilisateur_id: user?.id || user?.utilisateur_id || user?.pk || 0,

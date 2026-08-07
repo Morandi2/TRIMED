@@ -7,11 +7,11 @@ import {
   Info, 
   User, 
   Activity,
-  ArrowUpDown,
   Download
 } from 'lucide-react';
 import { auditService } from '../services/AuditService';
 import { AuditLog, AuditLogFilters } from '../types/AuditTypes';
+import { DemoModeBanner } from '../../../../components/shared/DemoModeBanner';
 // Plus besoin de date-fns
 
 export const AuditLogPage: React.FC = () => {
@@ -46,13 +46,6 @@ export const AuditLogPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (action: string) => {
-    if (action.toLowerCase().includes('suppression') || action.toLowerCase().includes('échec')) return 'text-red-500 bg-red-100 dark:bg-red-900/30';
-    if (action.toLowerCase().includes('création') || action.toLowerCase().includes('succès')) return 'text-green-500 bg-green-100 dark:bg-green-900/30';
-    if (action.toLowerCase().includes('modification')) return 'text-blue-500 bg-blue-100 dark:bg-blue-900/30';
-    return 'text-gray-500 bg-gray-100 dark:bg-gray-800';
-  };
-
   const filteredLogs = logs.filter(log => {
     const matchesSearch = log.utilisateur.toLowerCase().includes(filters.search.toLowerCase()) || 
                          log.action.toLowerCase().includes(filters.search.toLowerCase());
@@ -62,6 +55,11 @@ export const AuditLogPage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
+      <DemoModeBanner
+        module="Journal d'audit"
+        message="Les journaux affichés sont des données de démonstration : le backend n'expose pas encore d'endpoint d'audit."
+      />
+
       {/* Header Premium */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

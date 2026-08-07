@@ -1,4 +1,4 @@
-import { Smartphone, Stethoscope, User, WifiOff, Bell, FileSignature } from 'lucide-react';
+import { Stethoscope, User, WifiOff, Bell, FileSignature } from 'lucide-react';
 
 const MobileApp = () => {
   return (

@@ -6,6 +6,7 @@ import { PatientTable } from './components/PatientTable';
 import { PatientStats } from './components/PatientStats';
 import { PatientViewModal } from './components/PatientViewModal';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
+import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { PatientPrintPage } from './components/PatientPrintPage';
 import { 
   Users, 
@@ -13,10 +14,7 @@ import {
   Search, 
   ChevronLeft, 
   ChevronRight,
-  Filter,
-  Users2,
-  FileText,
-  BadgeCheck
+  Users2
 } from 'lucide-react';
 
 interface GestionPatientsProps {
@@ -30,7 +28,7 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
   const [currentPage, setCurrentPage] = useState(1);
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [, setFormErrors] = useState<string[]>([]);
   const [successModal, setSuccessModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -45,7 +43,9 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
   const hopitalId = tenantId;
 
   useEffect(() => {
-    loadPatients();
+    const controller = new AbortController();
+    loadPatients(controller.signal);
+    return () => controller.abort();
   }, [hopitalId]);
 
   useEffect(() => {
@@ -57,15 +57,17 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
     return () => { document.body.style.overflow = 'unset'; };
   }, [modalType]);
 
-  const loadPatients = async () => {
+  const loadPatients = async (signal?: AbortSignal) => {
     setIsLoading(true);
     try {
-      const patientsData = await patientService.obtenirPatientsParHopital(hopitalId);
+      const patientsData = await patientService.obtenirPatientsParHopital(hopitalId, signal);
+      if (signal?.aborted) return;
       setPatients(patientsData);
     } catch (e) {
-      console.error('[GestionPatients] Erreur chargement:', e);
+      if (signal?.aborted || isCanceledError(e)) return;
+      showSuccessMessage('Erreur de chargement', getApiErrorMessage(e), 'error');
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   };
 
@@ -92,8 +94,13 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
         isModifying ? 'Le patient a été modifié avec succès.' : 'Le patient a été enregistré avec succès.'
       );
     } else {
-      setFormErrors(result.errors || ["Erreur lors de l'opération"]);
-      showSuccessMessage('Erreur de validation', result.errors?.join(', ') || "Une erreur s'est produite.", 'error');
+      // On combine le message général et les erreurs de champ renvoyées par l'API
+      const fieldMsgs = result.fieldErrors
+        ? Object.entries(result.fieldErrors).map(([champ, msg]) => `${champ}: ${msg}`)
+        : [];
+      const allErrors = [...(result.errors || []), ...fieldMsgs];
+      setFormErrors(allErrors.length ? allErrors : ["Erreur lors de l'opération"]);
+      showSuccessMessage('Erreur de validation', (result.errors?.[0]) || fieldMsgs[0] || "Une erreur s'est produite.", 'error');
     }
   };
 
@@ -120,12 +127,12 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
 
   const handleDeleteConfirm = async () => {
     if (selectedPatient) {
-      const success = await patientService.supprimerPatient(selectedPatient.patient_id);
-      if (success) {
+      const result = await patientService.supprimerPatient(selectedPatient.patient_id);
+      if (result.success) {
         await loadPatients();
         showSuccessMessage('Suppression réussie', 'Le patient a été supprimé avec succès.');
       } else {
-        showSuccessMessage('Erreur', 'Une erreur s\'est produite.', 'error');
+        showSuccessMessage('Erreur', result.message || 'Une erreur s\'est produite.', 'error');
       }
       setModalType(null);
       setSelectedPatient(null);

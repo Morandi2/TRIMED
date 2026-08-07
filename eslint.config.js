@@ -19,10 +19,24 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
+      // Indice purement lié au Fast Refresh (dev) : sans impact en production,
+      // et le projet co-localise volontairement constantes et composants.
+      'react-refresh/only-export-components': 'off',
+      // Le code s'appuie sur la normalisation dynamique des réponses API : `any` est assumé.
+      '@typescript-eslint/no-explicit-any': 'off',
+      // Les paramètres non utilisés et les erreurs capturées ignorées sont tolérés ;
+      // les variables réellement inutiles restent signalées.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'none',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+          caughtErrors: 'none',
+        },
       ],
+      // Les blocs catch vides sont volontaires (échec silencieux du cache local, etc.).
+      'no-empty': ['error', { allowEmptyCatch: true }],
     },
   },
 )

@@ -20,11 +20,18 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   className = ""
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(value || '');
   const [items, setItems] = useState<(Patient | Medecin)[]>([]);
   const [selectedItem, setSelectedItem] = useState<Patient | Medecin | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sikronize chan an ak valè kontwole a (ex: pre-ranpli nan mòd modifikasyon).
+  // Se sèlman lè valè paran an chanje (chwazi/efase) l ap deklanche, donk li pa
+  // efase sa itilizatè a ap tape (paran an pa chanje pandan tapaj).
+  useEffect(() => {
+    setSearchTerm(value || '');
+  }, [value]);
 
   useEffect(() => {
     if (searchTerm.trim()) {

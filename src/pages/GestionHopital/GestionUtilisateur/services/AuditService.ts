@@ -6,21 +6,10 @@ class AuditService {
   private findField(obj: any, targetField: string | string[]): any {
     if (!obj || typeof obj !== 'object') return null;
 
-    if (Array.isArray(targetField)) {
-        for (const field of targetField) {
-            const found = this.findField(obj, field);
-            if (found !== undefined && found !== null) return found;
-        }
-        return null;
-    }
-
-    if (obj[targetField] !== undefined) return obj[targetField];
-
-    for (const key in obj) {
-      if (typeof obj[key] === 'object') {
-        const found = this.findField(obj[key], targetField);
-        if (found !== undefined && found !== null) return found;
-      }
+    const fields = Array.isArray(targetField) ? targetField : [targetField];
+    for (const field of fields) {
+      const value = obj[field];
+      if (value !== undefined && value !== null) return value;
     }
     return null;
   }

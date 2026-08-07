@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { djangoAuthApi } from '../../../../api/djangoAuthApi';
 import hospitalApi from '../../../../api/hospitalApi';
+import { collectAllPages } from '../../../../api/paginationHelper';
 
 export interface Specialite {
   specialite_id: number;
@@ -128,22 +128,10 @@ export class MedecinService {
   private findField(obj: any, targetField: string | string[]): any {
     if (!obj || typeof obj !== 'object') return null;
 
-    if (Array.isArray(targetField)) {
-      for (const field of targetField) {
-        const found = this.findField(obj, field);
-        if (found !== undefined && found !== null && found !== '') return found;
-      }
-      return null;
-    }
-
-    const directVal = obj[targetField];
-    if (directVal !== undefined && directVal !== null && directVal !== '') return directVal;
-
-    for (const key in obj) {
-      if (typeof obj[key] === 'object') {
-        const found = this.findField(obj[key], targetField);
-        if (found !== undefined && found !== null && found !== '') return found;
-      }
+    const fields = Array.isArray(targetField) ? targetField : [targetField];
+    for (const field of fields) {
+      const value = obj[field];
+      if (value !== undefined && value !== null && value !== '') return value;
     }
     return null;
   }
@@ -177,7 +165,7 @@ export class MedecinService {
     const date_naissance = this.formaterDatePourInput(
       find(['date_naissance', 'dateNaissance', 'birth_date', 'birthDate', 'dob', 'date_of_birth', 'dateNaiss', 'date_naiss']) || ''
     );
-    let cree_le =
+    const cree_le =
       m.cree_le || 
       m.created_at || 
       m.date_creation || 
@@ -185,15 +173,8 @@ export class MedecinService {
       m.createdAt || 
       find(['date_creation', 'dateCreation', 'created_at', 'createdAt', 'cree_le', 'creeLe', 'date_joined', 'dateJoined']) || '';
 
-    let modifie_le = m.modifie_le || m.updated_at || find(['modifie_le', 'updated_at']) || '';
+    const modifie_le = m.modifie_le || m.updated_at || find(['modifie_le', 'updated_at']) || '';
 
-    // Log the first Medecin found to help debug the exact payload from the backend
-    if (!this.medecinsCache && !localStorage.getItem('medecin_logged_v6')) {
-      console.log('[DEBUG] Structure exacte payload API Médecin: ', JSON.stringify(m, null, 2));
-      localStorage.setItem('medecin_logged_v6', 'true');
-    }
-
-    // ID resolution
     let medicId = m.medecin_id || find(['medecin_id', 'id_medecin', 'doctor_id']) || 0;
     if (!medicId && m.id) {
       if (m.role || m.is_staff !== undefined) {
@@ -264,15 +245,13 @@ export class MedecinService {
     } catch(e) {}
   }
 
-  async obtenirMedecinsParHopital(hopitalId: number): Promise<Medecin[]> {
+  async obtenirMedecinsParHopital(hopitalId: number, signal?: AbortSignal): Promise<Medecin[]> {
     // --- Return from cache if still fresh ---
     if (this.isMedecinsValid(hopitalId)) {
-      console.log('[MedecinService] Returning cached medecins');
       this.enrichMedecinsDeUtilisateur(this.medecinsCache!.data); // Dynamically enrich
       return this.medecinsCache!.data;
     }
 
-    console.log('[MedecinService] Cache miss — fetching fresh data for hopital', hopitalId);
 
     try {
       // Fetch medecins list + specialites in parallel for speed
@@ -282,14 +261,25 @@ export class MedecinService {
           ordering: '-cree_le',
           page_size: 1000,
           _t: Date.now(), // Force le navigateur à ne pas utiliser la version en cache HTTP locale
-        } as any),
+        } as any, { signal }),
         this.obtenirSpecialites(), // uses its own cache
       ]);
 
-      if (!profilesRes.success || !profilesRes.data) return [];
+      if (!profilesRes.success || !profilesRes.data) {
+        if (this.medecinsCache?.hopitalId === hopitalId && Array.isArray(this.medecinsCache.data)) {
+          return this.medecinsCache.data;
+        }
+        throw new Error((profilesRes as any).message || 'Erreur lors du chargement des médecins');
+      }
 
-      const rawProfiles = profilesRes.data.results || profilesRes.data || [];
-      const profilesList: any[] = Array.isArray(rawProfiles) ? rawProfiles : [rawProfiles];
+      const rawResp: any = profilesRes.data;
+      let profilesList: any[];
+      if (rawResp?.results && Array.isArray(rawResp.results)) {
+        profilesList = rawResp.next ? await collectAllPages(rawResp, signal) : rawResp.results;
+      } else {
+        const rawProfiles = rawResp || [];
+        profilesList = Array.isArray(rawProfiles) ? rawProfiles : [rawProfiles];
+      }
 
       // Build specialite lookup map O(N) once
       const specialitesMap = new Map<number, string>(
@@ -331,11 +321,12 @@ export class MedecinService {
       
       this.saveCacheToStorage();
 
-      console.log(`[MedecinService] Cached ${sorted.length} medecins et sauvegardé dans localStorage`);
       return sorted;
     } catch (error) {
-      console.error('[MedecinService] Erreur fetch:', error);
-      return [];
+      if (this.medecinsCache?.hopitalId === hopitalId && Array.isArray(this.medecinsCache.data)) {
+        return this.medecinsCache.data;
+      }
+      throw error;
     }
   }
 
@@ -413,7 +404,10 @@ export class MedecinService {
       delete rawPayload.medecin_id;
       delete rawPayload.cree_le;
       delete rawPayload.modifie_le;
+      delete rawPayload.created_at;
+      delete rawPayload.updated_at;
       delete rawPayload.specialite_principale_nom;
+      delete rawPayload.specialite_principale; // le backend attend specialite_principale_id
       delete rawPayload.statut;
       delete rawPayload.age;
       delete rawPayload.hopital_id;

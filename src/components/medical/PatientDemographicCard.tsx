@@ -3,7 +3,6 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
 import hospitalApi from "../../api/hospitalApi";
-import { djangoAuthApi } from "../../api/djangoAuthApi";
 
 export default function PatientDemographicCard() {
     const [isOpen, setIsOpen] = useState(false);
@@ -19,9 +18,6 @@ export default function PatientDemographicCard() {
         const fetchDemographics = async () => {
             setLoading(true);
             try {
-                const { user } = djangoAuthApi.verifierSession();
-                const tenantId = user?.hopital_id || 0;
-
                 const response = await hospitalApi.patients.getStatistiques();
                 if (response.success && response.data && response.data.repartition_age) {
                     const data = response.data.repartition_age;
@@ -33,7 +29,6 @@ export default function PatientDemographicCard() {
                     ]);
                 } else if (response.success && response.data && !response.data.repartition_age) {
                     // If we have data but no age repartition, maybe we can at least show total count if available
-                    console.log("[PatientDemographicCard] Stats success but no repartition_age:", response.data);
                 }
             } catch (error) {
                 console.error("Error fetching patient demographics:", error);

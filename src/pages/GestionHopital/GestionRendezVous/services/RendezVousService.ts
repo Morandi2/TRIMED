@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import hospitalApi, { RendezVous, RendezVousType, RendezVousStatut } from '../../../../api/hospitalApi';
+import { collectAllPages } from '../../../../api/paginationHelper';
 import { patientService } from '../../GestionPatients/services/PatientService';
 import { medecinService } from '../../GestionMedecins/services/MedecinService';
 
@@ -43,6 +43,8 @@ export class RendezVousService {
   private _medecins: any[] = [];
   private _types: RendezVousType[] = [];
   private _statuts: RendezVousStatut[] = [];
+  private _typesReels = false;
+  private _statutsReels = false;
 
   private constructor() {}
 
@@ -55,22 +57,11 @@ export class RendezVousService {
 
   private findField(obj: any, targetField: string | string[]): any {
     if (!obj || typeof obj !== 'object') return null;
-    
-    if (Array.isArray(targetField)) {
-        for (const field of targetField) {
-            const found = this.findField(obj, field);
-            if (found !== undefined && found !== null) return found;
-        }
-        return null;
-    }
 
-    if (obj[targetField] !== undefined) return obj[targetField];
-
-    for (const key in obj) {
-      if (typeof obj[key] === 'object') {
-        const found = this.findField(obj[key], targetField);
-        if (found !== undefined && found !== null) return found;
-      }
+    const fields = Array.isArray(targetField) ? targetField : [targetField];
+    for (const field of fields) {
+      const value = obj[field];
+      if (value !== undefined && value !== null) return value;
     }
     return null;
   }
@@ -139,13 +130,15 @@ export class RendezVousService {
 
   public async creeRendezVous(data: RendezVousFormData, tenantId: number): Promise<{ success: boolean; data?: any; errors?: string[] }> {
     try {
-      // Map des IDs numériques vers les slugs que le backend Django attend
-      const statutMap: Record<number, string> = {
-        1: 'planifie',
-        2: 'confirme',
-        3: 'termine',
-        4: 'annule'
-      };
+      // Les statuts/types sont des clés étrangères obligatoires: si le serveur
+      // ne les a pas encore configurés, on bloque avec un message clair au lieu
+      // d'envoyer des ids fictifs qui produiraient une erreur incompréhensible.
+      if (!this.referentielsRendezVousDisponibles()) {
+        return { success: false, errors: [
+          "La configuration des rendez-vous (types et statuts) n'est pas encore disponible côté serveur. " +
+          "Un administrateur système doit d'abord créer les types et statuts de rendez-vous."
+        ] };
+      }
 
       const payload: any = {
         patient: data.patient_id,
@@ -154,15 +147,13 @@ export class RendezVousService {
         motif: data.motif || '',
         notes: data.notes || '',
         duree_minutes: data.duree || 30,
-        statut: statutMap[data.statut_id] || 'PLANIFIE',
-        hopital: tenantId,
-        hopital_id: tenantId
+        statut: data.statut_id,               // clé étrangère réelle
+        tenant: tenantId,
       };
+      if (data.type_id) payload.type = data.type_id;
 
-      console.log('[RendezVousService] Payload création RDV:', payload);
 
       const response = await hospitalApi.rendezVous.create(payload) as any;
-      console.log('[RendezVousService] Réponse création RDV:', response);
       
       if (response.success) {
         return {
@@ -192,13 +183,6 @@ export class RendezVousService {
 
   public async modifierRendezVous(id: number, data: RendezVousFormData, tenantId?: number): Promise<{ success: boolean; data?: any; errors?: string[] }> {
     try {
-      const statutMap: Record<number, string> = {
-        1: 'planifie',
-        2: 'confirme',
-        3: 'termine',
-        4: 'annule'
-      };
-
       const payload: any = {
         patient: data.patient_id,
         medecin: data.medecin_id,
@@ -206,18 +190,13 @@ export class RendezVousService {
         motif: data.motif || '',
         notes: data.notes || '',
         duree_minutes: data.duree || 30,
-        statut: statutMap[data.statut_id] || 'planifie'
+        statut: data.statut_id,
       };
+      if (data.type_id) payload.type = data.type_id;
+      if (tenantId) payload.tenant = tenantId;
 
-      if (tenantId) {
-        payload.hopital = tenantId;
-        payload.hopital_id = tenantId;
-      }
-
-      console.log('[RendezVousService] Payload modification RDV:', payload);
 
       const response = await hospitalApi.rendezVous.update(id, payload) as any;
-      console.log('[RendezVousService] Réponse modification RDV:', response);
       
       if (response.success) {
         return {
@@ -252,24 +231,24 @@ export class RendezVousService {
     };
   }
 
-  public async obtenirTousRendezVous(params?: any): Promise<RendezVous[]> {
-    try {
-      const response = await hospitalApi.rendezVous.getAll({ ordering: '-date_creation', page_size: 1000, ...params } as any);
-      if (!response.success || !response.data) return [];
+  public async obtenirTousRendezVous(params?: any, signal?: AbortSignal): Promise<RendezVous[]> {
+    const response = await hospitalApi.rendezVous.getAll({ ordering: '-date_creation', page_size: 1000, ...params } as any, { signal });
+    if (!response.success || !response.data) {
+      throw new Error((response as any).message || 'Erreur lors du chargement des rendez-vous');
+    }
 
-      let results: any[] = [];
-      const rawData = response.data;
-      if (rawData.results && Array.isArray(rawData.results)) results = rawData.results;
-      else if (rawData.data?.results && Array.isArray(rawData.data.results)) results = rawData.data.results;
-      else if (Array.isArray(rawData.data)) results = rawData.data;
-      else if (Array.isArray(rawData)) results = rawData;
+    let results: any[] = [];
+    const rawData = response.data;
+    if (rawData.results && Array.isArray(rawData.results)) results = rawData.next ? await collectAllPages(rawData, signal) : rawData.results;
+    else if (rawData.data?.results && Array.isArray(rawData.data.results)) results = rawData.data.results;
+    else if (Array.isArray(rawData.data)) results = rawData.data;
+    else if (Array.isArray(rawData)) results = rawData;
 
-      return results.map(rv => this.normaliserRendezVous(rv)).sort((a, b) => {
-        const dA = new Date(a.date_heure).getTime();
-        const dB = new Date(b.date_heure).getTime();
-        return dB - dA;
-      });
-    } catch { return []; }
+    return results.map(rv => this.normaliserRendezVous(rv)).sort((a, b) => {
+      const dA = new Date(a.date_heure).getTime();
+      const dB = new Date(b.date_heure).getTime();
+      return dB - dA;
+    });
   }
 
   public async loadMetadata(tenantId?: number) {
@@ -286,7 +265,13 @@ export class RendezVousService {
       this._statuts = statutsRes.data.results || statutsRes.data || [];
     }
 
-    // Defaults if empty
+    // On mémorise si les référentiels proviennent réellement du serveur.
+    // Les listes de secours ci-dessous ne servent qu'à l'affichage; leurs ids
+    // fictifs ne doivent JAMAIS être envoyés au backend (clés étrangères).
+    this._typesReels = this._types.length > 0;
+    this._statutsReels = this._statuts.length > 0;
+
+    // Defaults if empty (affichage uniquement)
     if (this._types.length === 0) {
         this._types = [
             { id: 1, type_id: 1, nom: "Consultation standard", duree_estimee: 30, couleur: "#3b82f6" },
@@ -301,6 +286,15 @@ export class RendezVousService {
             { id: 4, statut_id: 4, nom: "Annulé", couleur: "#ef4444" }
         ] as any;
     }
+  }
+
+  /**
+   * Indique si les référentiels rendez-vous (types & statuts) existent
+   * réellement côté serveur. Un rendez-vous ne peut être créé que dans ce cas
+   * car `statut` (et `type`) sont des clés étrangères obligatoires.
+   */
+  public referentielsRendezVousDisponibles(): boolean {
+    return this._statutsReels && this._typesReels;
   }
 
   public async loadCache(tenantId: number) {

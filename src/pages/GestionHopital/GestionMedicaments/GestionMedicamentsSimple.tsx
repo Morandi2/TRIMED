@@ -37,13 +37,11 @@ export default function GestionMedicamentsSimple({ tenantId }: { tenantId: numbe
 
   const handleNewMedicament = () => {
     // TODO: Implement new medication modal
-    console.log('New medication for tenant:', tenantId);
     alert('Fonksyonalite pou nouvo medikaman an ap vini');
   };
 
   const handleModifier = (id: number) => {
     // TODO: Implement edit medication
-    console.log('Edit medication:', id);
     alert('Fonksyonalite pou modifye medikaman an ap vini');
   };
 

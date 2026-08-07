@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { Patient, patientService } from '../services/PatientService';
 import { calculateAge, formatDateFR } from '../../../../utils/dateUtils';

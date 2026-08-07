@@ -99,7 +99,6 @@ export const PatientModal: React.FC<PatientModalProps> = ({
 
 // Reste du code pour PatientDetailModal...
 export const PatientDetailModal: React.FC<PatientModalProps> = ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   patient,
   isOpen,
   onClose,

@@ -30,7 +30,6 @@ export default function HospitalMetrics() {
             const { user } = djangoAuthApi.verifierSession();
             const tenantId = user?.hopital_id || 0;
             
-            console.log(`[HospitalMetrics] Starting fetch for tenant: ${tenantId}...`);
             
             try {
                 // Fetch stats independently using Promise.allSettled
@@ -42,7 +41,6 @@ export default function HospitalMetrics() {
                     hospitalApi.rendezVous.getAll({ hopital_id: tenantId } as any), // 4 (Fallback count)
                 ]);
 
-                console.log("[HospitalMetrics] Raw results:", results);
 
                 setStats(prev => {
                     const newStats = { ...prev };
@@ -58,7 +56,6 @@ export default function HospitalMetrics() {
                     // 1. Patients
                     const patientStats = getResultData(0);
                     if (patientStats) {
-                        console.log("[HospitalMetrics] Patient stats data:", patientStats);
                         newStats.patients = (patientStats.total_patients || patientStats.count || patientStats.total || 0).toLocaleString();
                         const trend = patientStats.evolution_pourcentage || 0;
                         newStats.patientsTrend = `${trend >= 0 ? '+' : ''}${trend}%`;
@@ -68,7 +65,6 @@ export default function HospitalMetrics() {
                     if (newStats.patients === '0') {
                         const patientAll = getResultData(3);
                         if (patientAll) {
-                            console.log("[HospitalMetrics] Patient fallback (getAll) data:", patientAll);
                             const count = patientAll.count || (Array.isArray(patientAll) ? patientAll.length : (Array.isArray(patientAll.results) ? patientAll.results.length : 0));
                             newStats.patients = count.toLocaleString();
                         }
@@ -77,7 +73,6 @@ export default function HospitalMetrics() {
                     // 2. Appointments
                     const rdvStats = getResultData(1);
                     if (rdvStats) {
-                        console.log("[HospitalMetrics] RDV stats data:", rdvStats);
                         newStats.appointments = (rdvStats.total_rendez_vous || rdvStats.count || rdvStats.total || 0).toLocaleString();
                         const trend = rdvStats.evolution_pourcentage || 0;
                         newStats.appointmentsTrend = `${trend >= 0 ? '+' : ''}${trend}%`;
@@ -87,7 +82,6 @@ export default function HospitalMetrics() {
                     if (newStats.appointments === '0') {
                         const rdvAll = getResultData(4);
                         if (rdvAll) {
-                            console.log("[HospitalMetrics] RDV fallback (getAll) data:", rdvAll);
                             const count = rdvAll.count || (Array.isArray(rdvAll) ? rdvAll.length : (Array.isArray(rdvAll.results) ? rdvAll.results.length : 0));
                             newStats.appointments = count.toLocaleString();
                         }
@@ -96,13 +90,11 @@ export default function HospitalMetrics() {
                     // 3. Doctors
                     const medecinAll = getResultData(2);
                     if (medecinAll) {
-                        console.log("[HospitalMetrics] Medecin data:", medecinAll);
                         const doctorsList = medecinAll.results || medecinAll.data || medecinAll || [];
                         const count = medecinAll.count || (Array.isArray(doctorsList) ? doctorsList.length : 0);
                         newStats.doctors = count.toLocaleString();
                     }
 
-                    console.log("[HospitalMetrics] Final mapped stats:", newStats);
                     return newStats;
                 });
             } catch (error) {

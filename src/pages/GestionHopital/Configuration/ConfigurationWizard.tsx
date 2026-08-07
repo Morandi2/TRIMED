@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { 
-  Building2, 
-  Users, 
-  Stethoscope, 
-  Check, 
+import {
+  Building2,
+  Check,
   LayoutGrid, 
   UserPlus, 
   Settings2,
@@ -25,6 +23,8 @@ import { HospitalConfig } from './types/ConfigTypes';
 import { useAuth } from '../../../context/AuthContext';
 import Button from '../../../components/ui/button/Button';
 import hospitalApi from '../../../api/hospitalApi';
+import { NotificationToast } from '../../../components/shared';
+import { getApiErrorMessage } from '../../../utils/apiErrorHandler';
 
 const steps = [
   { id: 1, title: 'Hôpital', icon: Building2, description: 'Identité visuelle' },
@@ -49,6 +49,7 @@ export const ConfigurationWizard: React.FC = () => {
   const { setTenantConfig } = useTenant();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notif, setNotif] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' }>({ isOpen: false, message: '', type: 'success' });
   const [config, setConfig] = useState<Partial<HospitalConfig>>({
     branches: [],
     couleur_principale: '#2D32FF',
@@ -74,10 +75,21 @@ export const ConfigurationWizard: React.FC = () => {
 
   const handleComplete = async () => {
     if (isSubmitting) return;
+
+    // Validation minimale — sinon on ne finalise pas et on renvoie à l'étape 1.
+    if (!config.nom || !config.nom.trim()) {
+      setNotif({ isOpen: true, type: 'error', message: "Le nom de l'hôpital est obligatoire pour finaliser la configuration." });
+      setCurrentStep(1);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const tenantConfig = {
-        tenant_id: user?.hopital_id || 1, 
+      const tenantId = user?.hopital_id || 0;
+
+      // 1) Identité visuelle / interface — appliquée localement (palette, langue, devise, format).
+      setTenantConfig({
+        tenant_id: tenantId,
         nom: config.nom || '',
         logo: config.logo,
         couleur_principale: config.couleur_principale || '#2D32FF',
@@ -85,17 +97,43 @@ export const ConfigurationWizard: React.FC = () => {
         devise: config.devise || 'HTG',
         fuseau_horaire: config.fuseau_horaire || 'America/Port-au-Prince',
         is_configured: true,
-      };
+      });
 
-      setTenantConfig(tenantConfig);
-      const result = await hospitalApi.config.saveConfig(config);
+      if (tenantId) {
+        // 2) Paramètres backend du tenant (langue, devise, fuseau horaire).
+        const paramsRes = await hospitalApi.config.saveParametres(tenantId, {
+          langue: config.langue_defaut || 'fr',
+          devise: config.devise || 'HTG',
+          fuseau_horaire: config.fuseau_horaire || 'America/Port-au-Prince',
+        });
 
-      if (result.success) {
-        navigate('/home');
+        // L'enregistrement des paramètres est bloquant.
+        if (!paramsRes.success) {
+          setNotif({ isOpen: true, type: 'error', message: (paramsRes as any).message || 'Erreur lors de la sauvegarde de la configuration.' });
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 3) Informations de l'hôpital (nom, adresse, téléphone, nombre de lits).
+        //    En "best-effort": la modification du dossier hôpital est réservée à
+        //    un administrateur système; un refus (403) ne bloque pas la configuration.
+        const infoPayload: any = { nom: config.nom };
+        if (config.adresse) infoPayload.adresse = config.adresse;
+        if (config.telephone) infoPayload.telephone = config.telephone;
+        if (config.capacite_totale) infoPayload.nombre_de_lits = config.capacite_totale;
+        const infoRes = await hospitalApi.config.updateInfosHopital(tenantId, infoPayload);
+
+        const okMsg = 'Configuration enregistrée avec succès. Redirection...';
+        const partialMsg = "Interface et paramètres enregistrés. La modification des données de l'hôpital (nom, nombre de lits) nécessite un administrateur système.";
+        setNotif({ isOpen: true, type: 'success', message: infoRes.success ? okMsg : partialMsg });
+        setTimeout(() => navigate('/home'), infoRes.success ? 900 : 2200);
+        return;
       }
+
+      setNotif({ isOpen: true, type: 'success', message: 'Configuration enregistrée avec succès. Redirection...' });
+      setTimeout(() => navigate('/home'), 900);
     } catch (error) {
-      console.error('Erreur:', error);
-    } finally {
+      setNotif({ isOpen: true, type: 'error', message: getApiErrorMessage(error) });
       setIsSubmitting(false);
     }
   };
@@ -216,6 +254,13 @@ export const ConfigurationWizard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <NotificationToast
+        isOpen={notif.isOpen}
+        onClose={() => setNotif((p) => ({ ...p, isOpen: false }))}
+        message={notif.message}
+        type={notif.type}
+      />
     </div>
   );
 };

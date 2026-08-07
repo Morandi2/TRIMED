@@ -1,5 +1,6 @@
 import axios from 'axios';
 import config from '../config/environment';
+import { logApiError } from '../utils/apiErrorHandler';
 
 // Configuration de base pour axios - Django Backend
 const API_BASE_URL = config.API_BASE_URL;
@@ -47,30 +48,36 @@ const retryRequest = async (error: any, retryCount = 0): Promise<any> => {
 
 // Intercepteur pour les requêtes
 apiClient.interceptors.request.use(
-  (config) => {
+  (requestConfig) => {
     // Ajouter token JWT si disponible
     const token = localStorage.getItem('access_token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (token && requestConfig.headers) {
+      requestConfig.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // En-tête multi-tenant (si présent). Le backend infère normalement le
+    // tenant depuis le JWT, mais on le transmet quand il est disponible.
+    const tenantId = localStorage.getItem('tenant_id');
+    if (tenantId && requestConfig.headers) {
+      requestConfig.headers['X-Tenant-ID'] = tenantId;
     }
 
     // Cache-buster universel pour forcer les requêtes GET à contourner le cache du navigateur
-    if (config.method?.toLowerCase() === 'get') {
-      config.params = config.params || {};
+    if (requestConfig.method?.toLowerCase() === 'get') {
+      requestConfig.params = requestConfig.params || {};
       // Seuls les endpoints critiques nécessitent un rafraîchissement strict, mais on l'applique globalement
-      config.params._t = Date.now();
+      requestConfig.params._t = Date.now();
     }
 
-    // Log pour le débogage (désactiver en production)
-    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
-      data: config.data,
-      headers: config.headers
-    });
+    // Log pour le débogage (désactivé automatiquement en production)
+    if (config.DEBUG) {
+      console.log(`[API Request] ${requestConfig.method?.toUpperCase()} ${requestConfig.url}`);
+    }
 
-    return config;
+    return requestConfig;
   },
   (error) => {
-    console.error('Erreur requête API:', error);
+    logApiError(error, 'request');
     return Promise.reject(error);
   }
 );
@@ -78,22 +85,20 @@ apiClient.interceptors.request.use(
 // Intercepteur pour les réponses
 apiClient.interceptors.response.use(
   (response) => {
-    // Log pour le débogage
-    console.log(`[API Response] ${response.status} ${response.config.url}`, {
-      data: response.data,
-      status: response.status
-    });
+    // Log pour le débogage (désactivé automatiquement en production)
+    if (config.DEBUG) {
+      console.log(`[API Response] ${response.status} ${response.config.url}`);
+    }
     return response;
   },
   async (error) => {
-    if (error.response) {
-      console.error(`[API Error Response]:`, error.response.data);
-    }
+    // Journalisation centralisée et cohérente (incidents vs erreurs normales)
+    logApiError(error, error.config?.url);
+
     // Gestion spécifique des erreurs
     if (error.response) {
       switch (error.response.status) {
-        case 401:
-          console.warn('Token expiré, tentative de refresh...');
+        case 401: {
           // Essayer de rafraîchir le token
           const refreshToken = localStorage.getItem('refresh_token');
           if (refreshToken) {
@@ -108,8 +113,7 @@ apiClient.interceptors.response.use(
                 error.config.headers.Authorization = `Bearer ${newAccessToken}`;
                 return axios.request(error.config);
               }
-            } catch (refreshError) {
-              console.error('Refresh token expiré, déconnexion...');
+            } catch {
               localStorage.removeItem('access_token');
               localStorage.removeItem('refresh_token');
               localStorage.removeItem('user_data');
@@ -122,6 +126,7 @@ apiClient.interceptors.response.use(
             window.location.href = '/connexion';
           }
           break;
+        }
         case 404:
           console.error('Ressource non trouvée');
           break;

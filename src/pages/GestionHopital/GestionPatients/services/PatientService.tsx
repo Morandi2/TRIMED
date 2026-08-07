@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import hospitalApi from '../../../../api/hospitalApi';
+import { collectAllPages } from '../../../../api/paginationHelper';
 
 export interface Patient {
   patient_id: number;
@@ -91,34 +91,21 @@ export class PatientService {
   }
 
   /**
-   * Helper pou jwenn yon valè nan yon objè kèlkeswa kote l ye (Omni-Search)
+   * Récupère la première valeur non vide parmi les alias de champ fournis,
+   * en ne lisant que les clés directes de l'objet pour éviter de capter
+   * accidentellement la valeur d'un objet relationnel imbriqué.
    */
   private findField(obj: any, targetField: string | string[]): any {
     if (!obj || typeof obj !== 'object') return null;
-    
-    if (Array.isArray(targetField)) {
-        for (const field of targetField) {
-            const found = this.findField(obj, field);
-            if (found !== undefined && found !== null && found !== '') return found;
-        }
-        return null;
-    }
 
-    const directVal = obj[targetField];
-    if (directVal !== undefined && directVal !== null && directVal !== '') return directVal;
-
-    for (const key in obj) {
-      if (typeof obj[key] === 'object') {
-        const found = this.findField(obj[key], targetField);
-        if (found !== undefined && found !== null && found !== '') return found;
-      }
+    const fields = Array.isArray(targetField) ? targetField : [targetField];
+    for (const field of fields) {
+      const value = obj[field];
+      if (value !== undefined && value !== null && value !== '') return value;
     }
     return null;
   }
 
-  /**
-   * Normalizasyon yon pasyan
-   */
   public normaliserPatient(p: any): Patient {
     if (!p) return {} as Patient;
     const find = (field: string | string[]) => this.findField(p, field);
@@ -166,7 +153,7 @@ export class PatientService {
     return payload;
   }
 
-  async obtenirPatientsParHopital(hopitalId: number): Promise<Patient[]> {
+  async obtenirPatientsParHopital(hopitalId: number, signal?: AbortSignal): Promise<Patient[]> {
     if (this.isPatientsValid(hopitalId)) {
       return this.patientsCache!.data;
     }
@@ -176,14 +163,20 @@ export class PatientService {
         hopital_id: hopitalId,
         ordering: '-date_creation',
         page_size: 1000,
-      } as any);
+      } as any, { signal });
 
-      if (!response.success || !response.data) return [];
+      if (!response.success || !response.data) {
+        // Repli sur le cache périmé si disponible, sinon on signale l'échec.
+        if (this.patientsCache?.hopitalId === hopitalId && Array.isArray(this.patientsCache.data)) {
+          return this.patientsCache.data;
+        }
+        throw new Error((response as any).message || 'Erreur lors du chargement des patients');
+      }
 
       let results: any[] = [];
       const rawData = response.data;
 
-      if (rawData.results && Array.isArray(rawData.results)) results = rawData.results;
+      if (rawData.results && Array.isArray(rawData.results)) results = rawData.next ? await collectAllPages(rawData, signal) : rawData.results;
       else if (rawData.data?.results && Array.isArray(rawData.data.results)) results = rawData.data.results;
       else if (Array.isArray(rawData.data)) results = rawData.data;
       else if (Array.isArray(rawData)) results = rawData;
@@ -205,8 +198,13 @@ export class PatientService {
       this.saveCacheToStorage();
       
       return sorted;
-    } catch {
-      return [];
+    } catch (e) {
+      // On garde les données déjà chargées si elles existent (pas de blocage UI),
+      // sinon on propage l'erreur pour que l'écran affiche un message clair.
+      if (this.patientsCache?.hopitalId === hopitalId && Array.isArray(this.patientsCache.data)) {
+        return this.patientsCache.data;
+      }
+      throw e;
     }
   }
 
@@ -255,7 +253,8 @@ export class PatientService {
     return {
       success: response.success,
       data: newPatient,
-      errors: response.success ? undefined : [response.message || "Erreur inconnue"]
+      errors: response.success ? undefined : [response.message || "Erreur inconnue"],
+      fieldErrors: response.success ? undefined : response.fieldErrors,
     };
   }
 
@@ -274,16 +273,17 @@ export class PatientService {
     return {
       success: response.success,
       data: response.success ? this.normaliserPatient(response.data) : undefined,
-      errors: response.success ? undefined : [response.message || "Erreur inconnue"]
+      errors: response.success ? undefined : [response.message || "Erreur inconnue"],
+      fieldErrors: response.success ? undefined : response.fieldErrors,
     };
   }
 
-  async supprimerPatient(patientId: number): Promise<boolean> {
+  async supprimerPatient(patientId: number): Promise<{ success: boolean; message?: string }> {
     const response = await hospitalApi.patients.delete(patientId);
     if (response.success) {
       this.invalidateCache();
     }
-    return response.success;
+    return { success: response.success, message: response.success ? undefined : response.message };
   }
 }
 

@@ -94,7 +94,7 @@ export default function ConsultationVolumeChart() {
             data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         },
     ]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {

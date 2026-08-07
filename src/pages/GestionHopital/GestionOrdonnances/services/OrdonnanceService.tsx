@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import hospitalApi from '../../../../api/hospitalApi';
+import { collectAllPages } from '../../../../api/paginationHelper';
 import { patientService } from '../../GestionPatients/services/PatientService';
 import { medecinService } from '../../GestionMedecins/services/MedecinService';
 import { consultationService } from '../../GestionConsultations/services/ConsultationService';
@@ -77,23 +77,11 @@ export class OrdonnanceService {
 
   private findField(obj: any, targetField: string | string[]): any {
     if (!obj || typeof obj !== 'object') return null;
-    
-    if (Array.isArray(targetField)) {
-        for (const field of targetField) {
-            const found = this.findField(obj, field);
-            if (found !== undefined && found !== null) return found;
-        }
-        return null;
-    }
 
-    if (obj[targetField] !== undefined) return obj[targetField];
-
-    const restrictedKeys = ['hopital', 'user', 'tenant'];
-    for (const key in obj) {
-      if (typeof obj[key] === 'object' && !restrictedKeys.includes(key)) {
-        const found = this.findField(obj[key], targetField);
-        if (found !== undefined && found !== null) return found;
-      }
+    const fields = Array.isArray(targetField) ? targetField : [targetField];
+    for (const field of fields) {
+      const value = obj[field];
+      if (value !== undefined && value !== null) return value;
     }
     return null;
   }
@@ -152,7 +140,6 @@ export class OrdonnanceService {
       if (!ordonnancePayload.recommandations) delete ordonnancePayload.recommandations;
       if (!ordonnancePayload.validite) delete ordonnancePayload.validite;
 
-      console.log('[OrdonnanceService] creerOrdonnance payload:', ordonnancePayload);
       const response = await hospitalApi.ordonnances.create(ordonnancePayload);
       
       if (!response.success) {
@@ -188,25 +175,24 @@ export class OrdonnanceService {
     }
   }
 
-  async obtenirOrdonnancesParTenant(_tenantId: number): Promise<Ordonnance[]> {
-    try {
-      const response = await hospitalApi.ordonnances.getAll({ page_size: 1000 } as any);
-      if (response.success && response.data) {
-        let results: any[] = [];
-        const rawData = response.data;
-        if (rawData.results && Array.isArray(rawData.results)) results = rawData.results;
-        else if (rawData.data?.results && Array.isArray(rawData.data.results)) results = rawData.data.results;
-        else if (Array.isArray(rawData.data)) results = rawData.data;
-        else if (Array.isArray(rawData)) results = rawData;
+  async obtenirOrdonnancesParTenant(_tenantId: number, signal?: AbortSignal): Promise<Ordonnance[]> {
+    const response = await hospitalApi.ordonnances.getAll({ page_size: 1000 } as any, { signal });
+    if (!response.success || !response.data) {
+      throw new Error((response as any).message || 'Erreur lors du chargement des ordonnances');
+    }
 
-        return results.map(o => this.normaliserOrdonnance(o)).sort((a, b) => {
-          const dateA = new Date(a.date_ordonnance).getTime();
-          const dateB = new Date(b.date_ordonnance).getTime();
-          return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
-        });
-      }
-    } catch (e) { console.error('Error fetching ordonnances:', e); }
-    return [];
+    let results: any[] = [];
+    const rawData = response.data;
+    if (rawData.results && Array.isArray(rawData.results)) results = rawData.next ? await collectAllPages(rawData, signal) : rawData.results;
+    else if (rawData.data?.results && Array.isArray(rawData.data.results)) results = rawData.data.results;
+    else if (Array.isArray(rawData.data)) results = rawData.data;
+    else if (Array.isArray(rawData)) results = rawData;
+
+    return results.map(o => this.normaliserOrdonnance(o)).sort((a, b) => {
+      const dateA = new Date(a.date_ordonnance).getTime();
+      const dateB = new Date(b.date_ordonnance).getTime();
+      return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
+    });
   }
 
   async obtenirOrdonnance(ordonnanceId: number): Promise<Ordonnance | null> {

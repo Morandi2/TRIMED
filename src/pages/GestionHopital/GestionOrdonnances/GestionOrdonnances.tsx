@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
+import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { ordonnanceService, Ordonnance } from './services/OrdonnanceService';
 import { OrdonnanceModal } from './components/OrdonnanceModal';
 import { OrdonnancePrintPage } from './components/OrdonnancePrintPage';
@@ -16,19 +17,13 @@ import {
 import { 
   FileText, 
   Plus, 
-  Search, 
-  Settings,
+  Search,
   Pencil,
   Trash,
   Printer,
   ChevronLeft,
   ChevronRight,
-  Filter,
-  BadgeCheck,
-  Calendar,
-  XCircle,
   Clock,
-  User,
   Eye,
   Stethoscope,
   X
@@ -56,21 +51,30 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
   const [printOrdonnance, setPrintOrdonnance] = useState<Ordonnance | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     const init = async () => {
       setIsLoading(true);
       try {
         await ordonnanceService.loadMetadata(tenantId);
-        await chargerOrdonnances();
+        await chargerOrdonnances(controller.signal);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
     init();
+    return () => controller.abort();
   }, [tenantId]);
 
-  const chargerOrdonnances = async () => {
-    const ordonnancesData = await ordonnanceService.obtenirOrdonnancesParTenant(tenantId);
-    setOrdonnances(ordonnancesData);
+  const chargerOrdonnances = async (signal?: AbortSignal) => {
+    try {
+      const ordonnancesData = await ordonnanceService.obtenirOrdonnancesParTenant(tenantId, signal);
+      if (signal?.aborted) return;
+      setOrdonnances(ordonnancesData);
+    } catch (e) {
+      if (signal?.aborted || isCanceledError(e)) return;
+      setSuccessMessage(`Erreur : ${getApiErrorMessage(e)}`);
+      setShowSuccessModal(true);
+    }
   };
 
   const handleNouvelleOrdonnance = () => {

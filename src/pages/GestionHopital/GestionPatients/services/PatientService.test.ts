@@ -20,6 +20,8 @@ vi.mock('../../../../api/hospitalApi', () => ({
 describe('PatientService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Isolation: le service est un singleton, on vide le cache entre les tests.
+    patientService.invalidateCache();
   });
 
   describe('obtenirPatientsParHopital', () => {
@@ -55,10 +57,11 @@ describe('PatientService', () => {
       }));
     });
 
-    it('doit retourner un tableau vide si la réponse échoue', async () => {
-      (hospitalApi.patients.getAll as any).mockResolvedValue({ success: false });
-      const result = await patientService.obtenirPatientsParHopital(1);
-      expect(result).toEqual([]);
+    it('doit lever une erreur en cas d\'échec (aucun cache disponible)', async () => {
+      // Nouveau contrat: en cas d'échec sans cache, on propage l'erreur pour que
+      // l'UI affiche un message clair au lieu d'un tableau vide silencieux.
+      (hospitalApi.patients.getAll as any).mockResolvedValue({ success: false, message: 'Échec' });
+      await expect(patientService.obtenirPatientsParHopital(1)).rejects.toThrow();
     });
   });
 

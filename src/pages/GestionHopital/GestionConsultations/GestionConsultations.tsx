@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
+import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { consultationService, Consultation } from './services/ConsultationService';
 import { ConsultationModal } from './components/ConsultationModal';
 import { ConsultationPrintPage } from './components/ConsultationPrintPage';
@@ -14,10 +15,7 @@ import {
   Pencil, 
   Trash, 
   Printer, 
-  X, 
-  AlertTriangle, 
-  CheckCircle,
-  MoreVertical,
+  X,
   Calendar,
   User
 } from 'lucide-react';
@@ -35,21 +33,29 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     const init = async () => {
       setIsLoading(true);
       try {
         await consultationService.loadCache(tenantId);
-        await chargerConsultations();
+        await chargerConsultations(controller.signal);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
     init();
+    return () => controller.abort();
   }, [tenantId]);
 
-  const chargerConsultations = async () => {
-    const consultationsData = await consultationService.obtenirConsultationsParTenant(tenantId);
-    setConsultations(consultationsData);
+  const chargerConsultations = async (signal?: AbortSignal) => {
+    try {
+      const consultationsData = await consultationService.obtenirConsultationsParTenant(tenantId, signal);
+      if (signal?.aborted) return;
+      setConsultations(consultationsData);
+    } catch (e) {
+      if (signal?.aborted || isCanceledError(e)) return;
+      setSuccessModal({ isOpen: true, title: 'Erreur de chargement', message: getApiErrorMessage(e), type: 'error' });
+    }
   };
 
   const handleNouvelleConsultation = () => {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Types et interfaces pour l'authentification
 
 export interface InscriptionData {

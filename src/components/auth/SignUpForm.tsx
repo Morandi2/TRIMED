@@ -236,9 +236,21 @@ export default function SignUpForm() {
     }
   };
 
+  const TOTAL_STEPS = 6;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateStep(6)) return;
+
+    // Empêche toute soumission implicite (ex: touche Entrée dans un champ) avant
+    // la dernière étape. Dans ce cas on avance simplement l'assistant au lieu de
+    // déclencher l'inscription prématurément (bug: Submit se déclenchait avant le
+    // choix du forfait).
+    if (currentStep < TOTAL_STEPS) {
+      nextStep();
+      return;
+    }
+
+    if (!validateStep(TOTAL_STEPS)) return;
 
     setIsLoadingLocal(true);
     try {

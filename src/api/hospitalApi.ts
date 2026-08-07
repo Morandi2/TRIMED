@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from './apiConfig';
+import { normalizeApiError } from '../utils/apiErrorHandler';
 
 // Types pour les données hospitalières
 export interface Patient {
@@ -185,50 +185,115 @@ export interface MedicamentStatistiques {
  attention_requise: any[];
 }
 
+// Forme normalisée d'une réponse d'erreur renvoyée par les services.
+// `data`/`is_fallback` sont optionnels afin que ce type reste compatible
+// avec les réponses de succès `{ success, data, message }` au sein d'une
+// même union (les appelants continuent d'utiliser `response.data`).
+interface ApiErrorResult {
+  success: false;
+  message: string;
+  status: number | null;
+  fieldErrors: Record<string, string>;
+  error: any;
+  data?: any;
+  is_fallback?: boolean;
+}
+
 // Helper pour formater les erreurs API de manière plus verbeuse
-const formatApiError = (error: any, defaultMessage: string) => {
-  console.error(`[API Error] ${defaultMessage}:`, error);
-  
-  let message = error.response?.data?.detail || defaultMessage;
-  
-  // Si on a un dictionnaire d'erreurs (400 Bad Request)
-  if (error.response?.data && typeof error.response.data === 'object' && !error.response.data.detail) {
-    try {
-      message = Object.entries(error.response.data)
-        .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(' ') : JSON.stringify(val)}`)
-        .join(' | ');
-    } catch (e) {
-      console.error('Erreur lors du formatage du message d\'erreur:', e);
-    }
-  }
-  
+const formatApiError = (error: any, defaultMessage: string): ApiErrorResult => {
+  // Normalisation centralisée (réseau, timeout, 400/401/403/404/409/422/429/5xx)
+  const normalized = normalizeApiError(error);
+
+  // On préfère le message clair du normaliseur; on retombe sur le message
+  // par défaut du contexte si aucun message exploitable n'est disponible.
+  const message = normalized.message || defaultMessage;
+
   return {
     success: false,
-    message: message,
-    error: error.response?.data || error.message
+    message,
+    status: normalized.status,
+    fieldErrors: normalized.fieldErrors,
+    error: error?.response?.data || error?.message,
   };
 };
 
+/**
+ * Fabrique un ensemble CRUD standard pour une ressource DRF.
+ * `base` doit se terminer par '/'. Toutes les erreurs passent par
+ * formatApiError (messages clairs + fieldErrors) et getAll accepte un signal.
+ */
+const makeCrud = (base: string, label: string) => ({
+  async getAll(params?: any, opts?: { signal?: AbortSignal }) {
+    try {
+      const response = await apiClient.get(base, { params, signal: opts?.signal });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return formatApiError(error, `Erreur lors de la récupération (${label})`);
+    }
+  },
+  async getById(id: number) {
+    try {
+      const response = await apiClient.get(`${base}${id}/`);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return formatApiError(error, `${label} introuvable`);
+    }
+  },
+  async create(data: any) {
+    try {
+      const response = await apiClient.post(base, data);
+      return { success: true, data: response.data, message: `${label} enregistré(e) avec succès` };
+    } catch (error: any) {
+      return formatApiError(error, `Erreur lors de la création (${label})`);
+    }
+  },
+  async update(id: number, data: any) {
+    try {
+      const response = await apiClient.patch(`${base}${id}/`, data);
+      return { success: true, data: response.data, message: `${label} mis(e) à jour avec succès` };
+    } catch (error: any) {
+      return formatApiError(error, `Erreur lors de la modification (${label})`);
+    }
+  },
+  async delete(id: number) {
+    try {
+      await apiClient.delete(`${base}${id}/`);
+      return { success: true, message: `${label} supprimé(e) avec succès` };
+    } catch (error: any) {
+      return formatApiError(error, `Erreur lors de la suppression (${label})`);
+    }
+  },
+});
+
 // API pour la gestion hospitalière avec Django
 export const hospitalApi = {
+ // ==================== HOSPITALISATION ====================
+ hospitalisation: {
+   admissions: makeCrud('/hospitalisation/admissions/', 'Admission'),
+   chambres: makeCrud('/hospitalisation/chambres/', 'Chambre'),
+   lits: makeCrud('/hospitalisation/lits/', 'Lit'),
+ },
+
+ // ==================== SALLES MÉDICALES ====================
+ sallesMedicales: {
+   salles: makeCrud('/salles-medicales/salles/', 'Salle'),
+   reservations: makeCrud('/salles-medicales/reservations/', 'Réservation'),
+   typeSalles: makeCrud('/salles-medicales/type-salles/', 'Type de salle'),
+ },
+
  // ==================== PATIENTS ====================
  patients: {
  // Récupérer tous les patients
- async getAll(params?: { page?: number; search?: string; sexe?: string }) {
+ async getAll(params?: { page?: number; search?: string; sexe?: string }, opts?: { signal?: AbortSignal }) {
  try {
- const response = await apiClient.get('/patients/', { params });
+ const response = await apiClient.get('/patients/', { params, signal: opts?.signal });
  return {
  success: true,
  data: response.data,
  message: 'Patients récupérés avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur récupération patients:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération des patients',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la récupération des patients');
  }
  },
 
@@ -242,12 +307,7 @@ export const hospitalApi = {
  message: 'Patient récupéré avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur récupération patient:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Patient non trouvé',
- error: error.message
- };
+ return formatApiError(error, 'Patient non trouvé');
  }
  },
 
@@ -310,23 +370,7 @@ export const hospitalApi = {
  message: 'Patient mis à jour avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur mise à jour patient:', error);
- let errorMessage = error.response?.data?.detail || 'Erreur lors de la mise à jour du patient';
- 
- // Render DRF exact field validation errors
- if (error.response?.data && typeof error.response.data === 'object' && !error.response.data.detail) {
-   try {
-     errorMessage = Object.entries(error.response.data)
-       .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(' ') : JSON.stringify(val)}`)
-       .join('\n');
-   } catch(e) {}
- }
- 
- return {
- success: false,
- message: errorMessage,
- error: error.response?.data || error.message
- };
+ return formatApiError(error, 'Erreur lors de la mise à jour du patient');
  }
  },
 
@@ -339,12 +383,7 @@ export const hospitalApi = {
  message: 'Patient supprimé avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur suppression patient:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la suppression du patient',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la suppression du patient');
  }
  },
 
@@ -358,12 +397,7 @@ export const hospitalApi = {
  message: 'Dossier complet récupéré avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur récupération dossier:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération du dossier',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la récupération du dossier');
  }
  },
 
@@ -385,12 +419,7 @@ export const hospitalApi = {
         is_fallback: true
       };
     }
-    console.error(' Erreur statistiques patients:', error);
-    return {
-      success: false,
-      message: error.response?.data?.detail || 'Erreur lors de la récupération des statistiques',
-      error: error.message
-    };
+    return formatApiError(error, 'Erreur lors de la récupération des statistiques');
   }
  },
 
@@ -455,12 +484,7 @@ export const hospitalApi = {
  message: 'Rendez-vous récupérés avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur récupération rendez-vous:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération des rendez-vous',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la récupération des rendez-vous');
  }
  },
 
@@ -474,12 +498,7 @@ export const hospitalApi = {
  message: 'Rendez-vous créé avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur création rendez-vous:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la création du rendez-vous',
- error: error.response?.data || error.message
- };
+ return formatApiError(error, 'Erreur lors de la création du rendez-vous');
  }
  },
 
@@ -493,12 +512,7 @@ export const hospitalApi = {
  message: 'Rendez-vous mis à jour avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur mise à jour rendez-vous:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la mise à jour du rendez-vous',
- error: error.response?.data || error.message
- };
+ return formatApiError(error, 'Erreur lors de la mise à jour du rendez-vous');
  }
  },
 
@@ -512,12 +526,7 @@ export const hospitalApi = {
  message: 'Rendez-vous confirmé avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur confirmation rendez-vous:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la confirmation du rendez-vous',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la confirmation du rendez-vous');
  }
  },
 
@@ -531,12 +540,7 @@ export const hospitalApi = {
  message: 'Rendez-vous annulé avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur annulation rendez-vous:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de l\'annulation du rendez-vous',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de l\'annulation du rendez-vous');
  }
  },
 
@@ -552,12 +556,7 @@ export const hospitalApi = {
  message: 'Créneaux disponibles récupérés avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur créneaux disponibles:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération des créneaux',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la récupération des créneaux');
  }
  },
 
@@ -605,21 +604,16 @@ export const hospitalApi = {
  // ==================== MÉDECINS ====================
  medecins: {
  // Récupérer tous les médecins
- async getAll(params?: { page?: number; search?: string; specialite?: string }) {
+ async getAll(params?: { page?: number; search?: string; specialite?: string }, opts?: { signal?: AbortSignal }) {
  try {
- const response = await apiClient.get('/medical/medecins/', { params });
+ const response = await apiClient.get('/medical/medecins/', { params, signal: opts?.signal });
  return {
  success: true,
  data: response.data,
  message: 'Médecins récupérés avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur récupération médecins:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération des médecins',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la récupération des médecins');
  }
  },
 
@@ -633,12 +627,7 @@ export const hospitalApi = {
  message: 'Médecin récupéré avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur récupération médecin:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération du médecin',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la récupération du médecin');
  }
  },
 
@@ -667,12 +656,7 @@ export const hospitalApi = {
  message: 'Médecin créé avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur création médecin:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la création du médecin',
- error: error.response?.data || error.message
- };
+ return formatApiError(error, 'Erreur lors de la création du médecin');
  }
  },
 
@@ -686,12 +670,7 @@ export const hospitalApi = {
  message: 'Statistiques récupérées avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur statistiques médecin:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération des statistiques',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la récupération des statistiques');
  }
  },
 
@@ -705,12 +684,7 @@ export const hospitalApi = {
  message: 'Consultations récupérées avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur consultations médecin:', error);
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération des consultations',
- error: error.message
- };
+ return formatApiError(error, 'Erreur lors de la récupération des consultations');
  }
  },
 
@@ -829,12 +803,12 @@ export const hospitalApi = {
  // ==================== CONSULTATIONS ====================
  consultations: {
  // Récupérer toutes les consultations
- async getAll(params?: { page?: number; patient?: number; medecin?: number; date_debut?: string; date_fin?: string }) {
+ async getAll(params?: { page?: number; patient?: number; medecin?: number; date_debut?: string; date_fin?: string }, opts?: { signal?: AbortSignal }) {
  try {
- const response = await apiClient.get('/medical/consultations/', { params });
+ const response = await apiClient.get('/medical/consultations/', { params, signal: opts?.signal });
  return { success: true, data: response.data };
  } catch (error: any) {
- return { success: false, message: 'Erreur récupération consultations', error: error.message };
+ return formatApiError(error, 'Erreur lors de la récupération des consultations');
  }
  },
 
@@ -901,12 +875,12 @@ export const hospitalApi = {
 
  // ==================== ORDONNANCES ====================
  ordonnances: {
- async getAll(params?: any) {
+ async getAll(params?: any, opts?: { signal?: AbortSignal }) {
  try {
- const response = await apiClient.get('/medical/ordonnances/', { params });
+ const response = await apiClient.get('/medical/ordonnances/', { params, signal: opts?.signal });
  return { success: true, data: response.data };
  } catch (error: any) {
- return { success: false, message: 'Erreur récupération ordonnances', error: error.message };
+ return formatApiError(error, 'Erreur lors de la récupération des ordonnances');
  }
  },
  async getById(id: number) {
@@ -945,20 +919,52 @@ export const hospitalApi = {
 
  // ==================== EXAMENS ====================
  examens: {
- async getAll(params?: any) {
+ async getAll(params?: any, opts?: { signal?: AbortSignal }) {
  try {
- const response = await apiClient.get('/medical/examens/', { params });
+ const response = await apiClient.get('/medical/examens/', { params, signal: opts?.signal });
  return { success: true, data: response.data };
  } catch (error: any) {
- return { success: false, message: 'Erreur récupération examens', error: error.message };
+ return formatApiError(error, 'Erreur lors de la récupération des examens');
  }
  },
- async updateResultat(id: number, data: { resultat: string; notes?: string }) {
+ async getById(id: number) {
+ try {
+ const response = await apiClient.get(`/medical/examens/${id}/`);
+ return { success: true, data: response.data };
+ } catch (error: any) {
+ return formatApiError(error, 'Examen introuvable');
+ }
+ },
+ async create(examenData: any) {
+ try {
+ const response = await apiClient.post('/medical/examens/', examenData);
+ return { success: true, data: response.data, message: 'Examen prescrit avec succès' };
+ } catch (error: any) {
+ return formatApiError(error, "Erreur lors de la prescription de l'examen");
+ }
+ },
+ async update(id: number, examenData: any) {
+ try {
+ const response = await apiClient.patch(`/medical/examens/${id}/`, examenData);
+ return { success: true, data: response.data, message: 'Examen mis à jour avec succès' };
+ } catch (error: any) {
+ return formatApiError(error, "Erreur lors de la modification de l'examen");
+ }
+ },
+ async delete(id: number) {
+ try {
+ await apiClient.delete(`/medical/examens/${id}/`);
+ return { success: true, message: 'Examen supprimé avec succès' };
+ } catch (error: any) {
+ return formatApiError(error, "Erreur lors de la suppression de l'examen");
+ }
+ },
+ async updateResultat(id: number, data: { resultat: string; notes?: string; statut?: string }) {
  try {
  const response = await apiClient.post(`/medical/examens/${id}/ajouter_resultat/`, data);
  return { success: true, data: response.data, message: 'Résultat ajouté avec succès' };
  } catch (error: any) {
- return { success: false, message: 'Erreur ajout résultat', error: error.message };
+ return formatApiError(error, "Erreur lors de l'ajout du résultat");
  }
  }
  },
@@ -1148,17 +1154,16 @@ export const hospitalApi = {
  // ==================== MÉDICAMENTS ====================
  medicaments: {
  // Récupérer tous les médicaments
- async getAll(params?: any) {
+ async getAll(params?: any, opts?: { signal?: AbortSignal }) {
  try {
- const response = await apiClient.get('/medicaments/', { params });
+ const response = await apiClient.get('/medicaments/', { params, signal: opts?.signal });
  return {
  success: true,
  data: response.data,
  message: 'Médicaments récupérés avec succès'
  };
  } catch (error: any) {
- console.error(' Erreur récupération médicaments:', error);
- return { success: false, message: 'Erreur lors de la récupération des médicaments', error: error.message };
+ return formatApiError(error, 'Erreur lors de la récupération des médicaments');
  }
  },
 
@@ -1307,16 +1312,16 @@ export const hospitalApi = {
  // hospitalApi.rendezVous is now the preferred one aligned with backend /api/rendez-vous/
  rendezVous: {
  // Récupérer tous les rendez-vous
- async getAll(params?: { tenant?: number; patient?: number; medecin?: number; date_debut?: string; date_fin?: string; statut?: number; aujourdhui?: boolean; cette_semaine?: boolean }) {
+ async getAll(params?: { tenant?: number; patient?: number; medecin?: number; date_debut?: string; date_fin?: string; statut?: number; aujourdhui?: boolean; cette_semaine?: boolean }, opts?: { signal?: AbortSignal }) {
  try {
- const response = await apiClient.get('/rendez-vous/', { params });
+ const response = await apiClient.get('/rendez-vous/', { params, signal: opts?.signal });
  return {
  success: true,
  data: response.data,
  message: 'Rendez-vous récupérés avec succès'
  };
  } catch (error: any) {
- return { success: false, message: 'Erreur récupération rendez-vous', error: error.message };
+ return formatApiError(error, 'Erreur lors de la récupération des rendez-vous');
  }
  },
 
@@ -1353,7 +1358,7 @@ export const hospitalApi = {
  await apiClient.delete(`/rendez-vous/${id}/`);
  return { success: true };
  } catch (error: any) {
- return { success: false, message: 'Erreur suppression rdv', error: error.message };
+ return formatApiError(error, 'Erreur lors de la suppression du rendez-vous');
  }
  },
 
@@ -1441,43 +1446,49 @@ export const hospitalApi = {
 
  // ==================== CONFIGURATION ====================
  config: {
- // Sauvegarder la configuration de l'hôpital
- async saveConfig(configData: any) {
+ // Récupérer les paramètres du tenant (objet unique ou null)
+ async getParametres() {
  try {
- const response = await apiClient.post('/tenants/parametres/', configData)
- return {
- success: true,
- data: response.data,
- message: 'Configuration sauvegardée avec succès'
- }
+ const response = await apiClient.get('/tenants/parametres/');
+ const data = response.data;
+ const first = Array.isArray(data?.results) ? data.results[0] : (Array.isArray(data) ? data[0] : data);
+ return { success: true, data: first || null };
  } catch (error: any) {
- console.error(' Erreur sauvegarde configuration:', error)
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la sauvegarde de la configuration',
- error: error.message
- }
+ return formatApiError(error, 'Erreur lors de la récupération de la configuration');
  }
  },
 
- // Récupérer la configuration de l'hôpital
- async getConfig() {
+ // Enregistrer (créer ou mettre à jour) les paramètres du tenant.
+ // Champs backend supportés: fuseau_horaire, langue, devise,
+ // duree_consultation_defaut, notify_rdv_avance, notify_rdv_jour,
+ // email_notifications, sms_notifications, tva_taux.
+ async saveParametres(tenantId: number, params: any) {
  try {
- const response = await apiClient.get('/tenants/parametres/')
- return {
- success: true,
- data: response.data,
- message: 'Configuration récupérée avec succès'
+ const existingRes = await apiClient.get('/tenants/parametres/');
+ const d = existingRes.data;
+ const existing = Array.isArray(d?.results) ? d.results[0] : (Array.isArray(d) ? d[0] : d);
+ const id = existing?.parametre_id;
+ let response;
+ if (id) {
+ response = await apiClient.patch(`/tenants/parametres/${id}/`, params);
+ } else {
+ response = await apiClient.post('/tenants/parametres/', { tenant: tenantId, ...params });
  }
+ return { success: true, data: response.data, message: 'Configuration enregistrée avec succès' };
  } catch (error: any) {
- console.error(' Erreur récupération configuration:', error)
- return {
- success: false,
- message: error.response?.data?.detail || 'Erreur lors de la récupération de la configuration',
- error: error.message
+ return formatApiError(error, 'Erreur lors de la sauvegarde de la configuration');
  }
+ },
+
+ // Mettre à jour les informations de l'hôpital (nom, adresse, nombre_de_lits...)
+ async updateInfosHopital(tenantId: number, data: any) {
+ try {
+ const response = await apiClient.patch(`/tenants/tenants/${tenantId}/`, data);
+ return { success: true, data: response.data, message: "Informations de l'hôpital mises à jour" };
+ } catch (error: any) {
+ return formatApiError(error, "Erreur lors de la mise à jour des informations de l'hôpital");
  }
- }
+ },
  },
 
  // ==================== TENANTS (Hôpitaux) ====================

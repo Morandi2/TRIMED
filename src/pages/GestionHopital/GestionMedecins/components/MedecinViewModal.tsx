@@ -16,11 +16,6 @@ export const MedecinViewModal: React.FC<MedecinViewModalProps> = ({
 }) => {
   if (!medecin) return null;
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Non spécifiée';
-    return new Date(dateString).toLocaleDateString('fr-FR');
-  };
-
   const calculateAge = (dateString?: string) => {
     if (!dateString) return 'N/A';
     const today = new Date();

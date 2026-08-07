@@ -25,9 +25,8 @@ import {
   Search, 
   Filter, 
   CreditCard, 
-  Calendar, 
-  CheckCircle, 
-  AlertCircle, 
+  Calendar,
+  AlertCircle,
   Clock, 
   Trash, 
   Pencil, 
@@ -36,9 +35,7 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
-  X,
-  PlusCircle,
-  FileText
+  PlusCircle
 } from 'lucide-react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import hospitalApi from '../../../../api/hospitalApi';
 import apiClient from '../../../../api/apiConfig';
 import { patientService } from '../../GestionPatients/services/PatientService';
@@ -41,31 +40,6 @@ export class ConsultationService {
     return ConsultationService.instance;
   }
 
-  // Helper récursif pour trouver une valeur (Omni-Search)
-  private findField(obj: any, targetField: string | string[], restrictedKeys: string[] = ['tenant', 'hopital']): any {
-    if (!obj || typeof obj !== 'object') return null;
-    
-    if (Array.isArray(targetField)) {
-        for (const field of targetField) {
-            const found = this.findField(obj, field, restrictedKeys);
-            if (found !== undefined && found !== null) return found;
-        }
-        return null;
-    }
-
-    if (obj[targetField] !== undefined) return obj[targetField];
-
-    for (const key in obj) {
-      if (restrictedKeys.includes(key)) continue;
-      if (typeof obj[key] === 'object') {
-        const found = this.findField(obj[key], targetField, restrictedKeys);
-        if (found !== undefined && found !== null) return found;
-      }
-    }
-    return null;
-  }
-
-  // Lojik pou normalisé done konsultasyon yo
   public normaliserConsultation(c: any) {
     if (!c) return null;
 
@@ -113,7 +87,7 @@ export class ConsultationService {
   private CACHE_TTL = 30 * 60 * 1000;
 
   // Obtenir toutes les consultations (toutes les pages)
-  public async obtenirConsultationsParTenant(tenantId: number) {
+  public async obtenirConsultationsParTenant(tenantId: number, signal?: AbortSignal) {
     if (this.consultationsCache && this.consultationsCache.tenantId === tenantId) {
       if (Date.now() - this.consultationsCache.fetchedAt < this.CACHE_TTL) {
         return this.consultationsCache.data;
@@ -121,8 +95,13 @@ export class ConsultationService {
     }
 
     try {
-      const response = await hospitalApi.consultations.getAll({ ordering: '-date_creation', page_size: 1000 } as any);
-      if (!response.success || !response.data) return [];
+      const response = await hospitalApi.consultations.getAll({ ordering: '-date_creation', page_size: 1000 } as any, { signal });
+      if (!response.success || !response.data) {
+        if (this.consultationsCache && this.consultationsCache.tenantId === tenantId) {
+          return this.consultationsCache.data;
+        }
+        throw new Error((response as any).message || 'Erreur lors du chargement des consultations');
+      }
 
       const rawData = response.data;
       let results: any[] = [];
@@ -142,7 +121,7 @@ export class ConsultationService {
 
       while (nextUrl) {
         try {
-          const next = await apiClient.get(nextUrl);
+          const next = await apiClient.get(nextUrl, { signal });
           if (next.data.results && Array.isArray(next.data.results)) {
             results = [...results, ...next.data.results];
             nextUrl = next.data.next || null;
@@ -173,8 +152,10 @@ export class ConsultationService {
 
       return normalized;
     } catch (error) {
-      console.error('[ConsultationService] Erreur fetch:', error);
-      return [];
+      if (this.consultationsCache && this.consultationsCache.tenantId === tenantId) {
+        return this.consultationsCache.data;
+      }
+      throw error;
     }
   }
 
@@ -204,7 +185,6 @@ export class ConsultationService {
     if (c.notes) payload.notes = c.notes;
     if (c.rendez_vous_id) payload.rendez_vous = c.rendez_vous_id;
 
-    console.log('[ConsultationService] creerConsultation payload:', payload);
     const response = await hospitalApi.consultations.create(payload) as any;
 
     let newConsultation = undefined;

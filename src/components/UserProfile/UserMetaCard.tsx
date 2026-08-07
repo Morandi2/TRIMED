@@ -11,7 +11,6 @@ export default function UserMetaCard() {
 
   const handleSave = () => {
     // Handle save logic here
-    console.log("Changement Effectue...");
     closeModal();
   };
 

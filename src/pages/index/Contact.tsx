@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, MessageSquare, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 

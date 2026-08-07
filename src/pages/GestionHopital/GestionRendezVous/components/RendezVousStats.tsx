@@ -1,9 +1,7 @@
 import React from 'react';
 import { 
-  Calendar, 
-  CheckCircle, 
-  Clock, 
-  XCircle,
+  Calendar,
+  Clock,
   CalendarDays,
   BadgeCheck
 } from 'lucide-react';

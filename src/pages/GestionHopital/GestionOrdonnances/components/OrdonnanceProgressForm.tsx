@@ -122,7 +122,7 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
   };
 
   const validateStep = (step: number, updateState: boolean = true): boolean => {
-    let newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {};
     let isValid = true;
 
     if (step === 1) {

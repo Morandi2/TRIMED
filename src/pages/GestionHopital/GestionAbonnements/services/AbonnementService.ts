@@ -7,10 +7,8 @@ import {
   Paiement,
   PaiementFormData,
   PaiementMethode,
-  PaiementStatut,
-  Invoice
+  PaiementStatut
 } from '../types/AbonnementTypes';
-import { AbonnementRenouvellement, RenouvellementFormData, RenouvellementStats } from '../types/RenouvellementTypes';
 
 interface AbonnementsCache {
   data: Abonnement[];

@@ -8,15 +8,10 @@ import { AppWrapper } from "./components/common/PageMeta.tsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import ErrorBoundary from "./components/common/ErrorBoundary.tsx";
 
-console.log("DEBUG: Main.tsx execution started");
-
 const container = document.getElementById("root");
-console.log("DEBUG: Container found:", !!container);
 
 if (container) {
-  const root = createRoot(container);
-  console.log("DEBUG: Rendering app...");
-  root.render(
+  createRoot(container).render(
     <StrictMode>
       <ErrorBoundary>
         <ThemeProvider>
@@ -27,7 +22,6 @@ if (container) {
       </ErrorBoundary>
     </StrictMode>
   );
-  console.log("DEBUG: Render command issued");
 } else {
-  console.error("DEBUG: Root container not found");
+  console.error("Root container not found");
 }

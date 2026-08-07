@@ -12,11 +12,36 @@ dist
 dist-ssr
 *.local
 
+# Variables d'environnement (ne jamais committer les valeurs réelles)
+.env
+.env.*
+!.env.example
+
+# Outils / artefacts de session
+.claude/
+.playwright-mcp/
+lint-report.json
+tsc_output.txt
+build_output.txt
+
+# Variables d'environnement (garder uniquement .env.example)
+.env
+.env.*
+!.env.example
+
+# Artefacts d'outils / sessions
+.claude/
+.playwright-mcp/
+
+# Fichiers de sortie temporaires
+*_output.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+._*
 *.suo
 *.ntvs*
 *.njsproj
