@@ -41,7 +41,7 @@ export default defineConfig({
             "@fullcalendar/react",
             "@fullcalendar/timegrid",
           ],
-          ui: ["lucide-react", "swiper", "flatpickr"],
+          ui: ["lucide-react", "flatpickr"],
         },
       },
     },
