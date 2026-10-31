@@ -165,7 +165,7 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
         {/* Pied de page */}
         <div className="mt-12 pt-6 border-t-2 border-gray-300 text-center text-sm text-gray-600">
           <p>Cette ordonnance est confidentielle et destinée uniquement à un usage médical.</p>
-          <p>Généré automatiquement par le système de gestion hospitalière TRIMEDH</p>
+          <p>Généré automatiquement par le système de gestion hospitalière TRIMED</p>
           <p className="mt-2"><strong>Créé le:</strong> {formatDateTimeFR(ordonnance.created_at)}</p>
         </div>
       </div>

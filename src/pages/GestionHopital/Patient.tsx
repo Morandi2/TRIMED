@@ -10,7 +10,7 @@ export default function Patient() {
   return (
     <div>
       <PageMeta
-        title="TRIMEDH"
+        title="TRIMED"
         description="Gestion Patient"
       />
       <PageBreadcrumb pageTitle="Gestion Patient" />

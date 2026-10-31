@@ -10,7 +10,7 @@ export default function Ordonnance() {
   return (
     <div>
       <PageMeta
-        title="TRIMEDH"
+        title="TRIMED"
         description="Gestion des ordonnances"
       />
       <PageBreadcrumb pageTitle="Ordonnances" />

@@ -94,16 +94,16 @@ class AuditService {
   // Simulation de données au cas où le backend n'est pas encore prêt
   obtenirLogsSimules(): AuditLog[] {
     const actions = [
-      { action: "Connexion réussie", module: "Authentification", user: "admin@trimedh.com" },
-      { action: "Création de patient", module: "Patients", user: "dr.jean@trimedh.com" },
-      { action: "Modification de tarif", module: "Facturation", user: "admin@trimedh.com" },
-      { action: "Suppression de rendez-vous", module: "Rendez-vous", user: "reception@trimedh.com" },
-      { action: "Mise à jour dossier", module: "Patients", user: "dr.marie@trimedh.com" },
-      { action: "Ajout de médicament", module: "Pharmacie", user: "pharmacie@trimedh.com" },
-      { action: "Exportation logs", module: "Sécurité", user: "admin@trimedh.com" },
+      { action: "Connexion réussie", module: "Authentification", user: "admin@trimed.test" },
+      { action: "Création de patient", module: "Patients", user: "dr.jean@trimed.test" },
+      { action: "Modification de tarif", module: "Facturation", user: "admin@trimed.test" },
+      { action: "Suppression de rendez-vous", module: "Rendez-vous", user: "reception@trimed.test" },
+      { action: "Mise à jour dossier", module: "Patients", user: "dr.marie@trimed.test" },
+      { action: "Ajout de médicament", module: "Pharmacie", user: "pharmacie@trimed.test" },
+      { action: "Exportation logs", module: "Sécurité", user: "admin@trimed.test" },
       { action: "Échec de connexion", module: "Authentification", user: "inconnu@fake.com" },
-      { action: "Consultation terminée", module: "Consultations", user: "dr.jean@trimedh.com" },
-      { action: "Impression facture", module: "Facturation", user: "reception@trimedh.com" }
+      { action: "Consultation terminée", module: "Consultations", user: "dr.jean@trimed.test" },
+      { action: "Impression facture", module: "Facturation", user: "reception@trimed.test" }
     ];
 
     return Array.from({ length: 30 }).map((_, i) => {

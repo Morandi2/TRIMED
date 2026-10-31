@@ -10,7 +10,7 @@ export default function Paiement() {
   return (
     <div>
       <PageMeta
-        title="TRIMEDH"
+        title="TRIMED"
         description="Gestion hopital"
       />
       <PageBreadcrumb pageTitle="Paiement" />

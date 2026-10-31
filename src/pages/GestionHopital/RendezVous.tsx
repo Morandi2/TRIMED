@@ -10,7 +10,7 @@ export default function RendezVous() {
   return (
     <div>
       <PageMeta
-        title="TRIMEDH"
+        title="TRIMED"
         description="Gestion des rendez-vous"
       />
       <PageBreadcrumb pageTitle="Rendez Vous" />

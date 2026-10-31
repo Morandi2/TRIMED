@@ -19,7 +19,7 @@ export const UtilisateurViewModal: React.FC<UtilisateurViewModalProps> = ({
 }) => {
   const { user } = useAuth();
   const { tenantConfig } = useTenant();
-  const hospitalName = utilisateur?.hopital_nom || tenantConfig?.nom || user?.hopital_nom || 'TRIMEDH';
+  const hospitalName = utilisateur?.hopital_nom || tenantConfig?.nom || user?.hopital_nom || 'TRIMED';
 
   if (!isOpen || !utilisateur) return null;
 
@@ -128,7 +128,7 @@ export const UtilisateurViewModal: React.FC<UtilisateurViewModalProps> = ({
           {/* Footer d'impression */}
           <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-center text-xs text-gray-500 hidden print:block">
             <p className="font-bold text-gray-700 mb-1">{hospitalName}</p>
-            <p>Ce document est généré par le système TRIMEDH et est strictement confidentiel.</p>
+            <p>Ce document est généré par le système TRIMED et est strictement confidentiel.</p>
           </div>
 
           {/* Actions */}

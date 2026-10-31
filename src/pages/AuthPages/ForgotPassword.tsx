@@ -6,8 +6,8 @@ export default function ForgotPassword() {
     return (
         <>
             <PageMeta
-                title="Mot de passe oublié | TRIMEDH"
-                description="Réinitialisez votre mot de passe pour accéder à votre compte TRIMEDH."
+                title="Mot de passe oublié | TRIMED"
+                description="Réinitialisez votre mot de passe pour accéder à votre compte TRIMED."
             />
             <AuthPageLayout>
                 <ForgotPasswordForm />

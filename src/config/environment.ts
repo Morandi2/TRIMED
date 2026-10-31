@@ -1,4 +1,4 @@
-// Configuration des environnements pour TRIMEDH
+// Configuration des environnements pour TRIMED
 
 interface EnvironmentConfig {
   API_BASE_URL: string;
@@ -26,9 +26,9 @@ const productionConfig: EnvironmentConfig = {
   SESSION_TIMEOUT: 8 * 60 * 60 * 1000, // 8 heures
 };
 
-// Configuration de staging
+// Configuration de staging (pas de serveur de préproduction pour l’instant : même API que la production)
 const stagingConfig: EnvironmentConfig = {
-  API_BASE_URL: 'https://staging-api.TRIMEDH.com/api',
+  API_BASE_URL: 'https://trimedh-service.onrender.com/api',
   ENVIRONMENT: 'staging',
   DEBUG: true,
   TOKEN_REFRESH_INTERVAL: 120000, // 2 minutes
@@ -76,7 +76,7 @@ export const isStaging = config.ENVIRONMENT === 'staging';
 
 // Log de la configuration (seulement en développement)
 if (isDevelopment) {
-  console.log('Configuration TRIMEDH:', {
+  console.log('Configuration TRIMED:', {
     environment: config.ENVIRONMENT,
     apiUrl: config.API_BASE_URL,
     debug: config.DEBUG,

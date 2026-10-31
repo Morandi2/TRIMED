@@ -153,7 +153,7 @@ const ConnexionHopital = () => {
                                 <div className="flex justify-center ">
                                     <img src="/images/logo/logo-icon.svg" alt="" />
                                 </div>
-                                <h1 className="text-2xl font-bold text-gray-800">TRIMEDH</h1>
+                                <h1 className="text-2xl font-bold text-gray-800">TRIMED</h1>
                                 <p className="text-gray-600 mt-2">Connectez-vous à votre compte</p>
                             </div>
 
@@ -234,7 +234,7 @@ const ConnexionHopital = () => {
                                     <div className="flex justify-center mb-4">
                                         <img src="/images/logo/logo-icon.svg" alt="" />
                                     </div>
-                                    <h1 className="text-2xl ml-3 font-bold text-gray-800">TRIMEDH</h1>
+                                    <h1 className="text-2xl ml-3 font-bold text-gray-800">TRIMED</h1>
                                 </div>
                                 <h1 className="text-2xl text-black font-bold text-gray-800 mb-2">Réinitialiser le mot de passe</h1>
                                 <p className="text-gray-600">Vous recevrez un e-mail dans 60 secondes maximum</p>
@@ -291,7 +291,7 @@ const ConnexionHopital = () => {
                                         <img src="/images/logo/logo-icon.svg" alt="" />
                                     </div>
 
-                                    <h1 className="text-2xl ml-3 font-bold text-gray-800">TRIMEDH</h1>
+                                    <h1 className="text-2xl ml-3 font-bold text-gray-800">TRIMED</h1>
                                 </div>
                                 <h1 className="text-2xl font-bold text-gray-800">Nouvel Abonnement Hôpital</h1>
                                 <p className="text-gray-600 mt-2">Créez votre compte hôpital</p>

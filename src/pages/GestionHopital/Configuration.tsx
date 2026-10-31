@@ -7,7 +7,7 @@ export default function Configuration() {
   return (
     <div>
       <PageMeta
-        title="TRIMEDH - Configuration"
+        title="TRIMED - Configuration"
         description="Configuration initiale du système"
       />
       <PageBreadcrumb pageTitle="Configuration Système" />

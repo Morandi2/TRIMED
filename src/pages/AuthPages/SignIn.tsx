@@ -6,7 +6,7 @@ export default function SignIn() {
   return (
     <>
       <PageMeta
-        title="TRIMEDH"
+        title="TRIMED"
         description="La plateforme médicale complète pour gérer vos patients, rendez-vous et prescriptions en toute simplicité. 
         Accédez à tous vos outils professionnels en un seul endroit sécurisé."
       />

@@ -156,8 +156,8 @@ const Calendar: React.FC = () => {
  return (
  <>
  <PageMeta
- title="Calendrier Médical | TRIMEDH"
- description="Gestion des rendez-vous et plannings médicaux pour TRIMEDH."
+ title="Calendrier Médical | TRIMED"
+ description="Gestion des rendez-vous et plannings médicaux pour TRIMED."
  />
  <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
  <div className="custom-calendar">

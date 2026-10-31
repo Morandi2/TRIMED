@@ -614,7 +614,7 @@ export default function SignUpForm() {
                   <div className="flex items-start gap-4 p-4 border border-brand-100 dark:border-brand-800 rounded-2xl bg-brand-50/30">
                     <Checkbox checked={isChecked} onChange={setIsChecked} className="mt-1" />
                     <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                      En cliquant ici, j'accepte les <span className="text-brand-600 font-semibold cursor-pointer">Termes et Conditions</span> ainsi que la <span className="text-brand-600 font-semibold cursor-pointer">Politique de Confidentialité</span> de TRIMEDH.
+                      En cliquant ici, j'accepte les <a href="/conditions-utilisation" target="_blank" rel="noopener" className="text-brand-600 font-semibold hover:underline">Conditions d’utilisation</a> ainsi que la <a href="/politique-de-confidentialite" target="_blank" rel="noopener" className="text-brand-600 font-semibold hover:underline">Politique de confidentialité</a> de TRIMED.
                     </p>
                   </div>
                 </div>
