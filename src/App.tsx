@@ -23,7 +23,7 @@ import SallesMedicales from "./pages/GestionHopital/SallesMedicales";
 import Paiement from "./pages/GestionHopital/Paiement";
 import RendezVous from "./pages/GestionHopital/RendezVous";
 import Configuration from "./pages/GestionHopital/Configuration";
-import Index from "./pages/index/Index";
+import Portail from "./pages/index/portail/Portail";
 import ForgotPassword from "./pages/AuthPages/ForgotPassword";
 import Contact from "./pages/index/Contact";
 import PolitiqueConfidentialite from "./pages/index/PolitiqueConfidentialite";
@@ -42,7 +42,7 @@ export default function App() {
             <ScrollToTop />
             <Routes>
               {/* Routes Publiques */}
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Portail />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/connexion" element={<SignIn />} />

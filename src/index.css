@@ -10,6 +10,21 @@ layer(base);
 @theme {
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
+  /* Identité TRIMED : Martian Mono pour la marque et les titres (proche du logotype),
+     Lexend pour le texte courant (conçue pour la lisibilité). */
+  --font-marque: "Martian Mono", ui-monospace, monospace;
+  --font-texte: Lexend, Outfit, sans-serif;
+
+  /* Couleurs relevées sur le logo officiel. Le vert sert aux accents et aux icônes ;
+     pour du texte sur fond clair, utiliser trimed-vert-fonce (contraste suffisant). */
+  --color-trimed-indigo: #2720ff;
+  --color-trimed-indigo-fonce: #1a14b8;
+  --color-trimed-vert: #02c377;
+  --color-trimed-vert-fonce: #00784a;
+  --color-trimed-menthe: #b3f4db;
+  --color-trimed-brume: #ebfcf5;
+  --color-trimed-encre: #0e1033;
+  --color-trimed-encre-douce: #4a4e6a;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;

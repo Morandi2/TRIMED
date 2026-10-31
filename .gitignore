@@ -47,3 +47,6 @@ build_output.txt
 *.njsproj
 *.sln
 *.sw?
+
+# Comptes de démonstration générés par scripts/seed (mots de passe)
+scripts/seed/*.local.json
