@@ -1,6 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap")
-layer(base);
-
 @import "tailwindcss";
 @plugin "daisyui";
 @tailwind utilities;
@@ -9,11 +6,12 @@ layer(base);
 
 @theme {
   --font-*: initial;
-  --font-outfit: Outfit, sans-serif;
+  /* Polices chargées depuis le site (@fontsource-variable, voir main.tsx). */
+  --font-outfit: "Outfit Variable", Outfit, sans-serif;
   /* Identité TRIMED : Martian Mono pour la marque et les titres (proche du logotype),
      Lexend pour le texte courant (conçue pour la lisibilité). */
-  --font-marque: "Martian Mono", ui-monospace, monospace;
-  --font-texte: Lexend, Outfit, sans-serif;
+  --font-marque: "Martian Mono Variable", "Martian Mono", ui-monospace, monospace;
+  --font-texte: "Lexend Variable", Lexend, "Outfit Variable", sans-serif;
 
   /* Couleurs relevées sur le logo officiel. Le vert sert aux accents et aux icônes ;
      pour du texte sur fond clair, utiliser trimed-vert-fonce (contraste suffisant). */

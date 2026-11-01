@@ -1,89 +1,109 @@
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { TenantProvider } from "./context/TenantContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import SignIn from "./pages/AuthPages/SignIn";
-import SignUp from "./pages/AuthPages/SignUp";
-import NotFound from "./pages/OtherPage/NotFound";
-import UserProfiles from "./pages/UserProfiles";
-import Calendar from "./pages/Calendar";
-import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import RoleBasedHome from "./pages/Dashboard/RoleBasedHome";
-import Utilisateur from "./pages/Dashboard/Utilisateur";
-import Patient from "./pages/GestionHopital/Patient";
-import Consultation from "./pages/GestionHopital/Consultation";
-import Medecin from "./pages/GestionHopital/Medecin";
-import Medicament from "./pages/GestionHopital/Medicament";
-import Ordonnance from "./pages/GestionHopital/Ordonnance";
-import Examen from "./pages/GestionHopital/Examen";
-import Hospitalisation from "./pages/GestionHopital/Hospitalisation";
-import SallesMedicales from "./pages/GestionHopital/SallesMedicales";
-import Paiement from "./pages/GestionHopital/Paiement";
-import RendezVous from "./pages/GestionHopital/RendezVous";
-import Configuration from "./pages/GestionHopital/Configuration";
 import Portail from "./pages/index/portail/Portail";
-import ForgotPassword from "./pages/AuthPages/ForgotPassword";
-import Contact from "./pages/index/Contact";
-import PolitiqueConfidentialite from "./pages/index/PolitiqueConfidentialite";
-import ConditionsUtilisation from "./pages/index/ConditionsUtilisation";
-import CentreAide from "./pages/index/CentreAide";
-import { AuditLogPage } from "./pages/GestionHopital/GestionUtilisateur/pages";
-import VerifyEmailPage from "./pages/AuthPages/VerifyEmailPage";
-import GestionTenants from "./pages/AdminPortal/GestionTenants";
+import { reveillerServeur } from "./utils/reveilServeur";
+
+// Le portail est la seule page chargée d’emblée. Les autres pages (et leurs bibliothèques :
+// graphiques, calendrier…) ne sont téléchargées que lorsqu’on les ouvre.
+const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
+const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/AuthPages/ForgotPassword"));
+const VerifyEmailPage = lazy(() => import("./pages/AuthPages/VerifyEmailPage"));
+const Contact = lazy(() => import("./pages/index/Contact"));
+const PolitiqueConfidentialite = lazy(() => import("./pages/index/PolitiqueConfidentialite"));
+const ConditionsUtilisation = lazy(() => import("./pages/index/ConditionsUtilisation"));
+const CentreAide = lazy(() => import("./pages/index/CentreAide"));
+const NotFound = lazy(() => import("./pages/OtherPage/NotFound"));
+const AppLayout = lazy(() => import("./layout/AppLayout"));
+const RoleBasedHome = lazy(() => import("./pages/Dashboard/RoleBasedHome"));
+const Utilisateur = lazy(() => import("./pages/Dashboard/Utilisateur"));
+const GestionTenants = lazy(() => import("./pages/AdminPortal/GestionTenants"));
+const Patient = lazy(() => import("./pages/GestionHopital/Patient"));
+const Consultation = lazy(() => import("./pages/GestionHopital/Consultation"));
+const Medecin = lazy(() => import("./pages/GestionHopital/Medecin"));
+const Medicament = lazy(() => import("./pages/GestionHopital/Medicament"));
+const Ordonnance = lazy(() => import("./pages/GestionHopital/Ordonnance"));
+const Examen = lazy(() => import("./pages/GestionHopital/Examen"));
+const Hospitalisation = lazy(() => import("./pages/GestionHopital/Hospitalisation"));
+const SallesMedicales = lazy(() => import("./pages/GestionHopital/SallesMedicales"));
+const Paiement = lazy(() => import("./pages/GestionHopital/Paiement"));
+const RendezVous = lazy(() => import("./pages/GestionHopital/RendezVous"));
+const Configuration = lazy(() => import("./pages/GestionHopital/Configuration"));
+const AuditLogPage = lazy(() => import("./pages/GestionHopital/GestionUtilisateur/pages").then((m) => ({ default: m.AuditLogPage })));
+const UserProfiles = lazy(() => import("./pages/UserProfiles"));
+const Calendar = lazy(() => import("./pages/Calendar"));
+
+function Chargement({ pleinEcran = false }: { pleinEcran?: boolean }) {
+  return (
+    <div className={`flex items-center justify-center ${pleinEcran ? "min-h-screen" : "min-h-[40vh]"}`} role="status" aria-live="polite">
+      <span className="h-8 w-8 animate-spin rounded-full border-2 border-[#2720ff] border-t-transparent" aria-hidden="true" />
+      <span className="sr-only">Chargement…</span>
+    </div>
+  );
+}
+
+// Pages de l’espace protégé : le chargement s’affiche dans la zone de contenu, la barre latérale reste en place.
+const page = (contenu: ReactNode) => <Suspense fallback={<Chargement />}>{contenu}</Suspense>;
 
 export default function App() {
+  useEffect(reveillerServeur, []);
   return (
     <Router>
       <TenantProvider>
         <AuthProvider>
           <UserProvider>
             <ScrollToTop />
-            <Routes>
-              {/* Routes Publiques */}
-              <Route path="/" element={<Portail />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/connexion" element={<SignIn />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/politique-de-confidentialite" element={<PolitiqueConfidentialite />} />
-              <Route path="/conditions-utilisation" element={<ConditionsUtilisation />} />
-              <Route path="/centre-aide" element={<CentreAide />} />
-              <Route path="/verifier-email" element={<VerifyEmailPage />} />
-              <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
+            <Suspense fallback={<Chargement pleinEcran />}>
+              <Routes>
+                {/* Routes Publiques */}
+                <Route path="/" element={<Portail />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/connexion" element={<SignIn />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/politique-de-confidentialite" element={<PolitiqueConfidentialite />} />
+                <Route path="/conditions-utilisation" element={<ConditionsUtilisation />} />
+                <Route path="/centre-aide" element={<CentreAide />} />
+                <Route path="/verifier-email" element={<VerifyEmailPage />} />
+                <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
 
-              {/* Espace Protégé */}
-              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-                <Route path="/home" element={<RoleBasedHome />} />
-                <Route path="/Utilisateur" element={<ProtectedRoute requiredPermission="canManageUsers"><Utilisateur /></ProtectedRoute>} />
+                {/* Espace Protégé */}
+                <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                  <Route path="/home" element={page(<RoleBasedHome />)} />
+                  <Route path="/Utilisateur" element={<ProtectedRoute requiredPermission="canManageUsers">{page(<Utilisateur />)}</ProtectedRoute>} />
 
-                {/* Portail Administrateur TRIMED */}
-                <Route path="/admin/tenants" element={<ProtectedRoute requiredPermission="canManageSystem"><GestionTenants /></ProtectedRoute>} />
+                  {/* Portail Administrateur TRIMED */}
+                  <Route path="/admin/tenants" element={<ProtectedRoute requiredPermission="canManageSystem">{page(<GestionTenants />)}</ProtectedRoute>} />
 
-                {/* Gestion de l'Hôpital */}
-                <Route path="/patient" element={<ProtectedRoute requiredPermission="canViewPatients"><Patient /></ProtectedRoute>} />
-                <Route path="/consultation" element={<ProtectedRoute requiredPermission="canViewConsultations"><Consultation /></ProtectedRoute>} />
-                <Route path="/medecin" element={<ProtectedRoute requiredPermission="canViewMedecins"><Medecin /></ProtectedRoute>} />
-                <Route path="/medicament" element={<ProtectedRoute requiredPermission="canViewMedicaments"><Medicament /></ProtectedRoute>} />
-                <Route path="/ordonnance" element={<ProtectedRoute requiredPermission="canViewOrdonnances"><Ordonnance /></ProtectedRoute>} />
-                <Route path="/examen" element={<ProtectedRoute requiredPermission="canViewConsultations"><Examen /></ProtectedRoute>} />
-                <Route path="/hospitalisation" element={<ProtectedRoute requiredPermission="canViewConsultations"><Hospitalisation /></ProtectedRoute>} />
-                <Route path="/salles-medicales" element={<ProtectedRoute requiredPermission="canViewConsultations"><SallesMedicales /></ProtectedRoute>} />
-                <Route path="/paiement" element={<ProtectedRoute requiredPermission="canViewPaiements"><Paiement /></ProtectedRoute>} />
-                <Route path="/rendezvous" element={<ProtectedRoute requiredPermission="canViewRendezVous"><RendezVous /></ProtectedRoute>} />
-                <Route path="/configuration" element={<ProtectedRoute requiredPermission="canManageSystem"><Configuration /></ProtectedRoute>} />
-                <Route path="/admin/audit-logs" element={<ProtectedRoute requiredPermission="canViewAuditLogs"><AuditLogPage /></ProtectedRoute>} />
+                  {/* Gestion de l'Hôpital */}
+                  <Route path="/patient" element={<ProtectedRoute requiredPermission="canViewPatients">{page(<Patient />)}</ProtectedRoute>} />
+                  <Route path="/consultation" element={<ProtectedRoute requiredPermission="canViewConsultations">{page(<Consultation />)}</ProtectedRoute>} />
+                  <Route path="/medecin" element={<ProtectedRoute requiredPermission="canViewMedecins">{page(<Medecin />)}</ProtectedRoute>} />
+                  <Route path="/medicament" element={<ProtectedRoute requiredPermission="canViewMedicaments">{page(<Medicament />)}</ProtectedRoute>} />
+                  <Route path="/ordonnance" element={<ProtectedRoute requiredPermission="canViewOrdonnances">{page(<Ordonnance />)}</ProtectedRoute>} />
+                  <Route path="/examen" element={<ProtectedRoute requiredPermission="canViewConsultations">{page(<Examen />)}</ProtectedRoute>} />
+                  <Route path="/hospitalisation" element={<ProtectedRoute requiredPermission="canViewConsultations">{page(<Hospitalisation />)}</ProtectedRoute>} />
+                  <Route path="/salles-medicales" element={<ProtectedRoute requiredPermission="canViewConsultations">{page(<SallesMedicales />)}</ProtectedRoute>} />
+                  <Route path="/paiement" element={<ProtectedRoute requiredPermission="canViewPaiements">{page(<Paiement />)}</ProtectedRoute>} />
+                  <Route path="/rendezvous" element={<ProtectedRoute requiredPermission="canViewRendezVous">{page(<RendezVous />)}</ProtectedRoute>} />
+                  <Route path="/configuration" element={<ProtectedRoute requiredPermission="canManageSystem">{page(<Configuration />)}</ProtectedRoute>} />
+                  <Route path="/admin/audit-logs" element={<ProtectedRoute requiredPermission="canViewAuditLogs">{page(<AuditLogPage />)}</ProtectedRoute>} />
 
-                {/* Autres Pages */}
-                <Route path="/profile" element={<UserProfiles />} />
-                <Route path="/calendar" element={<ProtectedRoute requiredPermission="canViewCalendar"><Calendar /></ProtectedRoute>} />
-              </Route>
+                  {/* Autres Pages */}
+                  <Route path="/profile" element={page(<UserProfiles />)} />
+                  <Route path="/calendar" element={<ProtectedRoute requiredPermission="canViewCalendar">{page(<Calendar />)}</ProtectedRoute>} />
+                </Route>
 
-              {/* Itinéraire de Secours (Fallback) */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                {/* Itinéraire de Secours (Fallback) */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </UserProvider>
         </AuthProvider>
       </TenantProvider>

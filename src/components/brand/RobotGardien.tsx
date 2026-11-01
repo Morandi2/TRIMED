@@ -17,6 +17,8 @@ interface Props {
   mouvementReduit: boolean;
   /** Appelé si WebGL n’est pas disponible : la page affiche alors le symbole 2D. */
   onIndisponible?: () => void;
+  /** Appelé après la première image : la page peut alors fondre le symbole 2D. */
+  onPret?: () => void;
   className?: string;
 }
 
@@ -92,7 +94,7 @@ function textureAura() {
   return new THREE.CanvasTexture(c);
 }
 
-export default function RobotGardien({ etat, mouvementReduit, onIndisponible, className = '' }: Props) {
+export default function RobotGardien({ etat, mouvementReduit, onIndisponible, onPret, className = '' }: Props) {
   const conteneur = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -116,8 +118,8 @@ export default function RobotGardien({ etat, mouvementReduit, onIndisponible, cl
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
     camera.position.set(0, 0, 8.5);
-    const env = environnement(rendu);
-    scene.environment = env;
+    // Préparation en plusieurs étapes (voir plus bas) : rien n’est dessiné avant que les shaders soient prêts.
+    let env: THREE.Texture | null = null, prepare = false, annule = false;
     const lumiere = new THREE.DirectionalLight('#ffffff', 1.2);
     lumiere.position.set(2, 3, 5);
     scene.add(lumiere, new THREE.AmbientLight('#ffffff', 0.35));
@@ -206,7 +208,7 @@ export default function RobotGardien({ etat, mouvementReduit, onIndisponible, cl
       // Rayon visé : un tiers de la hauteur visible, sans dépasser un quart de la largeur
       // En portrait, le robot occupe le haut de l’écran, au-dessus du texte : plus petit.
       taille = Math.min(demiHauteur * (portrait ? 0.2 : 0.36), demiLargeur * (portrait ? 0.62 : 0.24)) / ECHELLE;
-      if (mouvementReduit) dessiner(performance.now());
+      if (mouvementReduit && prepare) dessiner(performance.now());
     };
     const observateur = new ResizeObserver(redimensionner);
     observateur.observe(hote);
@@ -221,7 +223,7 @@ export default function RobotGardien({ etat, mouvementReduit, onIndisponible, cl
       return entre(-d, d, lisse(0.70, 0.79, p));
     };
 
-    let prochainClin = performance.now() + 2500, debutClin = -1;
+    let prochainClin = performance.now() + 2500, debutClin = -1, signale = false;
     function dessiner(t: number) {
       const p = mouvementReduit ? Math.round(etat.current.progression * 4) / 4 : etat.current.progression;
       const casse = mouvementReduit ? 0 : lisse(0.22, 0.38, p) * (1 - lisse(0.48, 0.64, p));
@@ -287,41 +289,64 @@ export default function RobotGardien({ etat, mouvementReduit, onIndisponible, cl
       (aura.material as THREE.SpriteMaterial).opacity = 0.4 + 0.35 * securite - 0.2 * casse;
 
       rendu.render(scene, camera);
+      if (!signale) { signale = true; onPret?.(); }
     }
 
     // Boucle d’animation, suspendue quand le robot n’est pas à l’écran ou que l’onglet est caché
     let boucle = 0, visible = true;
     const tourner = (t: number) => { dessiner(t); boucle = requestAnimationFrame(tourner); };
-    const demarrer = () => { if (!boucle && visible && !document.hidden && !mouvementReduit) boucle = requestAnimationFrame(tourner); };
+    const demarrer = () => { if (prepare && !boucle && visible && !document.hidden && !mouvementReduit) boucle = requestAnimationFrame(tourner); };
     const arreter = () => { cancelAnimationFrame(boucle); boucle = 0; };
     const vue = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) demarrer(); else arreter(); });
     vue.observe(hote);
     const onglet = () => (document.hidden ? arreter() : demarrer());
     document.addEventListener('visibilitychange', onglet);
     // En mouvement réduit : une image fixe, redessinée seulement quand le chapitre change
-    const surDefilement = () => mouvementReduit && dessiner(performance.now());
+    const surDefilement = () => mouvementReduit && prepare && dessiner(performance.now());
     if (mouvementReduit) window.addEventListener('scroll', surDefilement, { passive: true });
-    redimensionner();
-    demarrer();
+
+    // Le studio de lumière et la compilation des shaders du verre sont les étapes les plus lourdes.
+    // On rend la main au navigateur entre chacune, et les shaders se compilent en arrière-plan
+    // (compileAsync) : la page reste fluide pendant que le robot se prépare.
+    const pause = () => new Promise<void>((r) => setTimeout(r, 0));
+    let compilation: Promise<unknown> = Promise.resolve();
+    (async () => {
+      await pause();
+      if (annule) return;
+      env = environnement(rendu);
+      scene.environment = env;
+      await pause();
+      if (annule) return;
+      compilation = rendu.compileAsync(scene, camera);
+      await compilation;
+      if (annule) return;
+      prepare = true;
+      redimensionner();
+      demarrer();
+    })();
 
     return () => {
+      annule = true;
       arreter();
       vue.disconnect();
       observateur.disconnect();
       document.removeEventListener('visibilitychange', onglet);
       window.removeEventListener('pointermove', surPointeur);
       window.removeEventListener('scroll', surDefilement);
-      scene.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.geometry) m.geometry.dispose();
-        const mat = m.material as THREE.Material | THREE.Material[] | undefined;
-        if (mat) (Array.isArray(mat) ? mat : [mat]).forEach((x) => { (x as THREE.SpriteMaterial).map?.dispose(); x.dispose(); });
-      });
-      env.dispose();
-      rendu.dispose();
       rendu.domElement.remove();
+      // Une compilation en cours interroge encore les shaders : on libère le GPU une fois qu’elle est finie.
+      void compilation.then(() => {
+        scene.traverse((o) => {
+          const m = o as THREE.Mesh;
+          if (m.geometry) m.geometry.dispose();
+          const mat = m.material as THREE.Material | THREE.Material[] | undefined;
+          if (mat) (Array.isArray(mat) ? mat : [mat]).forEach((x) => { (x as THREE.SpriteMaterial).map?.dispose(); x.dispose(); });
+        });
+        env?.dispose();
+        rendu.dispose();
+      });
     };
-  }, [etat, mouvementReduit, onIndisponible]);
+  }, [etat, mouvementReduit, onIndisponible, onPret]);
 
   return <div ref={conteneur} className={className} />;
 }

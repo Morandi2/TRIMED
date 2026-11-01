@@ -9,6 +9,17 @@ import { progressionDe, useMouvementReduit } from './defilement';
 // Three.js n’est chargé que sur l’accueil, après le premier affichage.
 const RobotGardien = lazy(() => import('../../../components/brand/RobotGardien'));
 
+// Le robot 3D n’est chargé que si l’appareil peut le porter : le symbole 2D reste affiché en mode
+// « économie de données », en 2G, ou sur les téléphones à peu de mémoire ou de cœurs.
+function appareilCapable() {
+  const n = navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string }; deviceMemory?: number };
+  if (n.connection?.saveData) return false;
+  if (['slow-2g', '2g'].includes(n.connection?.effectiveType ?? '')) return false;
+  if (n.deviceMemory !== undefined && n.deviceMemory < 3) return false;
+  if (n.hardwareConcurrency && n.hardwareConcurrency < 4) return false;
+  return true;
+}
+
 // Ouverture + histoire du robot gardien : une scène épinglée de quatre écrans.
 // Le robot reste à l’écran pendant que le texte change ; sa progression suit le défilement.
 export default function Recit() {
@@ -16,8 +27,31 @@ export default function Recit() {
   const etat = useRef<EtatRobot>({ progression: 0 });
   const [chapitre, setChapitre] = useState(-1); // -1 : ouverture, 0 à 2 : chapitres de l’histoire
   const [sans3d, setSans3d] = useState(false);
+  const [charger3d, setCharger3d] = useState(false);
+  const [robotPret, setRobotPret] = useState(false);
   const reduit = useMouvementReduit();
   const indisponible = useCallback(() => setSans3d(true), []);
+  const pret = useCallback(() => setRobotPret(true), []);
+
+  // Le robot 3D attend que la page soit affichée et que le navigateur soit libre :
+  // le texte et le symbole 2D apparaissent d’abord, sans attendre Three.js.
+  useEffect(() => {
+    if (!appareilCapable()) return;
+    let annule = false, attente = 0, minuteur = 0;
+    const w = window as Window & { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    const lancer = () => {
+      if (w.requestIdleCallback) attente = w.requestIdleCallback(() => !annule && setCharger3d(true), { timeout: 2500 });
+      else minuteur = window.setTimeout(() => !annule && setCharger3d(true), 1200);
+    };
+    if (document.readyState === 'complete') lancer();
+    else window.addEventListener('load', lancer, { once: true });
+    return () => {
+      annule = true;
+      window.removeEventListener('load', lancer);
+      if (attente) w.cancelIdleCallback?.(attente);
+      clearTimeout(minuteur);
+    };
+  }, []);
 
   useEffect(() => {
     let image = 0;
@@ -36,9 +70,10 @@ export default function Recit() {
     return () => { cancelAnimationFrame(image); window.removeEventListener('scroll', demander); window.removeEventListener('resize', demander); };
   }, []);
 
+  // Symbole 2D : affiché tout de suite, puis fondu sous le robot 3D quand celui-ci est prêt.
   const symbole2d = (
-    <div className="absolute inset-0 flex items-start justify-center pt-[16vh] md:items-center md:justify-end md:pt-0 md:pr-[9vw]" aria-hidden="true">
-      <Symbole taille={260} vivant titre="" className="drop-shadow-[0_30px_50px_rgba(39,32,255,0.35)]" />
+    <div className={`absolute inset-0 flex items-start justify-center pt-[13vh] transition-opacity duration-700 md:items-center md:justify-end md:pt-0 md:pr-[9vw] ${robotPret ? 'opacity-0' : 'opacity-100'}`} aria-hidden="true">
+      <Symbole taille={260} vivant titre="" className="h-[150px] w-[150px] drop-shadow-[0_30px_50px_rgba(39,32,255,0.35)] md:h-[260px] md:w-[260px]" />
     </div>
   );
 
@@ -47,9 +82,13 @@ export default function Recit() {
       <div className="sticky top-0 h-[100svh] overflow-hidden">
         {/* Le robot */}
         <div className="absolute inset-0">
-          {sans3d ? symbole2d : (
-            <Suspense fallback={symbole2d}>
-              <RobotGardien etat={etat} mouvementReduit={reduit} onIndisponible={indisponible} className="absolute inset-0 [&>canvas]:block [&>canvas]:h-full [&>canvas]:w-full" />
+          {symbole2d}
+          {charger3d && !sans3d && (
+            <Suspense fallback={null}>
+              <RobotGardien
+                etat={etat} mouvementReduit={reduit} onIndisponible={indisponible} onPret={pret}
+                className={`absolute inset-0 transition-opacity duration-700 [&>canvas]:block [&>canvas]:h-full [&>canvas]:w-full ${robotPret ? 'opacity-100' : 'opacity-0'}`}
+              />
             </Suspense>
           )}
         </div>

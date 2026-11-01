@@ -7,7 +7,7 @@ const PolitiqueConfidentialite = () => {
     <div className="ptl min-h-screen">
       <EnTete accueil={false} />
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-slate-100" data-aos="fade-up">
+        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-slate-100">
           <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-8 pb-4 border-b border-slate-100">
             Politique de Confidentialité
           </h1>
