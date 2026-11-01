@@ -191,8 +191,8 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'Administrateur TRIMED': return 'error';
       case 'Administrateur de l’hôpital': return 'error';
+      case 'Propriétaire de l’hôpital': return 'error';
       case 'Médecin': return 'success';
       case 'Infirmier': return 'info';
       case 'Secrétaire': return 'warning';

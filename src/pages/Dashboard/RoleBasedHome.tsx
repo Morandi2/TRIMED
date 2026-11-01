@@ -8,7 +8,6 @@ import { MedecinDashboard } from '../GestionHopital/GestionUtilisateur/pages/Med
 import { InfirmierDashboard } from '../GestionHopital/GestionUtilisateur/pages/InfirmierDashboard';
 import { ReceptionnisteDashboard } from '../GestionHopital/GestionUtilisateur/pages/ReceptionnisteDashboard';
 import { PharmacienDashboard } from '../GestionHopital/GestionUtilisateur/pages/PharmacienDashboard';
-import { ManagerDashboard } from '../GestionHopital/GestionUtilisateur/pages/ManagerDashboard';
 import { PatientDashboard } from '../GestionHopital/GestionUtilisateur/pages/PatientDashboard';
 import TrimedAdminDashboard from './TrimedAdminDashboard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -49,8 +48,10 @@ export default function RoleBasedHome() {
       return <ReceptionnisteDashboard />;
     case 'personnel':
       return <PharmacienDashboard />;
+    // Administrateur de l’hôpital (propriétaire ou admin délégué) : le portail de l’hôpital
     case 'proprietaire-hopital':
-      return <ManagerDashboard />;
+    case 'admin-hopital':
+      return <Home />;
     case 'patient':
       return <PatientDashboard />;
     case 'admin-systeme':

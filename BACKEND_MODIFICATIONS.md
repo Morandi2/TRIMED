@@ -31,7 +31,7 @@ ROLES_PERSONNEL = {"medecin", "infirmier", "secretaire", "personnel"}
 
 def validate_role(self, role):
     demandeur = self.context["request"].user
-    if demandeur.role == "admin-systeme":
+    if est_equipe_trimed(demandeur):          # voir 0.5
         return role
     if role not in ROLES_PERSONNEL:
         raise serializers.ValidationError("Ce rôle ne peut pas être attribué depuis un hôpital.")
@@ -39,7 +39,7 @@ def validate_role(self, role):
 
 def validate(self, data):
     demandeur = self.context["request"].user
-    if demandeur.role != "admin-systeme":
+    if not est_equipe_trimed(demandeur):
         data["hopital"] = demandeur.hopital          # jamais un autre hôpital
         if self.instance and self.instance.role not in ROLES_PERSONNEL:
             data.pop("role", None)                    # on ne change pas le rôle d'un admin/propriétaire
@@ -49,25 +49,33 @@ def validate(self, data):
 ```
 - `update_profile` : ignorer `role`, `hopital`, `is_staff` et `is_active`.
 - `inscription` (publique) : forcer `role = "proprietaire-hopital"` et `is_active = False`, quel que soit le corps.
-- Un compte `admin-systeme` ne doit pas avoir d'hôpital (`hopital = None`).
+- Seule l'équipe TRIMED (0.5) peut créer un compte `admin-systeme` sans hôpital.
 
-**Données à corriger.** Désactiver ou rétrograder les comptes `admin-systeme` qui ont un `hopital` (requête
-dans le shell Django : `Utilisateur.objects.filter(role="admin-systeme", hopital__isnull=False)`).
+**Données à vérifier.** Les comptes `admin-systeme` rattachés à un hôpital sont désormais des administrateurs
+d'hôpital (0.5). Vérifier qu'aucun n'a `is_staff` coché :
+`Utilisateur.objects.filter(role="admin-systeme", hopital__isnull=False, is_staff=True)` doit être vide.
 
-### 0.2 Liste des hôpitaux visible par tous les propriétaires (`GET /api/tenants/tenants/`)
+### 0.2 Données d'un hôpital visibles par les autres hôpitaux
 
-**Constat.** Un propriétaire reçoit **les 4 hôpitaux**, avec courriel, adresse, direction, type
-d'abonnement et statut de vérification des autres établissements. Le détail (`/tenants/tenants/{id}/`)
-renvoie 404, même pour son propre hôpital.
+**Constat** (vérifié avec les propriétaires de JCC, Mirebalais et Albert Schweitzer, et un médecin de JCC) :
+- `GET /api/tenants/tenants/` : **tout compte connecté**, quel que soit son hôpital ou son rôle, reçoit
+  la liste de tous les hôpitaux de la plateforme, avec courriel, adresse, direction, type d'abonnement et
+  statut de vérification. Le détail (`/tenants/tenants/{id}/`) renvoie 404, même pour son propre hôpital.
+- `GET /api/hospitalisation/chambres/`, `/hospitalisation/lits/` et `/salles-medicales/salles/` : le
+  propriétaire de Mirebalais (hôpital vide) reçoit les 8 chambres, 19 lits et 8 salles de JCC. Le filtre
+  `?tenant=` fonctionne, mais il est facultatif : rien n'empêche de l'omettre.
+- Correctement séparés : patients, utilisateurs, admissions, paramètres.
 
-**Correction.** Même `get_queryset` pour la liste et le détail :
+**Correction.** Même `get_queryset` pour la liste et le détail, dans chaque ViewSet concerné :
 ```python
 def get_queryset(self):
     u = self.request.user
-    if u.role == "admin-systeme":
+    if est_equipe_trimed(u):                  # voir 0.5
         return Tenant.objects.all()
     return Tenant.objects.filter(pk=u.hopital_id)
 ```
+Pour les chambres et salles : `Model.objects.filter(tenant=u.hopital)` ; pour les lits :
+`Lit.objects.filter(chambre__tenant=u.hopital)`. À la création d'un lit, refuser une chambre d'un autre hôpital.
 
 ### 0.3 Modification de son hôpital par le propriétaire (`PATCH /api/tenants/tenants/{id}/`)
 
@@ -82,7 +90,28 @@ En attendant, l'assistant de configuration affiche ces informations en lecture e
 ### 0.4 Rappel de principe
 
 Chaque vue qui renvoie des données d'hôpital doit filtrer par `request.user.hopital` côté serveur, pour tous
-les rôles sauf `admin-systeme`. Le frontend masque des menus, mais il ne protège rien à lui seul.
+les comptes sauf l'équipe TRIMED (0.5). Le frontend masque des menus, mais il ne protège rien à lui seul.
+
+### 0.5 Équipe TRIMED = `is_staff`, pas le rôle
+
+**Décision (1er novembre 2026).** Le portail Admin TRIMED est réservé aux comptes `admin-systeme` dont la case
+« statut équipe » (`is_staff`) est cochée dans l'admin Django. Un `admin-systeme` sans `is_staff` est un
+**administrateur d'hôpital** : il administre son hôpital, comme le propriétaire. Le frontend applique déjà
+cette règle (`roleEffectif` dans `src/types/userRoles.ts`).
+
+**Côté serveur.** L'accès à tous les hôpitaux doit suivre la même règle, jamais le seul rôle :
+```python
+def est_equipe_trimed(u):
+    return u.is_authenticated and u.is_staff and u.role == "admin-systeme" and u.hopital_id is None
+```
+- `is_staff` reste en lecture seule dans tous les serializers (c'est déjà le cas) : il ne se coche que
+  dans l'admin Django.
+- Un `admin-systeme` rattaché à un hôpital ne voit et ne modifie que cet hôpital.
+- Une fois ce point en place, le formulaire des utilisateurs pourra proposer « Administrateur de l'hôpital »
+  au propriétaire (rôle serveur `admin-systeme`, toujours rattaché à son hôpital). D'ici là, il ne le propose pas.
+
+**Test.** Le compte 11 (admin-systeme, hôpital JCC, `is_staff = false`) doit recevoir les 7 utilisateurs de
+JCC sur `/api/comptes/utilisateurs/`, pas les 11 de la plateforme.
 
 ---
 
@@ -250,6 +279,16 @@ l'identifiant), ou ajouter l'identifiant en lecture seule au serializer de créa
   (statut) avec trace dans le journal d'audit.
 - **Vérification des documents.** `PATCH /api/tenants/tenants/{id}/verifier_documents/` attend
   `{"action": "approuver"}` ou `{"action": "rejeter"}`. Le documenter dans le schéma OpenAPI.
+
+---
+
+## 13. Profil d'un compte sans hôpital : erreur 500
+
+**Constat.** `GET /api/comptes/utilisateurs/profile/` renvoie 500 pour le compte administrateur TRIMED
+(`admin-systeme`, sans hôpital). Le serializer du profil suppose probablement que `hopital` existe.
+
+**Correction.** Rendre `hopital` / `hopital_detail` facultatifs dans le serializer du profil (`None` si absent).
+Le frontend n'appelle plus ce profil pour un administrateur TRIMED, mais d'autres écrans pourraient en avoir besoin.
 
 ---
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { utilisateurService } from './UtilisateurService';
 import { djangoAuthApi } from '../../../../api/djangoAuthApi';
-import { normalizeRole, rolePermissions } from '../../../../types/userRoles';
+import { normalizeRole, roleEffectif, rolePermissions } from '../../../../types/userRoles';
 import type { UtilisateurFormData } from '../types/UtilisateurTypes';
 
 vi.mock('../../../../api/djangoAuthApi', () => ({
@@ -26,9 +26,18 @@ describe('Rôles et droits', () => {
     expect(normalizeRole('admin-systeme')).toBe('admin-systeme');
   });
 
-  it('seul le propriétaire peut configurer son hôpital', () => {
+  it('le portail Admin TRIMED exige admin-systeme et la case « statut équipe »', () => {
+    expect(roleEffectif({ role: 'admin-systeme', is_staff: true })).toBe('admin-systeme');
+    expect(roleEffectif({ role: 'admin-systeme', is_staff: false })).toBe('admin-hopital');
+    expect(roleEffectif({ role: 'admin-systeme' })).toBe('admin-hopital');
+    expect(roleEffectif({ role: 'proprietaire-hopital', is_staff: true })).toBe('proprietaire-hopital');
+    expect(roleEffectif(null)).toBe('personnel');
+  });
+
+  it('seuls les administrateurs de l’hôpital configurent leur hôpital', () => {
     const autorises = Object.entries(rolePermissions).filter(([, p]) => p.canConfigurerHopital).map(([r]) => r);
-    expect(autorises).toEqual(['proprietaire-hopital']);
+    expect(autorises.sort()).toEqual(['admin-hopital', 'proprietaire-hopital']);
+    expect(rolePermissions['admin-hopital'].canManageSystem).toBe(false);
   });
 
   it('un hôpital ne propose que les rôles du personnel', () => {

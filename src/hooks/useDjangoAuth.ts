@@ -24,8 +24,9 @@ export const useDjangoAuth = (): UseAuthReturn => {
     if (sessionCheck.isValid && sessionCheck.user) {
       const u = sessionCheck.user;
       
-      // Si les données sont incomplètes, on tente de récupérer le profil
-      if (!u.hopital_id || (u.nom_complet ?? '').includes('undefined')) {
+      // Si les données sont incomplètes, on tente de récupérer le profil.
+      // Un administrateur TRIMED n’a pas d’hôpital : ce n’est pas un profil incomplet.
+      if ((!u.hopital_id && u.role !== 'admin-systeme') || (u.nom_complet ?? '').includes('undefined')) {
         console.warn('Session valide mais profil incomplet, récupération du profil...');
         const profileRes = await djangoAuthApi.getProfile();
         if (profileRes.success && profileRes.data) {
@@ -71,7 +72,8 @@ export const useDjangoAuth = (): UseAuthReturn => {
         // on tente de récupérer le profil complet immédiatement
         try {
           // On vérifie quelques champs clés qui pourraient manquer (nom_complet est calculé par mapUserResponse, mais s'il s'est rabattu sur l'email, on fetch)
-          const needsProfile = !finalUser.hopital_id || finalUser.role === 'personnel' || finalUser.nom_complet === finalUser.email || finalUser.nom_complet === 'Utilisateur';
+          const sansHopitalAttendu = finalUser.role === 'admin-systeme' && finalUser.is_staff === true;
+          const needsProfile = (!finalUser.hopital_id && !sansHopitalAttendu) || finalUser.role === 'personnel' || finalUser.nom_complet === finalUser.email || finalUser.nom_complet === 'Utilisateur';
           
           if (needsProfile) {
             const profileRes = await djangoAuthApi.getProfile();

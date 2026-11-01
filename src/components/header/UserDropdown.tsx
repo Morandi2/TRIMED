@@ -4,12 +4,12 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useAuth } from "../../context/AuthContext";
 import { LifeBuoy, Settings, UserRound } from "lucide-react";
 import { useUser } from "../../context/UserContext";
-import { LIBELLES_ROLES, normalizeRole } from "../../types/userRoles";
+import { LIBELLES_ROLES } from "../../types/userRoles";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout, isLoading } = useAuth();
-  const { permissions } = useUser();
+  const { permissions, currentUserRole } = useUser();
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -76,7 +76,7 @@ export default function UserDropdown() {
             {user?.email || "Aucun email"}
           </span>
           <span className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-            {LIBELLES_ROLES[normalizeRole(user?.role)]}
+            {LIBELLES_ROLES[currentUserRole]}
           </span>
         </div>
 

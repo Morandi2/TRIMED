@@ -265,7 +265,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
             {roleVerrouille ? (
               <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
                 {tousLesRoles.find((r) => r.role_id === formData.role_id)?.nom ?? 'Rôle particulier'}
-                <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">Ce rôle est géré par l’équipe TRIMED et ne peut pas être modifié ici.</span>
+                <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">Ce rôle ne se modifie pas depuis ce formulaire.</span>
               </p>
             ) : (
               <select

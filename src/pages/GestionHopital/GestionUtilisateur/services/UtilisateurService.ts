@@ -1,15 +1,16 @@
 import { Utilisateur, UtilisateurFormData, UtilisateurStats, UtilisateurRole, UtilisateurStatut } from '../types/UtilisateurTypes';
 import { djangoAuthApi } from '../../../../api/djangoAuthApi';
 
-// Rôles qu’un hôpital peut attribuer à son personnel. L’administrateur TRIMED et le
-// propriétaire de l’hôpital ne s’attribuent pas depuis un hôpital : ils sont créés par l’équipe TRIMED.
+// Rôles qu’un hôpital peut attribuer à son personnel. Le propriétaire et l’administrateur de l’hôpital
+// (rôle serveur admin-systeme, sans « statut équipe ») ne s’attribuent pas depuis le formulaire, tant que
+// le serveur ne limite pas ce rôle à son hôpital (BACKEND_MODIFICATIONS.md, point 0.5).
 export const ROLES_ATTRIBUABLES = [3, 4, 5, 6];
 const MESSAGE_ROLE_REFUSE = 'Ce rôle ne peut pas être attribué depuis un hôpital. Choisissez médecin, infirmier, secrétaire ou personnel.';
 
 class UtilisateurService {
   private roles: UtilisateurRole[] = [
-    { role_id: 1, nom: 'Administrateur TRIMED', description: 'Équipe TRIMED : gestion de la plateforme' },
-    { role_id: 2, nom: 'Administrateur de l’hôpital', description: 'Propriétaire : gère son hôpital' },
+    { role_id: 1, nom: 'Administrateur de l’hôpital', description: 'Administre l’hôpital avec le propriétaire' },
+    { role_id: 2, nom: 'Propriétaire de l’hôpital', description: 'Responsable de l’établissement' },
     { role_id: 3, nom: 'Médecin', description: 'Accès aux dossiers patients' },
     { role_id: 4, nom: 'Infirmier', description: 'Saisie des constantes et soins' },
     { role_id: 5, nom: 'Secrétaire', description: 'Accueil et rendez-vous' },

@@ -1,7 +1,8 @@
-export type UserRole = 
-  | 'admin-systeme' 
-  | 'proprietaire-hopital' 
-  | 'medecin' 
+export type UserRole =
+  | 'admin-systeme'
+  | 'admin-hopital'
+  | 'proprietaire-hopital'
+  | 'medecin'
   | 'infirmier' 
   | 'secretaire' 
   | 'personnel' 
@@ -28,10 +29,23 @@ export const normalizeRole = (role: string | null | undefined): UserRole => {
   return 'personnel'; // Rôle inconnu : droits minimaux
 };
 
+/**
+ * Rôle de l’interface pour le compte connecté.
+ * Le portail Admin TRIMED est réservé à l’équipe TRIMED : rôle `admin-systeme` **et** case
+ * « statut équipe » (`is_staff`) cochée dans l’admin Django, que l’API ne permet pas de modifier.
+ * Un `admin-systeme` sans `is_staff` administre son hôpital (portail de l’hôpital).
+ */
+export const roleEffectif = (user: { role?: string | null; is_staff?: boolean } | null | undefined): UserRole => {
+  const role = normalizeRole(user?.role);
+  if (role === 'admin-systeme' && user?.is_staff !== true) return 'admin-hopital';
+  return role;
+};
+
 /** Libellés lisibles des rôles, pour l’interface. */
 export const LIBELLES_ROLES: Record<UserRole, string> = {
   'admin-systeme': 'Administrateur TRIMED',
-  'proprietaire-hopital': 'Administrateur de l’hôpital',
+  'admin-hopital': 'Administrateur de l’hôpital',
+  'proprietaire-hopital': 'Propriétaire de l’hôpital',
   'medecin': 'Médecin',
   'infirmier': 'Infirmier',
   'secretaire': 'Secrétaire',
@@ -104,6 +118,33 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewAuditLogs: true,
     canModifierTenant: true,
     canConfigurerHopital: false,
+  },
+  'admin-hopital': {
+    canViewPatients: true,
+    canEditPatients: true,
+    canViewOwnFolderOnly: false,
+    canViewMedecins: true,
+    canViewConsultations: true,
+    canEditConsultations: true,
+    canViewOrdonnances: true,
+    canEditOrdonnances: true,
+    canGererHospitalisation: true,
+    canViewMedicaments: true,
+    canGererMedicaments: true,
+    canModifierStock: true,
+    canViewRendezVous: true,
+    canEditRendezVous: true,
+    canGererSalles: true,
+    canViewCalendar: true,
+    canViewPaiements: true,
+    canGererFacturation: true,
+    canManageUsers: true,
+    canViewDashboard: true,
+    canViewReports: true,
+    canManageSystem: false,
+    canViewAuditLogs: true,
+    canModifierTenant: false,
+    canConfigurerHopital: true,
   },
   'proprietaire-hopital': {
     canViewPatients: true,

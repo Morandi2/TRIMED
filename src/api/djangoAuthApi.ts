@@ -461,7 +461,8 @@ export const djangoAuthApi = {
       email: user?.email || '',
       role: user?.role || 'personnel',
       hopital_id: Number(hopital_id) || 0,
-      hopital_nom
+      hopital_nom,
+      is_staff: user?.is_staff === true
     };
   },
 
