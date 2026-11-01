@@ -8,29 +8,35 @@ export type UserRole =
   | 'patient';
 
 /**
- * Normalise le rôle reçu du backend vers les types officiels du frontend
+ * Normalise le rôle reçu du backend vers les types officiels du frontend.
+ * Correspondance exacte uniquement : un rôle inconnu ne doit jamais ouvrir plus de droits.
+ * (Auparavant, tout rôle contenant « admin » devenait administrateur de la plateforme.)
  */
 export const normalizeRole = (role: string | null | undefined): UserRole => {
-  if (!role) return 'personnel'; 
-  
+  if (!role) return 'personnel';
+
   const r = role.toLowerCase().trim();
-  
-  // Mapping direct avec les slugs backend
-  if (r === 'admin-systeme' || r === 'superadmin' || r === 'administrateur-trimed') return 'admin-systeme';
-  if (r === 'proprietaire-hopital' || r === 'proprietaire') return 'proprietaire-hopital';
-  if (r === 'medecin' || r === 'docteur') return 'medecin';
+
+  if (r === 'admin-systeme') return 'admin-systeme';
+  if (r === 'proprietaire-hopital') return 'proprietaire-hopital';
+  if (r === 'medecin') return 'medecin';
   if (r === 'infirmier') return 'infirmier';
   if (r === 'secretaire') return 'secretaire';
   if (r === 'personnel') return 'personnel';
   if (r === 'patient') return 'patient';
-  
-  // Mapping des alias courants
-  if (r.includes('admin')) return 'admin-systeme';
-  if (r.includes('owner')) return 'proprietaire-hopital';
-  if (r.includes('doc')) return 'medecin';
-  if (r.includes('nurse')) return 'infirmier';
-  
-  return 'personnel'; // Fallback par défaut sécurisé
+
+  return 'personnel'; // Rôle inconnu : droits minimaux
+};
+
+/** Libellés lisibles des rôles, pour l’interface. */
+export const LIBELLES_ROLES: Record<UserRole, string> = {
+  'admin-systeme': 'Administrateur TRIMED',
+  'proprietaire-hopital': 'Administrateur de l’hôpital',
+  'medecin': 'Médecin',
+  'infirmier': 'Infirmier',
+  'secretaire': 'Secrétaire',
+  'personnel': 'Personnel',
+  'patient': 'Patient',
 };
 
 export interface UserPermissions {
@@ -67,6 +73,8 @@ export interface UserPermissions {
   canManageSystem: boolean;
   canViewAuditLogs: boolean;
   canModifierTenant: boolean;
+  /** Paramètres et assistant de configuration de son propre hôpital (propriétaire). */
+  canConfigurerHopital: boolean;
 }
 
 export const rolePermissions: Record<UserRole, UserPermissions> = {
@@ -95,6 +103,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: true,
     canViewAuditLogs: true,
     canModifierTenant: true,
+    canConfigurerHopital: false,
   },
   'proprietaire-hopital': {
     canViewPatients: true,
@@ -121,6 +130,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: true,
     canModifierTenant: false,
+    canConfigurerHopital: true,
   },
   'medecin': {
     canViewPatients: true,
@@ -147,6 +157,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
   },
   'infirmier': {
     canViewPatients: true,
@@ -173,6 +184,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
   },
   'secretaire': {
     canViewPatients: true,
@@ -199,6 +211,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
   },
   'personnel': {
     canViewPatients: true,
@@ -225,6 +238,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
   },
   'patient': {
     canViewPatients: false,
@@ -251,6 +265,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
   },
 };
 

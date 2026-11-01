@@ -62,7 +62,9 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
   const [editingUtilisateur, setEditingUtilisateur] = useState<Utilisateur | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<number | undefined>();
+  // Tous les rôles servent à l’affichage ; seuls les rôles du personnel sont proposés à la création.
   const [roles, setRoles] = useState<UtilisateurRole[]>([]);
+  const rolesAttribuables = utilisateurService.obtenirRolesAttribuables();
   const [statuts, setStatuts] = useState<UtilisateurStatut[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -189,10 +191,11 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'Administrateur': return 'error';
+      case 'Administrateur TRIMED': return 'error';
+      case 'Administrateur de l’hôpital': return 'error';
       case 'Médecin': return 'success';
       case 'Infirmier': return 'info';
-      case 'Réceptionniste': return 'warning';
+      case 'Secrétaire': return 'warning';
       default: return 'primary';
     }
   };
@@ -429,7 +432,8 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
         serverErrors={serverErrors}
         generalError={generalError || undefined}
         utilisateur={editingUtilisateur}
-        roles={roles}
+        roles={rolesAttribuables}
+        tousLesRoles={roles}
         statuts={statuts}
       />
 

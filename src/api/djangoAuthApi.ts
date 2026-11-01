@@ -470,8 +470,8 @@ export const djangoAuthApi = {
    */
   getRedirectionPath: function (role: string): string {
     switch (role) {
-      case 'admin-systeme': return '/admin/dashboard';
-      case 'proprietaire-hopital': return '/Home';
+      case 'admin-systeme': return '/home';
+      case 'proprietaire-hopital': return '/home';
       case 'medecin': return '/home';
       case 'infirmier': return '/home';
       case 'secretaire': return '/home';

@@ -5,7 +5,84 @@ démonstration (`scripts/seed/seed-demo.mjs`). Chaque point indique ce qui se pa
 et la précaution de sécurité à garder. Aucun de ces changements n'ouvre d'accès supplémentaire : ils
 corrigent des erreurs ou complètent des fonctions que le frontend utilise déjà.
 
-Ordre conseillé : 1 → 2 → 3, puis le reste.
+Ordre conseillé : **0 (critique)** → 1 → 2 → 3, puis le reste.
+
+---
+
+## 0. Accès entre rôles et entre hôpitaux (critique, à faire avant tout le reste)
+
+Constats du 1er novembre 2026, vérifiés avec le compte propriétaire de démonstration de JCC.
+
+**Origine.** Au début, le rôle « Administrateur » désignait l'administrateur d'un hôpital. En mars 2026,
+le formulaire des utilisateurs l'a rebaptisé « Administrateur Systeme » et l'a relié à `admin-systeme`.
+En mai 2026, le portail Admin TRIMED (hôpitaux, abonnements) a réservé ce rôle à l'équipe TRIMED. Depuis,
+un propriétaire qui crée un « administrateur » pour son hôpital crée en réalité un administrateur de toute
+la plateforme. Le frontend ne le propose plus, mais **seul le serveur peut fermer la porte** : n'importe qui
+avec un compte propriétaire peut encore envoyer la requête à la main.
+
+### 0.1 Attribution des rôles (`/api/comptes/utilisateurs/`)
+
+**Constat.** `POST` et `PATCH` acceptent `role: "admin-systeme"` ou `"proprietaire-hopital"` de la part
+d'un propriétaire. Un compte `admin-systeme` a ainsi été créé dans l'hôpital 1 (id 11, le 1er novembre).
+
+**Correction.** Dans le serializer `Utilisateur` (création et modification) :
+```python
+ROLES_PERSONNEL = {"medecin", "infirmier", "secretaire", "personnel"}
+
+def validate_role(self, role):
+    demandeur = self.context["request"].user
+    if demandeur.role == "admin-systeme":
+        return role
+    if role not in ROLES_PERSONNEL:
+        raise serializers.ValidationError("Ce rôle ne peut pas être attribué depuis un hôpital.")
+    return role
+
+def validate(self, data):
+    demandeur = self.context["request"].user
+    if demandeur.role != "admin-systeme":
+        data["hopital"] = demandeur.hopital          # jamais un autre hôpital
+        if self.instance and self.instance.role not in ROLES_PERSONNEL:
+            data.pop("role", None)                    # on ne change pas le rôle d'un admin/propriétaire
+        if self.instance and self.instance.pk == demandeur.pk:
+            data.pop("role", None)                    # personne ne change son propre rôle
+    return data
+```
+- `update_profile` : ignorer `role`, `hopital`, `is_staff` et `is_active`.
+- `inscription` (publique) : forcer `role = "proprietaire-hopital"` et `is_active = False`, quel que soit le corps.
+- Un compte `admin-systeme` ne doit pas avoir d'hôpital (`hopital = None`).
+
+**Données à corriger.** Désactiver ou rétrograder les comptes `admin-systeme` qui ont un `hopital` (requête
+dans le shell Django : `Utilisateur.objects.filter(role="admin-systeme", hopital__isnull=False)`).
+
+### 0.2 Liste des hôpitaux visible par tous les propriétaires (`GET /api/tenants/tenants/`)
+
+**Constat.** Un propriétaire reçoit **les 4 hôpitaux**, avec courriel, adresse, direction, type
+d'abonnement et statut de vérification des autres établissements. Le détail (`/tenants/tenants/{id}/`)
+renvoie 404, même pour son propre hôpital.
+
+**Correction.** Même `get_queryset` pour la liste et le détail :
+```python
+def get_queryset(self):
+    u = self.request.user
+    if u.role == "admin-systeme":
+        return Tenant.objects.all()
+    return Tenant.objects.filter(pk=u.hopital_id)
+```
+
+### 0.3 Modification de son hôpital par le propriétaire (`PATCH /api/tenants/tenants/{id}/`)
+
+**Constat.** Refusée (403), ce qui est correct pour le statut, l'abonnement et la vérification. Mais le
+propriétaire ne peut pas non plus corriger son téléphone ou son adresse.
+
+**Correction (optionnelle).** Autoriser le propriétaire sur **son** hôpital pour `telephone`, `adresse`,
+`email_professionnel`, `directeur`, `nombre_de_lits` seulement. Les champs `statut`, `type_abonnement`,
+`statut_verification_document`, `verifie_par`, `nom_schema_base_de_donnees` restent réservés à `admin-systeme`.
+En attendant, l'assistant de configuration affiche ces informations en lecture et propose d'écrire à l'équipe.
+
+### 0.4 Rappel de principe
+
+Chaque vue qui renvoie des données d'hôpital doit filtrer par `request.user.hopital` côté serveur, pour tous
+les rôles sauf `admin-systeme`. Le frontend masque des menus, mais il ne protège rien à lui seul.
 
 ---
 
@@ -178,7 +255,11 @@ l'identifiant), ou ajouter l'identifiant en lecture seule au serializer de créa
 
 ## Côté frontend (pour mémoire)
 
-Le Setup Wizard (`src/pages/GestionHopital/Configuration/ConfigurationWizard.tsx`) n'enregistre que
-l'identité de l'hôpital et les paramètres (étapes 1 et 5). Les étapes « Structure », « Physique » et
-« Personnel » sont visuelles : les routes nécessaires existent déjà (`type-salles`, `salles`, `chambres`,
-`lits`, `utilisateurs`). Le script `scripts/seed/seed-demo.mjs` montre les appels et l'ordre à respecter.
+- L'assistant de configuration (`src/pages/GestionHopital/Configuration/`) est réservé à l'administrateur de
+  l'hôpital (le propriétaire) et s'ouvre seul à sa première connexion, tant que l'hôpital n'a pas de
+  `ParametreHopital`. Ses quatre étapes enregistrent sur le serveur : informations (lecture, voir 0.3),
+  chambres et lits (`chambres`, `lits`), équipe (`utilisateurs`, rôles du personnel seulement), préférences
+  (`parametres`). Les anciennes étapes « branches » et « départements » ont été retirées : aucun modèle ne
+  les porte côté serveur.
+- Le portail des abonnements (`src/pages/GestionHopital/GestionAbonnements/`) existe mais n'a pas de route :
+  il attend les routes de facturation du point 6. Le lien « Abonnements » a été retiré du menu en attendant.

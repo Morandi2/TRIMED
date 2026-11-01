@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { useAuth } from '../../context/AuthContext';
-import { normalizeRole } from '../../types/userRoles';
+import hospitalApi from '../../api/hospitalApi';
 import Home from './Home';
-// ... rest of imports
 import { MedecinDashboard } from '../GestionHopital/GestionUtilisateur/pages/MedecinDashboard';
 import { InfirmierDashboard } from '../GestionHopital/GestionUtilisateur/pages/InfirmierDashboard';
 import { ReceptionnisteDashboard } from '../GestionHopital/GestionUtilisateur/pages/ReceptionnisteDashboard';
@@ -12,28 +12,33 @@ import { ManagerDashboard } from '../GestionHopital/GestionUtilisateur/pages/Man
 import { PatientDashboard } from '../GestionHopital/GestionUtilisateur/pages/PatientDashboard';
 import TrimedAdminDashboard from './TrimedAdminDashboard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { hopitalDejaConfigure, marquerHopitalConfigure } from '../GestionHopital/Configuration/etat';
 
 export default function RoleBasedHome() {
-  const { currentUserRole, setCurrentUserRole } = useUser();
+  const { currentUserRole: role, permissions } = useUser();
   const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
 
-  // Effet pour synchroniser le rôle du contexte global avec le UserContext local
+  // Première connexion d’un administrateur d’hôpital : tant que l’hôpital n’a pas ses
+  // paramètres (langue, devise, rendez-vous…), on ouvre l’assistant de configuration.
   useEffect(() => {
-    if (user && user.role) {
-      const mappedRole = normalizeRole(user.role);
-      
-      if (mappedRole && mappedRole !== currentUserRole) {
-        setCurrentUserRole(mappedRole);
+    if (!permissions.canConfigurerHopital || !user?.hopital_id) return;
+    const hopitalId = user.hopital_id;
+    if (hopitalDejaConfigure(hopitalId)) return;
+    let annule = false;
+    hospitalApi.config.getParametres().then((res) => {
+      if (annule || !res.success) return;
+      if (res.data) marquerHopitalConfigure(hopitalId);
+      else {
+        navigate('/configuration?premiere=1', { replace: true });
       }
-    }
-  }, [user, currentUserRole, setCurrentUserRole]);
+    });
+    return () => { annule = true; };
+  }, [permissions.canConfigurerHopital, user?.hopital_id, navigate]);
 
   if (isLoading) {
     return <LoadingSpinner />;
   }
-
-  // On utilise une version normalisée pour le switch
-  const role = currentUserRole;
 
   switch (role) {
     case 'medecin':

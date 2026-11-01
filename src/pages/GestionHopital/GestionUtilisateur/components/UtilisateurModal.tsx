@@ -9,7 +9,10 @@ interface UtilisateurModalProps {
   serverErrors?: Record<string, string>;
   generalError?: string;
   utilisateur?: Utilisateur | null;
+  /** Rôles que l’on peut attribuer (personnel de l’hôpital). */
   roles: UtilisateurRole[];
+  /** Tous les rôles, pour afficher le rôle d’un compte qu’on ne peut pas modifier. */
+  tousLesRoles?: UtilisateurRole[];
   statuts: UtilisateurStatut[];
 }
 
@@ -21,8 +24,11 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
   generalError,
   utilisateur,
   roles,
+  tousLesRoles = roles,
   statuts
 }) => {
+  // Le rôle d’un administrateur, d’un propriétaire ou d’un patient ne se change pas ici.
+  const roleVerrouille = !!utilisateur && !roles.some((r) => r.role_id === utilisateur.role_id);
   const [formData, setFormData] = useState<UtilisateurFormData>({
     nom_complet: '',
     email: '',
@@ -256,18 +262,25 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Rôle *
             </label>
-            <select
-              required
-              value={formData.role_id}
-              onChange={(e) => setFormData(prev => ({ ...prev, role_id: parseInt(e.target.value) }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            >
-              {roles.map(role => (
-                <option key={role.role_id} value={role.role_id}>
-                  {role.nom}
-                </option>
-              ))}
-            </select>
+            {roleVerrouille ? (
+              <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                {tousLesRoles.find((r) => r.role_id === formData.role_id)?.nom ?? 'Rôle particulier'}
+                <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">Ce rôle est géré par l’équipe TRIMED et ne peut pas être modifié ici.</span>
+              </p>
+            ) : (
+              <select
+                required
+                value={formData.role_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, role_id: parseInt(e.target.value) }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              >
+                {roles.map(role => (
+                  <option key={role.role_id} value={role.role_id}>
+                    {role.nom}
+                  </option>
+                ))}
+              </select>
+            )}
             
             {formData.role_id === 3 && medecinMatchWarning && (
               <div className={`mt-3 p-3 text-sm rounded-lg border ${

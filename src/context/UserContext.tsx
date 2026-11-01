@@ -1,32 +1,23 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { UserRole, UserPermissions, rolePermissions, normalizeRole } from '../types/userRoles';
+import { useAuth } from './AuthContext';
 
 interface UserContextType {
   currentUserRole: UserRole;
-  setCurrentUserRole: (role: UserRole) => void;
   permissions: UserPermissions;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// Le rôle découle toujours du compte connecté (réponse du serveur) : il ne se modifie pas
+// depuis l’interface, et il change dès qu’on se reconnecte avec un autre compte.
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentUserRole, setCurrentUserRole] = useState<UserRole>(() => {
-    const storedUserData = localStorage.getItem('user_data');
-    if (storedUserData) {
-      try {
-        const user = JSON.parse(storedUserData);
-        return normalizeRole(user.role);
-      } catch (e) {
-        console.error("Erreur init role context:", e);
-      }
-    }
-    return 'personnel';
-  });
-
+  const { user } = useAuth();
+  const currentUserRole = normalizeRole(user?.role);
   const permissions = rolePermissions[currentUserRole] || rolePermissions['personnel'];
 
   return (
-    <UserContext.Provider value={{ currentUserRole, setCurrentUserRole, permissions }}>
+    <UserContext.Provider value={{ currentUserRole, permissions }}>
       {children}
     </UserContext.Provider>
   );
