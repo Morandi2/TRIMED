@@ -226,7 +226,7 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20">
+              <div className="p-2 bg-brand-600 rounded-xl shadow-lg shadow-brand-500/20">
                 <Stethoscope className="w-6 h-6 text-white" />
               </div>
               <h1 className="font-marque text-xl sm:text-2xl">
@@ -234,13 +234,13 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
               {hopitalNom || "Votre hôpital"}
             </p>
           </div>
           <button
             onClick={handleAddMedecin}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-xl shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold shadow-xl shadow-brand-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="w-5 h-5" />
             Ajouter Médecin
@@ -252,18 +252,18 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
       <MedecinStats medecins={medecins} specialites={specialites} />
 
       {/* Main Content Container */}
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden text-black dark:text-white">
         {/* Filters Bar */}
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
               <input
                 type="text"
                 placeholder="Rechercher par nom, spécialité ou matricule..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-brand-500/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
               />
             </div>
             
@@ -273,7 +273,7 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
                 <select
                   value={sortBy}
                   onChange={(e) => { setSortBy(e.target.value as typeof sortBy); setCurrentPage(1); }}
-                  className="bg-transparent border-none text-xs font-black focus:ring-0 outline-none uppercase tracking-tight"
+                  className="bg-transparent border-none text-xs font-bold focus:ring-0 outline-none uppercase tracking-tight"
                 >
                   <option value="recent">Plus récent</option>
                   <option value="ancien">Plus ancien</option>
@@ -282,9 +282,9 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
                   <option value="specialite">Spécialité</option>
                 </select>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-2xl">
-                <Users2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+              <div className="flex items-center gap-2 px-4 py-2 bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 rounded-2xl">
+                <Users2 className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest">
                   {filteredMedecins.length} PRATICIENS
                 </span>
               </div>
@@ -336,8 +336,8 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
                       onClick={() => setCurrentPage(pageNum)}
                       className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${
                         currentPage === pageNum 
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
-                          : 'bg-white dark:bg-white/5 text-gray-400 hover:text-blue-600 border border-gray-100 dark:border-white/10'
+                          ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30' 
+                          : 'bg-white dark:bg-white/5 text-gray-400 hover:text-brand-600 border border-gray-100 dark:border-white/10'
                       }`}
                     >
                       {pageNum}
@@ -361,7 +361,7 @@ const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom 
       {(modalType === "add" || modalType === "edit") && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
-          <div className="relative bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl border border-white/10">
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl border border-white/10">
             <MedecinModal
               hopitalId={hopitalId}
               onSave={handleCreateMedecin}

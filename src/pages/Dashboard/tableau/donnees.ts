@@ -3,7 +3,7 @@ import { lireOuNull, lireTout } from '../../../api/listes';
 
 export interface PatientL { patient_id: number; sexe?: string; age?: number | null }
 export interface ConsultationL { consultation_id: number; date_consultation: string; motif?: string; patient_nom?: string; patient_prenom?: string; medecin_nom?: string; medecin_prenom?: string }
-export interface RendezVousL { rendez_vous_id: number; date_heure: string; motif?: string; patient_nom?: string; patient_prenom?: string; medecin_nom?: string; medecin_prenom?: string; type_nom?: string; statut_nom?: string; statut_couleur?: string }
+export interface RendezVousL { rendez_vous_id: number; date_heure: string; date_fin?: string; motif?: string; patient_nom?: string; patient_prenom?: string; medecin_nom?: string; medecin_prenom?: string; type_nom?: string; statut_nom?: string; statut_couleur?: string }
 export interface AdmissionL { id: number; date_admission: string; date_sortie?: string | null; statut: string; lit: number; patient: number; motif?: string }
 export interface LitL { id: number; numero_lit: string; statut?: string; chambre: number }
 export interface MedicamentL { medicament_id: number; nom: string; stock_actuel: number; stock_minimum: number; dosage_standard?: string }

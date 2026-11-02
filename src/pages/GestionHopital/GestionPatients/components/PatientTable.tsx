@@ -138,7 +138,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
                     <Tooltip text="Modifier">
                       <button 
                         onClick={() => onEditPatient(patient)}
-                        className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                        className="rounded p-1.5 text-brand-600 hover:bg-brand-50 hover:text-brand-700 dark:text-brand-400 dark:hover:bg-brand-900/20"
                       >
                         <svg
                           width="16"

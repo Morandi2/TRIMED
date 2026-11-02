@@ -216,7 +216,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
               setEditingPaiement(null);
               setShowModal(true);
             }}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold shadow-lg shadow-brand-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="h-5 w-5" />
             Ajouter Paiement
@@ -232,7 +232,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
           { label: 'En attente', value: stats.en_attente, icon: Clock, color: 'orange', sub: 'à traiter' },
           { label: 'Recettes Totales', value: formatMontant(stats.montant_total), icon: DollarSign, color: 'indigo', sub: 'HTG' }
         ].map((stat, i) => (
-          <div key={i} className="group p-6 rounded-3xl bg-white/40 dark:bg-white/[0.03] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
+          <div key={i} className="group p-6 rounded-3xl bg-white dark:bg-white/[0.03] border border-white/20 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
             <div className={`absolute -right-4 -top-4 p-8 opacity-5 group-hover:opacity-10 transition-opacity text-${stat.color}-500`}>
               <stat.icon className="w-24 h-24" />
             </div>
@@ -241,10 +241,10 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
                 <stat.icon className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{stat.label}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">{stat.label}</p>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter">{stat.value}</span>
-                  <span className={`text-[10px] font-black text-${stat.color}-600 bg-${stat.color}-50 dark:bg-${stat.color}-900/20 px-2 py-0.5 rounded-lg border border-${stat.color}-100 dark:border-${stat.color}-900/30 uppercase`}>{stat.sub}</span>
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tighter">{stat.value}</span>
+                  <span className={`text-[10px] font-bold text-${stat.color}-600 bg-${stat.color}-50 dark:bg-${stat.color}-900/20 px-2 py-0.5 rounded-lg border border-${stat.color}-100 dark:border-${stat.color}-900/30 uppercase`}>{stat.sub}</span>
                 </div>
               </div>
             </div>
@@ -253,7 +253,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
       </div>
 
       {/* Main Content */}
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden text-black dark:text-white">
         {/* Filters */}
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
           <div className="flex flex-col lg:flex-row gap-4">
@@ -303,24 +303,24 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
               <Table>
                 <TableHeader className="bg-gray-50/50 dark:bg-white/[0.02]">
                   <TableRow>
-                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">Transaction</TableCell>
-                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Patient</TableCell>
-                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Montant</TableCell>
-                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Méthode</TableCell>
-                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">Status</TableCell>
-                    <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Transaction</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Patient</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Montant</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Méthode</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-center">Status</TableCell>
+                    <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</TableCell>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
                   {currentPaiements.map((paiement) => (
-                    <TableRow key={paiement.paiement_id} className="group hover:bg-white/60 dark:hover:bg-white/[0.03] transition-all">
+                    <TableRow key={paiement.paiement_id} className="group hover:bg-white dark:hover:bg-white/[0.03] transition-all">
                       <TableCell className="py-5 px-6">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100 dark:border-amber-900/30 transition-transform group-hover:scale-110">
                             <DollarSign className="w-6 h-6" />
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-sm font-black uppercase tracking-tight">#{paiement.paiement_id}</span>
+                            <span className="text-sm font-bold uppercase tracking-tight">#{paiement.paiement_id}</span>
                             <span className="text-[10px] font-bold text-gray-400 italic">{paiement.reference || 'REF-GEN'}</span>
                           </div>
                         </div>
@@ -328,7 +328,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
                       <TableCell className="py-5 px-6">
                         <span className="text-sm font-bold uppercase">Patient ID: {paiement.patient_id}</span>
                       </TableCell>
-                      <TableCell className="py-5 px-6 font-black text-gray-900 dark:text-white italic">
+                      <TableCell className="py-5 px-6 font-bold text-gray-900 dark:text-white italic">
                         {formatMontant(paiement.montant)}
                       </TableCell>
                       <TableCell className="py-5 px-6">
@@ -345,7 +345,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
                         <div className="flex justify-end gap-2 transition-all duration-300">
                           <button
                             onClick={() => handleEdit(paiement)}
-                            className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-sm"
+                            className="p-2.5 rounded-xl bg-brand-50 text-brand-600 hover:bg-brand-600 hover:text-white transition-all active:scale-95 shadow-sm"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
@@ -363,10 +363,10 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
               </Table>
               {filteredPaiements.length === 0 && !isLoading && (
                 <div className="py-24 text-center">
-                  <div className="mx-auto w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mb-6">
+                  <div className="mx-auto w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-3xl flex items-center justify-center mb-6">
                     <DollarSign className="w-10 h-10 text-gray-300" />
                   </div>
-                  <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Aucun paiement</h3>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">Aucun paiement</h3>
                   <p className="text-gray-500 dark:text-gray-400 italic font-medium">L'historique des transactions est vide.</p>
                 </div>
               )}

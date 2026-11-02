@@ -458,7 +458,7 @@ export default function GestionConsultations() {
             <Tooltip text="Nouvelle consultation">
               <button
                 onClick={handleAddConsultation}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-brand-700"
               >
                 <svg
                   width="16"
@@ -492,8 +492,8 @@ export default function GestionConsultations() {
         <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
-                <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/20">
+                <svg className="h-6 w-6 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -571,7 +571,7 @@ export default function GestionConsultations() {
                 placeholder="Rechercher par patient, médecin ou numéro..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pl-10 text-theme-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-gray-400 dark:focus:border-blue-500"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pl-10 text-theme-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-gray-400 dark:focus:border-brand-500"
               />
               <svg
                 className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400"
@@ -594,7 +594,7 @@ export default function GestionConsultations() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-blue-500"
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-500"
             >
               {types.map(type => (
                 <option key={type} value={type}>{type}</option>
@@ -604,7 +604,7 @@ export default function GestionConsultations() {
             <select
               value={selectedStatut}
               onChange={(e) => setSelectedStatut(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-blue-500"
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-500"
             >
               {statuts.map(statut => (
                 <option key={statut} value={statut}>{statut}</option>
@@ -614,7 +614,7 @@ export default function GestionConsultations() {
             <select
               value={selectedMedecin}
               onChange={(e) => setSelectedMedecin(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-blue-500"
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-500"
             >
               {medecins.map(medecin => (
                 <option key={medecin} value={medecin}>{medecin}</option>
@@ -750,7 +750,7 @@ export default function GestionConsultations() {
                       <Tooltip text="Modifier">
                         <button
                           onClick={() => handleEdit(consultation)}
-                          className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                          className="rounded p-1.5 text-brand-600 hover:bg-brand-50 hover:text-brand-700 dark:text-brand-400 dark:hover:bg-brand-900/20"
                         >
                           <svg
                             width="16"
@@ -865,7 +865,7 @@ export default function GestionConsultations() {
                         key={page}
                         onClick={() => setCurrentPage(page)}
                         className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${currentPage === page
-                          ? 'bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                          ? 'bg-brand-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600'
                           : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
                           }`}
                       >
@@ -1179,7 +1179,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 <select
                   value={formData.patientId}
                   onChange={(e) => handlePatientChange(parseInt(e.target.value))}
-                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 ${errors.patient ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 ${errors.patient ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                   required
                 >
@@ -1200,7 +1200,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 <select
                   value={formData.medecinId}
                   onChange={(e) => handleMedecinChange(parseInt(e.target.value))}
-                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 ${errors.medecin ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 ${errors.medecin ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                   required
                 >
@@ -1221,7 +1221,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 <select
                   value={formData.salle}
                   onChange={(e) => handleInputChange('salle', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 >
                   {SALLES_CONSULTATION.map(salle => (
                     <option key={salle} value={salle}>{salle}</option>
@@ -1240,7 +1240,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   value={formData.dateConsultation}
                   onChange={(e) => handleInputChange('dateConsultation', e.target.value)}
                   placeholder="JJ/MM/AAAA"
-                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${errors.dateConsultation ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${errors.dateConsultation ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                   required
                 />
@@ -1255,7 +1255,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   type="time"
                   value={formData.heureConsultation}
                   onChange={(e) => handleInputChange('heureConsultation', e.target.value)}
-                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 ${errors.heureConsultation ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 ${errors.heureConsultation ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                     }`}
                   required
                 />
@@ -1269,7 +1269,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 <select
                   value={formData.typeConsultation}
                   onChange={(e) => handleInputChange('typeConsultation', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 >
                   {TYPES_CONSULTATION.map(type => (
                     <option key={type} value={type}>{type}</option>
@@ -1284,7 +1284,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 <select
                   value={formData.statut}
                   onChange={(e) => handleInputChange('statut', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 >
                   {STATUTS_CONSULTATION.map(statut => (
                     <option key={statut} value={statut}>{statut}</option>
@@ -1308,7 +1308,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 onChange={(e) => handleInputChange('motif', e.target.value)}
                 placeholder="Décrivez le motif principal de la consultation..."
                 rows={2}
-                className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${errors.motif ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${errors.motif ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 required
               />
@@ -1325,7 +1325,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   onChange={(e) => handleInputChange('symptomes', e.target.value)}
                   placeholder="Décrivez les symptômes présentés par le patient..."
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
                 />
               </div>
 
@@ -1338,7 +1338,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   onChange={(e) => handleInputChange('antecedents', e.target.value)}
                   placeholder="Antécédents médicaux, chirurgicaux, familiaux..."
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
                 />
               </div>
             </div>
@@ -1359,7 +1359,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   step="0.1"
                   value={formData.poids || ""}
                   onChange={(e) => handleNumericInput('poids', e.target.value, 0.5, 300)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 {getFieldError('poids')}
               </div>
@@ -1372,7 +1372,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   type="number"
                   value={formData.taille || ""}
                   onChange={(e) => handleNumericInput('taille', e.target.value, 30, 250)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 {getFieldError('taille')}
               </div>
@@ -1386,7 +1386,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   value={formData.tensionArterielle}
                   onChange={(e) => handleInputChange('tensionArterielle', e.target.value)}
                   placeholder="120/80"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
                 />
               </div>
 
@@ -1399,7 +1399,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   step="0.1"
                   value={formData.temperature || ""}
                   onChange={(e) => handleNumericInput('temperature', e.target.value, 30, 45)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 {getFieldError('temperature')}
               </div>
@@ -1412,7 +1412,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   type="number"
                   value={formData.frequenceCardiaque || ""}
                   onChange={(e) => handleNumericInput('frequenceCardiaque', e.target.value, 30, 250)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 {getFieldError('frequenceCardiaque')}
               </div>
@@ -1425,7 +1425,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   type="number"
                   value={formData.saturationO2 || ""}
                   onChange={(e) => handleNumericInput('saturationO2', e.target.value, 50, 100)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 {getFieldError('saturationO2')}
               </div>
@@ -1447,7 +1447,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   onChange={(e) => handleInputChange('examenClinique', e.target.value)}
                   placeholder="Résultats de l'examen clinique..."
                   rows={4}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
                 />
               </div>
 
@@ -1460,7 +1460,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   onChange={(e) => handleInputChange('diagnostic', e.target.value)}
                   placeholder="Diagnostic posé..."
                   rows={4}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
                 />
               </div>
             </div>
@@ -1498,21 +1498,21 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 value={newPrescription.medicament}
                 onChange={(e) => setNewPrescription(prev => ({ ...prev, medicament: e.target.value }))}
                 placeholder="Médicament"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
               />
               <input
                 type="text"
                 value={newPrescription.dosage}
                 onChange={(e) => setNewPrescription(prev => ({ ...prev, dosage: e.target.value }))}
                 placeholder="Dosage"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
               />
               <input
                 type="text"
                 value={newPrescription.duree}
                 onChange={(e) => setNewPrescription(prev => ({ ...prev, duree: e.target.value }))}
                 placeholder="Durée"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
               />
               <div className="flex gap-2">
                 <input
@@ -1520,12 +1520,12 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   value={newPrescription.instructions}
                   onChange={(e) => setNewPrescription(prev => ({ ...prev, instructions: e.target.value }))}
                   placeholder="Instructions"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
                 />
                 <button
                   type="button"
                   onClick={addPrescription}
-                  className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
                 >
                   Ajouter
                 </button>
@@ -1579,7 +1579,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
               <select
                 value={newExamen.type}
                 onChange={(e) => setNewExamen(prev => ({ ...prev, type: e.target.value }))}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
               >
                 <option value="">Type d'examen</option>
                 {TYPES_EXAMENS.map(type => (
@@ -1591,7 +1591,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 value={newExamen.description}
                 onChange={(e) => setNewExamen(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Description de l'examen"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
               />
               <div className="flex gap-2">
                 <div className="flex items-center gap-2">
@@ -1600,7 +1600,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                     id="urgent"
                     checked={newExamen.urgent}
                     onChange={(e) => setNewExamen(prev => ({ ...prev, urgent: e.target.checked }))}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                   />
                   <label htmlFor="urgent" className="text-sm text-gray-700 dark:text-gray-300">
                     Urgent
@@ -1609,7 +1609,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 <button
                   type="button"
                   onClick={addExamen}
-                  className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="flex-1 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
                 >
                   Ajouter
                 </button>
@@ -1631,7 +1631,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   type="number"
                   value={formData.dureeConsultation}
                   onChange={(e) => handleNumericInput('dureeConsultation', e.target.value, 5)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 {getFieldError('dureeConsultation')}
               </div>
@@ -1644,7 +1644,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   type="number"
                   value={formData.coutConsultation}
                   onChange={(e) => handleNumericInput('coutConsultation', e.target.value, 0)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 {getFieldError('coutConsultation')}
               </div>
@@ -1655,7 +1655,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                   id="paye"
                   checked={formData.paye}
                   onChange={(e) => handleInputChange('paye', e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                 />
                 <label htmlFor="paye" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Consultation payée
@@ -1672,7 +1672,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 onChange={(e) => handleInputChange('notesMedecin', e.target.value)}
                 placeholder="Notes supplémentaires, recommandations, suivi..."
                 rows={3}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
               />
             </div>
 
@@ -1685,7 +1685,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                 value={formData.prochaineVisite}
                 onChange={(e) => handleInputChange('prochaineVisite', e.target.value)}
                 placeholder="JJ/MM/AAAA"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -1701,7 +1701,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
             >
               {mode === "edit" ? "Modifier" : "Créer"} Consultation
             </button>

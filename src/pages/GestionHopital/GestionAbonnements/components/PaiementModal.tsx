@@ -80,7 +80,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                 required
                 value={formData.montant}
                 onChange={(e) => setFormData(prev => ({ ...prev, montant: parseFloat(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -92,7 +92,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                 required
                 value={formData.methode_id}
                 onChange={(e) => setFormData(prev => ({ ...prev, methode_id: parseInt(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 {methodes.map(methode => (
                   <option key={methode.methode_id} value={methode.methode_id}>
@@ -111,7 +111,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                 required
                 value={formData.date_paiement}
                 onChange={(e) => setFormData(prev => ({ ...prev, date_paiement: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -123,7 +123,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                 required
                 value={formData.statut_id}
                 onChange={(e) => setFormData(prev => ({ ...prev, statut_id: parseInt(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 {statuts.map(statut => (
                   <option key={statut.statut_id} value={statut.statut_id}>
@@ -142,7 +142,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
               type="text"
               value={formData.reference}
               onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
           </div>
 
@@ -156,7 +156,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
               Créer
             </button>

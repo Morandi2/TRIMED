@@ -127,10 +127,10 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           onKeyDown={handleKeyDown}
-          className={`w-full rounded-lg border px-3 py-2 text-sm text-left bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200 ${
-            error ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'
+          className={`w-full rounded-lg border px-3 py-2 text-sm text-left bg-white text-gray-900 focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white transition-all duration-200 ${
+            error ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:border-brand-500'
           } ${
-            isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''
+            isOpen ? 'ring-2 ring-brand-500 border-brand-500' : ''
           }`}
         >
           <div className="flex items-center justify-between">
@@ -170,7 +170,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                   setSearchTerm(e.target.value);
                   setHighlightedIndex(0);
                 }}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white text-gray-900 dark:bg-gray-600 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white text-gray-900 dark:bg-gray-600 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-brand-500 focus:ring-brand-500"
                 autoFocus
               />
             </div>
@@ -190,10 +190,10 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     onClick={() => handleSelect(option)}
                     className={`w-full text-left px-3 py-2 text-sm transition-colors text-gray-900 dark:text-white ${
                       index === highlightedIndex
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
+                        ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-900 dark:text-brand-100'
                         : 'hover:bg-gray-100 dark:hover:bg-gray-600'
                     } ${
-                      option.name === value ? 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-500' : ''
+                      option.name === value ? 'bg-brand-50 dark:bg-brand-900/20 border-l-2 border-brand-500' : ''
                     }`}
                   >
                     <div className="flex flex-col">

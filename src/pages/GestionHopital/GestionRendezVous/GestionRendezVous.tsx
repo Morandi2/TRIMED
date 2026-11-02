@@ -1,3 +1,4 @@
+import { useRechercheUrl } from '../../../hooks/useRechercheUrl';
 import React, { useState, useEffect } from 'react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
@@ -59,6 +60,7 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
     type: 'Tous',
     date: ''
   });
+  useRechercheUrl((terme) => setFilters((f) => ({ ...f, searchTerm: terme })));
   const [currentPage, setCurrentPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editingRendezVous, setEditingRendezVous] = useState<RendezVous | null>(null);
@@ -218,12 +220,12 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
   return (
     <div className="min-h-screen pb-12">
       {/* Header Premium */}
-      <div className="relative mb-10 p-8 rounded-[2rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="relative mb-10 p-8 rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden text-black dark:text-white">
         
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20">
+              <div className="p-2 bg-brand-600 rounded-xl shadow-lg shadow-brand-600/20">
                 <Calendar className="h-6 w-6 text-white" />
               </div>
               <h1 className="font-marque text-xl sm:text-2xl">
@@ -240,7 +242,7 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
             onClick={() => { setEditingRendezVous(null); setShowModal(true); }}
             disabled={!configReady}
             title={configReady ? undefined : "Configuration des rendez-vous indisponible côté serveur"}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-2xl font-bold shadow-lg shadow-brand-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="h-5 w-5" />
             Ajouter Rendez-vous
@@ -262,18 +264,18 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
       <RendezVousStats stats={stats} />
 
       {/* Main Content Container */}
-      <div className="rounded-[2rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden text-black dark:text-white">
         {/* Filters and Search */}
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
               <input
                 type="text"
                 placeholder="Rechercher un patient, un médecin ou un motif..."
                 value={filters.searchTerm}
                 onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
-                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-black dark:text-white"
+                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all outline-none text-black dark:text-white"
               />
             </div>
             
@@ -308,36 +310,36 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
           <Table>
             <TableHeader className="bg-gray-50/50 dark:bg-white/[0.02]">
               <TableRow>
-                <TableCell isHeader className="py-4 px-6 text-theme-xs font-black text-gray-500 uppercase tracking-widest">Aperçu</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-theme-xs font-black text-gray-500 uppercase tracking-widest text-left">Bénéficiaire</TableCell>
-                <th className="px-6 py-4 text-theme-xs font-black text-gray-500 uppercase tracking-widest text-left">Praticien Responsable</th>
-                <TableCell isHeader className="py-4 px-6 text-theme-xs font-black text-gray-500 uppercase tracking-widest">Détails Du Motif</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-theme-xs font-black text-gray-500 uppercase tracking-widest text-right">Actions</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-theme-xs font-bold text-gray-500 uppercase tracking-widest">Aperçu</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-theme-xs font-bold text-gray-500 uppercase tracking-widest text-left">Bénéficiaire</TableCell>
+                <th className="px-6 py-4 text-theme-xs font-bold text-gray-500 uppercase tracking-widest text-left">Praticien Responsable</th>
+                <TableCell isHeader className="py-4 px-6 text-theme-xs font-bold text-gray-500 uppercase tracking-widest">Détails Du Motif</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-theme-xs font-bold text-gray-500 uppercase tracking-widest text-right">Actions</TableCell>
               </TableRow>
             </TableHeader>
 
             <TableBody>
                 {currentRendezVous.map((rdv) => (
-                  <TableRow key={rdv.rendez_vous_id} className="group hover:bg-white/60 dark:hover:bg-white/[0.03] transition-colors">
+                  <TableRow key={rdv.rendez_vous_id} className="group hover:bg-white dark:hover:bg-white/[0.03] transition-colors">
                     <TableCell className="py-5 px-6">
                       <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-500">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-900/20 text-brand-500">
                           <CalendarDays className="h-6 w-6" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-theme-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">#{rdv.rendez_vous_id}</span>
+                          <span className="text-theme-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">#{rdv.rendez_vous_id}</span>
                           <span className="text-theme-xs text-gray-500 italic uppercase">{formatDate(rdv.date_heure)}</span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="py-5 px-6">
                       <div className="flex flex-col">
-                        <span className="text-theme-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{rdv.patient_nom}</span>
+                        <span className="text-theme-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{rdv.patient_nom}</span>
                       </div>
                     </TableCell>
                     <TableCell className="py-5 px-6">
                       <div className="flex flex-col">
-                        <span className="text-theme-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{rdv.medecin_nom}</span>
+                        <span className="text-theme-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{rdv.medecin_nom}</span>
                       </div>
                     </TableCell>
                     <TableCell className="py-5 px-6">
@@ -397,7 +399,7 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <div className="flex items-center px-4 py-2 rounded-xl bg-blue-600 text-white font-black text-sm shadow-lg shadow-blue-600/20">
+              <div className="flex items-center px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm shadow-lg shadow-brand-600/20">
                 {currentPage} / {totalPages}
               </div>
               <button 
@@ -415,7 +417,7 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
       {/* Modal RendezVous Progress */}
       {showModal && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-[2rem] shadow-2xl overflow-hidden h-[90vh]">
+          <div className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden h-[90vh]">
             <RendezVousProgressForm
               tenantId={tenantId}
               onSave={handleSave}

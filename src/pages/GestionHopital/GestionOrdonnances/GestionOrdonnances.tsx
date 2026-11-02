@@ -164,7 +164,7 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20">
+              <div className="p-2 bg-brand-600 rounded-xl shadow-lg shadow-brand-600/20">
                 <FileText className="h-6 w-6 text-white" />
               </div>
               <h1 className="font-marque text-xl sm:text-2xl">
@@ -172,14 +172,14 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
               {hopitalNom || "Votre hôpital"}
             </p>
           </div>
 
           <button
             onClick={handleNouvelleOrdonnance}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold shadow-lg shadow-brand-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="h-5 w-5" />
             Ajouter Ordonnance
@@ -190,22 +190,22 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
       <OrdonnanceStats ordonnances={ordonnances} />
 
       {/* Main Content Container */}
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden">
         {/* Filters and Search */}
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
               <input
                 type="text"
                 placeholder="Rechercher par patient, médecin ou validité..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-black/20 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-black dark:text-white placeholder:text-gray-400"
+                className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-black/20 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all font-medium text-black dark:text-white placeholder:text-gray-400"
               />
             </div>
-            <div className="flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-2xl">
-              <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+            <div className="flex items-center px-4 py-2 bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 rounded-2xl">
+              <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest">
                 {filteredOrdonnances.length} PRESCRIPTIONS
               </span>
             </div>
@@ -217,22 +217,22 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
           <Table>
             <TableHeader className="bg-gray-50/50 dark:bg-white/[0.02]">
               <TableRow>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Patient & Médecin</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Date & Validité</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Patient & Médecin</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Date & Validité</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</TableCell>
               </TableRow>
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
               {currentOrdonnances.map((ordonnance) => (
-                <TableRow key={ordonnance.ordonnance_id} className="group hover:bg-white/60 dark:hover:bg-white/[0.03] transition-all">
+                <TableRow key={ordonnance.ordonnance_id} className="group hover:bg-white dark:hover:bg-white/[0.03] transition-all">
                   <TableCell className="py-5 px-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm border border-blue-100 dark:border-blue-900/30 transition-transform group-hover:scale-110">
+                      <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 shadow-sm border border-brand-100 dark:border-brand-900/30 transition-transform group-hover:scale-110">
                         <FileText className="w-6 h-6" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">
+                        <span className="text-sm font-bold uppercase tracking-tight text-gray-900 dark:text-white">
                           {ordonnance.patient_nom || ordonnanceService.obtenirNomPatient(ordonnance.patient_id)}
                         </span>
                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400 italic">
@@ -247,7 +247,7 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         <Clock className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="text-sm font-black italic text-gray-800 dark:text-gray-200">{formatDateTimeFR(ordonnance.date_ordonnance)}</span>
+                        <span className="text-sm font-bold italic text-gray-800 dark:text-gray-200">{formatDateTimeFR(ordonnance.date_ordonnance)}</span>
                       </div>
                       <Badge 
                         color={ordonnance.validite?.toLowerCase().includes('expire') ? 'error' : 'success'}
@@ -278,7 +278,7 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
                       </button>
                       <button 
                         onClick={() => handleModifierOrdonnance(ordonnance.ordonnance_id)}
-                        className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-sm"
+                        className="p-2.5 rounded-xl bg-brand-50 text-brand-600 hover:bg-brand-600 hover:text-white transition-all active:scale-95 shadow-sm"
                         title="Modifier"
                       >
                         <Pencil className="h-4 w-4" />
@@ -302,7 +302,7 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
               <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-inner mb-4">
                 <FileText className="h-12 w-12 text-gray-300 dark:text-gray-700" />
               </div>
-              <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Aucune ordonnance</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tight">Aucune ordonnance</h3>
               <p className="text-gray-500 dark:text-gray-400 font-medium italic">Essayez de changer vos critères de recherche.</p>
             </div>
           )}
@@ -326,7 +326,7 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <div className="flex items-center px-4 py-2 rounded-xl bg-blue-600 text-white font-black text-sm shadow-lg shadow-blue-600/20">
+              <div className="flex items-center px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-sm shadow-lg shadow-brand-600/20">
                 {currentPage} / {totalPages}
               </div>
               <button 
@@ -352,14 +352,14 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
       {/* Modal de visualisation Premium */}
       {modalType === 'view' && selectedOrdonnance && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className="relative bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/20">
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/20">
             <div className="p-8 border-b border-gray-100 dark:border-white/[0.05]">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                    <div className="p-2 bg-green-500 rounded-xl shadow-lg shadow-green-500/20">
                      <Eye className="h-5 w-5 text-white" />
                    </div>
-                   <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight text-left">Détails de l'Ordonnance</h2>
+                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight text-left">Détails de l'Ordonnance</h2>
                 </div>
                 <button onClick={closeModal} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                   <X className="w-6 h-6" />
@@ -370,13 +370,13 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
             <div className="p-8 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 text-left">
                 <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05]">
-                  <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2">Patient</p>
+                  <p className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest mb-2">Patient</p>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">
                     {selectedOrdonnance.patient_nom || ordonnanceService.obtenirNomPatient(selectedOrdonnance.patient_id)}
                   </p>
                 </div>
                 <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05]">
-                  <p className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-2">Médecin Prescripteur</p>
+                  <p className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-2">Médecin Prescripteur</p>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">
                     {selectedOrdonnance.medecin_nom || ordonnanceService.obtenirNomMedecin(selectedOrdonnance.medecin_id)}
                   </p>
@@ -385,14 +385,14 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
 
               <div className="space-y-6 text-left">
                 <div>
-                  <h4 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest mb-4 border-l-4 border-blue-600 pl-3">Contenu de l'ordonnance</h4>
+                  <h4 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-4 border-l-4 border-brand-600 pl-3">Contenu de l'ordonnance</h4>
                   {selectedOrdonnance.prescriptions && selectedOrdonnance.prescriptions.length > 0 ? (
                     <div className="space-y-3">
                       {selectedOrdonnance.prescriptions.map((p, idx) => (
                         <div key={idx} className="p-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm">
                           <div className="flex justify-between mb-1">
-                            <p className="font-black text-gray-900 dark:text-white">{p.medicament}</p>
-                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-lg">{p.dosage}</span>
+                            <p className="font-bold text-gray-900 dark:text-white">{p.medicament}</p>
+                            <span className="text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-2.5 py-1 rounded-lg">{p.dosage}</span>
                           </div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">{p.duree} • {p.instructions}</p>
                         </div>
@@ -405,7 +405,7 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
 
                 {selectedOrdonnance.recommandations && (
                   <div>
-                    <h4 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest mb-2 border-l-4 border-amber-500 pl-3">Recommandations</h4>
+                    <h4 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest mb-2 border-l-4 border-amber-500 pl-3">Recommandations</h4>
                     <div className="p-6 rounded-3xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
                       <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
                         {selectedOrdonnance.recommandations}

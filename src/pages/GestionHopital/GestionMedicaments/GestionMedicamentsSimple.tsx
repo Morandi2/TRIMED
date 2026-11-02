@@ -78,7 +78,7 @@ export default function GestionMedicamentsSimple({ tenantId }: { tenantId: numbe
             </p>
           </div>
 
-          <button onClick={handleNewMedicament} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+          <button onClick={handleNewMedicament} className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-700">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -93,7 +93,7 @@ export default function GestionMedicamentsSimple({ tenantId }: { tenantId: numbe
             placeholder="Rechercher par nom ou code..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
           />
         </div>
 
@@ -149,7 +149,7 @@ export default function GestionMedicamentsSimple({ tenantId }: { tenantId: numbe
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleModifier(medicament.id)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                      <button onClick={() => handleModifier(medicament.id)} className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300">
                         Modifier
                       </button>
                       <button onClick={() => handleSupprimer(medicament.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">

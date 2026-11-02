@@ -20,7 +20,7 @@ export default function Logotype({ taille = 'md', inverse = false, slogan = fals
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <Symbole taille={t.symbole} corps={inverse ? '#ffffff' : undefined} visage={inverse ? 'var(--color-trimed-indigo)' : undefined} vivant titre="" />
-      <span className="flex flex-col leading-none">
+      <span className="flex flex-col text-left leading-none">
         <span className={`font-marque font-extrabold tracking-tight ${t.texte}`} style={{ fontVariationSettings: "'wdth' 112.5" }}>
           <span className={inverse ? 'text-white' : 'text-trimed-vert'}>TRI</span>
           <span className={inverse ? 'text-white' : 'text-trimed-indigo'}>MED</span>

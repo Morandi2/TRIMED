@@ -64,7 +64,7 @@ export default function GestionTenants() {
       case 'premium':
         return <span className="text-purple-600 font-bold">👑 Premium</span>;
       case 'standard':
-        return <span className="text-blue-600 font-semibold">★ Standard</span>;
+        return <span className="text-brand-600 font-semibold">★ Standard</span>;
       default:
         return <span className="text-gray-500 font-medium">Basic</span>;
     }
@@ -155,7 +155,7 @@ export default function GestionTenants() {
                         {tenant.statut !== 'actif' && (
                           <Button 
                             size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white text-xs shadow-none"
+                            className="bg-brand-500 hover:bg-brand-600 text-white text-xs shadow-none"
                             onClick={() => handleStatusUpdate(tenant.id, 'actif')}
                           >
                             Activer

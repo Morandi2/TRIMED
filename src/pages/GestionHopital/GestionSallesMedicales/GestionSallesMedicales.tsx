@@ -107,7 +107,7 @@ const GestionSallesMedicales: React.FC<Props> = ({ tenantId, hopitalNom }) => {
 
   return (
     <div className="min-h-screen pb-12 space-y-8">
-      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm text-black dark:text-white">
+      <div className="relative p-8 rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm text-black dark:text-white">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-brand-500 rounded-xl">
             <DoorOpen className="h-6 w-6 text-white" />
@@ -120,7 +120,7 @@ const GestionSallesMedicales: React.FC<Props> = ({ tenantId, hopitalNom }) => {
         </p>
       </div>
 
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm p-6 text-black dark:text-white">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm p-6 text-black dark:text-white">
         <div className="flex gap-2 mb-6 border-b border-gray-100 dark:border-white/[0.05]">
           {tabs.map((t) => (
             <button

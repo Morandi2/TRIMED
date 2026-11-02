@@ -5,12 +5,16 @@ import { ChevronRight } from "lucide-react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
+
+const CLE_EMAIL = "trimed-adresse-memorisee";
 import { useAuth } from "../../context/AuthContext";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
-  const [email, setEmail] = useState("");
+  // « Se souvenir de mon adresse » : seule l’adresse est gardée sur cet appareil, jamais le mot de passe.
+  const memorisee = (() => { try { return localStorage.getItem(CLE_EMAIL) || ""; } catch { return ""; } })();
+  const [isChecked, setIsChecked] = useState(!!memorisee);
+  const [email, setEmail] = useState(memorisee);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoadingLocal, setIsLoadingLocal] = useState(false);
@@ -36,6 +40,7 @@ export default function SignInForm() {
 
     setIsLoadingLocal(true);
     try {
+      try { if (isChecked) localStorage.setItem(CLE_EMAIL, email.trim()); else localStorage.removeItem(CLE_EMAIL); } catch { /* stockage indisponible */ }
       const result = await login(email, password);
       if (result.success) {
         navigate(result.redirectTo || "/home");
@@ -129,7 +134,7 @@ export default function SignInForm() {
             className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
           />
           <label className="ml-2.5 block text-xs font-medium text-gray-500 dark:text-gray-400 cursor-pointer" onClick={() => setIsChecked(!isChecked)}>
-            Rester connecté pendant 30 jours
+            Se souvenir de mon adresse e-mail
           </label>
         </div>
 

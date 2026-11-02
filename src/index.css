@@ -817,3 +817,9 @@ span.flatpickr-weekday,
 .simplebar-scrollbar.simplebar-visible:before {
   @apply opacity-100;
 }
+
+/* Calendrier : bouton « Aujourd’hui » et événements aux couleurs TRIMED */
+.custom-calendar .fc .fc-today-button { background: var(--color-brand-500); border-color: var(--color-brand-500); opacity: 1; }
+.custom-calendar .fc .fc-today-button:disabled { background: var(--color-brand-200); border-color: var(--color-brand-200); }
+.custom-calendar .fc .fc-daygrid-block-event { border-radius: 6px; padding: 1px 4px; font-size: 12px; }
+.custom-calendar .fc .fc-day-today { background: color-mix(in oklab, var(--color-brand-500) 6%, transparent); }

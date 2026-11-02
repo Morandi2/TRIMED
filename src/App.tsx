@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Portail from "./pages/index/portail/Portail";
 import { reveillerServeur } from "./utils/reveilServeur";
+import { modules } from "./routes/modules";
 
 // Le portail est la seule page chargée d’emblée. Les autres pages (et leurs bibliothèques :
 // graphiques, calendrier…) ne sont téléchargées que lorsqu’on les ouvre.
@@ -23,20 +24,20 @@ const AppLayout = lazy(() => import("./layout/AppLayout"));
 const RoleBasedHome = lazy(() => import("./pages/Dashboard/RoleBasedHome"));
 const Utilisateur = lazy(() => import("./pages/Dashboard/Utilisateur"));
 const GestionTenants = lazy(() => import("./pages/AdminPortal/GestionTenants"));
-const Patient = lazy(() => import("./pages/GestionHopital/Patient"));
-const Consultation = lazy(() => import("./pages/GestionHopital/Consultation"));
-const Medecin = lazy(() => import("./pages/GestionHopital/Medecin"));
-const Medicament = lazy(() => import("./pages/GestionHopital/Medicament"));
-const Ordonnance = lazy(() => import("./pages/GestionHopital/Ordonnance"));
-const Examen = lazy(() => import("./pages/GestionHopital/Examen"));
-const Hospitalisation = lazy(() => import("./pages/GestionHopital/Hospitalisation"));
+const Patient = lazy(modules.patient);
+const Consultation = lazy(modules.consultation);
+const Medecin = lazy(modules.medecin);
+const Medicament = lazy(modules.medicament);
+const Ordonnance = lazy(modules.ordonnance);
+const Examen = lazy(modules.examen);
+const Hospitalisation = lazy(modules.hospitalisation);
 const SallesMedicales = lazy(() => import("./pages/GestionHopital/SallesMedicales"));
 const Paiement = lazy(() => import("./pages/GestionHopital/Paiement"));
-const RendezVous = lazy(() => import("./pages/GestionHopital/RendezVous"));
+const RendezVous = lazy(modules.rendezVous);
 const Configuration = lazy(() => import("./pages/GestionHopital/Configuration"));
 const AuditLogPage = lazy(() => import("./pages/GestionHopital/GestionUtilisateur/pages").then((m) => ({ default: m.AuditLogPage })));
 const UserProfiles = lazy(() => import("./pages/UserProfiles"));
-const Calendar = lazy(() => import("./pages/Calendar"));
+const Calendar = lazy(modules.calendrier);
 
 function Chargement({ pleinEcran = false }: { pleinEcran?: boolean }) {
   return (

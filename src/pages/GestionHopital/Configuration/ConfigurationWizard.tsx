@@ -105,7 +105,7 @@ export const ConfigurationWizard = () => {
                     type="button"
                     onClick={() => aller(i)}
                     aria-current={active ? 'step' : undefined}
-                    className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors ${active ? 'bg-white shadow-sm ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800' : 'hover:bg-white/60 dark:hover:bg-white/5'}`}
+                    className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors ${active ? 'bg-white shadow-sm ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800' : 'hover:bg-white dark:hover:bg-white/5'}`}
                   >
                     <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${active ? 'bg-trimed-indigo text-white' : faite ? 'bg-trimed-vert text-white' : 'bg-gray-100 text-gray-500 dark:bg-gray-800'}`}>
                       {faite ? <Check className="h-4 w-4" aria-hidden="true" /> : <Icone className="h-4 w-4" aria-hidden="true" />}
@@ -121,7 +121,7 @@ export const ConfigurationWizard = () => {
           </ol>
         </nav>
 
-        <section className="rounded-3xl border border-gray-200 bg-white/80 p-5 sm:p-8 dark:border-gray-800 dark:bg-gray-900/60" aria-labelledby="titre-etape">
+        <section className="rounded-3xl border border-gray-200 bg-white p-5 sm:p-8 dark:border-gray-800 dark:bg-gray-900" aria-labelledby="titre-etape">
           <p className="text-xs uppercase tracking-[0.2em] text-trimed-indigo">Étape {etape + 1} sur {ETAPES.length}</p>
           <h2 id="titre-etape" className="mt-1 mb-6 font-marque text-lg text-gray-900 dark:text-white">{ETAPES[etape].titre}</h2>
 

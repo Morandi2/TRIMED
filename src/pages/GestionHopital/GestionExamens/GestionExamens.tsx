@@ -121,7 +121,7 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
           {canEdit && (
             <button
               onClick={() => setPrescrireOpen(true)}
-              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-green-600/20"
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-brand-500/20"
             >
               <Plus className="h-5 w-5" />
               Prescrire un examen
@@ -137,15 +137,15 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
           { label: 'En attente', value: stats.attente, color: 'text-amber-600' },
           { label: 'Avec résultat', value: stats.resultat, color: 'text-green-600' },
         ].map((s) => (
-          <div key={s.label} className="p-5 rounded-2xl bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl">
-            <p className="text-xs font-black uppercase tracking-widest text-gray-400">{s.label}</p>
-            <p className={`text-3xl font-black mt-1 ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="p-5 rounded-2xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400">{s.label}</p>
+            <p className={`text-3xl font-bold mt-1 ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Main */}
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden text-black dark:text-white">
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05] flex flex-col lg:flex-row gap-4">
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -179,7 +179,7 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/[0.05]">
+                <tr className="text-left text-xs font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/[0.05]">
                   <th className="px-6 py-4">Patient</th>
                   <th className="px-6 py-4">Examen</th>
                   <th className="px-6 py-4">Catégorie</th>
@@ -345,7 +345,7 @@ const PrescrireModal: React.FC<{
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg p-8 shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-black text-gray-900 dark:text-white">Prescrire un examen</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Prescrire un examen</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">
             <X className="h-5 w-5 text-gray-400" />
           </button>
@@ -389,7 +389,7 @@ const PrescrireModal: React.FC<{
         </div>
         <div className="flex gap-3 mt-8">
           <button onClick={onClose} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300">Annuler</button>
-          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold disabled:opacity-50">
+          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold disabled:opacity-50">
             {saving ? 'Enregistrement...' : 'Prescrire'}
           </button>
         </div>
@@ -431,7 +431,7 @@ const ResultatModal: React.FC<{
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg p-8 shadow-2xl border border-white/10">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-black text-gray-900 dark:text-white">Résultat d'examen</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Résultat d'examen</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">
             <X className="h-5 w-5 text-gray-400" />
           </button>

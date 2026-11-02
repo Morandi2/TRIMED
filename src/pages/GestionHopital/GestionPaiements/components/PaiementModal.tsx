@@ -111,7 +111,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                 required
                 value={formData.patient_id}
                 onChange={(e) => setFormData(prev => ({ ...prev, patient_id: parseInt(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -123,7 +123,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                 type="number"
                 value={formData.consultation_id || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, consultation_id: e.target.value ? parseInt(e.target.value) : undefined }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -137,7 +137,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                 required
                 value={formData.montant}
                 onChange={(e) => setFormData(prev => ({ ...prev, montant: parseFloat(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -157,7 +157,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                     methode_id: methode ? methode.methode_id : prev.methode_id
                   }));
                 }}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 {methodes.map(methode => (
                   <option key={methode.methode_id} value={methode.nom}>
@@ -183,7 +183,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                     statut_id: statutObj ? statutObj.statut_id : prev.statut_id
                   }));
                 }}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 {statuts.map(statut => (
                   <option key={statut.statut_id} value={statut.nom}>
@@ -202,7 +202,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
                 required
                 value={formData.date_paiement}
                 onChange={(e) => setFormData(prev => ({ ...prev, date_paiement: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
           </div>
@@ -215,7 +215,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
               type="text"
               value={formData.reference}
               onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
           </div>
 
@@ -227,7 +227,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
               rows={3}
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
           </div>
 
@@ -242,7 +242,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSubmitting ? (
                 <>

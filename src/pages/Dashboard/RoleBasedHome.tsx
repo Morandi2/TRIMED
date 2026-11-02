@@ -8,6 +8,7 @@ import TrimedAdminDashboard from './TrimedAdminDashboard';
 import TableauPersonnel from './TableauPersonnel';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { hopitalDejaConfigure, marquerHopitalConfigure } from '../GestionHopital/Configuration/etat';
+import { prechargerModules } from '../../routes/modules';
 
 export default function RoleBasedHome() {
   const { currentUserRole: role, permissions } = useUser();
@@ -30,6 +31,10 @@ export default function RoleBasedHome() {
     });
     return () => { annule = true; };
   }, [permissions.canConfigurerHopital, user?.hopital_id, navigate]);
+
+  // Une fois le tableau de bord affiché, les modules du rôle se chargent en arrière-plan :
+  // ils s’ouvrent ensuite sans attente.
+  useEffect(() => { if (role !== 'admin-systeme') prechargerModules(permissions); }, [role, permissions]);
 
   if (isLoading) {
     return <LoadingSpinner />;

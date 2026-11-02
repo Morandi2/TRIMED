@@ -188,7 +188,7 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
           {useUser().permissions.canEditPatients && (
             <button
               onClick={handleAddPatient}
-              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-green-600/20"
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-brand-500/20"
             >
               <Plus className="h-5 w-5" />
               Ajouter Patient
@@ -200,7 +200,7 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
       <PatientStats patients={patients} />
 
       {/* Main Container */}
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden text-black dark:text-white">
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1 group">
@@ -216,7 +216,7 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-black/20 border border-gray-100 dark:border-gray-800 rounded-2xl">
                 <Users2 className="h-4 w-4 text-gray-400" />
-                <span className="text-xs font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest">
+                <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest">
                   {filteredPatients.length} DOSSIERS
                 </span>
               </div>
@@ -293,7 +293,7 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
       {(modalType === "add" || modalType === "edit") && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
-          <div className="relative bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-5xl h-[90vh] overflow-hidden shadow-2xl border border-white/10">
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-5xl h-[90vh] overflow-hidden shadow-2xl border border-white/10">
             <PatientProgressForm
               hopitalId={hopitalId}
               onSave={handleCreatePatient}

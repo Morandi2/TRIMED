@@ -194,14 +194,14 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
             onClick={() => setCurrentStep(step)}
             className={`flex flex-col items-center transition-all duration-200 ${
               step <= currentStep 
-                ? 'text-blue-600 dark:text-blue-400' 
+                ? 'text-brand-600 dark:text-brand-400' 
                 : 'text-gray-400 dark:text-gray-500'
             }`}
           >
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${
                 step <= currentStep 
-                  ? 'bg-blue-600 border-blue-600 text-white' 
+                  ? 'bg-brand-600 border-brand-600 text-white' 
                   : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
               }`}
             >
@@ -217,14 +217,14 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
       </div>
       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
         <div
-          className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+          className="bg-brand-600 h-2 rounded-full transition-all duration-500"
           style={{ width: `${(currentStep / totalSteps) * 100}%` }}
         ></div>
       </div>
     </div>
   );
 
-  const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200";
+  const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200";
   const errorInputClass = "w-full px-4 py-3 border border-red-500 dark:border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200";
   const errorTextClass = "text-red-500 dark:text-red-400 text-sm mt-1";
 
@@ -252,8 +252,8 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
         <div className="p-6">
             {currentStep === 1 && (
               <div className="space-y-6">
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-6">Participants à la Consultation</h3>
+                <div className="bg-brand-50 dark:bg-brand-900/20 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-brand-800 dark:text-brand-300 mb-6">Participants à la Consultation</h3>
                 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <SearchableSelect
@@ -424,7 +424,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
                 disabled={!isCurrentStepValid}
                 className={`px-6 py-3 rounded-lg font-medium transition-colors ${
                   isCurrentStepValid
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'bg-brand-600 text-white hover:bg-brand-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                 }`}
               >

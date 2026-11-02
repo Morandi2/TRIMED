@@ -136,8 +136,8 @@ export const PatientDetailModal: React.FC<PatientModalProps> = ({
     >
       <div className="space-y-6">
         {/* Informations Personnelles */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
-          <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-4 text-lg">Informations Personnelles</h4>
+        <div className="bg-brand-50 dark:bg-brand-900/20 p-6 rounded-lg">
+          <h4 className="font-semibold text-brand-800 dark:text-brand-300 mb-4 text-lg">Informations Personnelles</h4>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <span className="text-sm text-gray-700 dark:text-gray-400">ID Patient:</span>

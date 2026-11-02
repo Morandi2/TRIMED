@@ -160,7 +160,7 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20">
+              <div className="p-2 bg-brand-600 rounded-xl shadow-lg shadow-brand-600/20">
                 <FileText className="h-6 w-6 text-white" />
               </div>
               <h1 className="font-marque text-xl sm:text-2xl">
@@ -168,14 +168,14 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
               {hopitalNom || "Votre hôpital"}
             </p>
           </div>
 
           <button 
             onClick={handleNouvelleConsultation}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold shadow-lg shadow-brand-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="h-5 w-5" />
             Ajouter Consultation
@@ -187,22 +187,22 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
       <ConsultationStats consultations={consultations} />
 
       {/* Glass Container for Table & Filters */}
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden">
         {/* Filters Bar */}
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="flex-1 w-full relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors w-5 h-5" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-600 transition-colors w-5 h-5" />
               <input
                 type="text"
                 placeholder="Rechercher un dossier, médecin ou symptôme..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-black/20 focus:ring-2 focus:ring-blue-600/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-black/20 focus:ring-2 focus:ring-brand-600/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
               />
             </div>
-            <div className="flex items-center gap-3 text-[10px] font-black text-gray-400 bg-gray-100/50 dark:bg-white/5 px-5 py-3 rounded-xl uppercase tracking-widest border border-gray-100 dark:border-white/5">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></div>
+            <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400 bg-gray-100/50 dark:bg-white/5 px-5 py-3 rounded-xl uppercase tracking-widest border border-gray-100 dark:border-white/5">
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-600 animate-pulse"></div>
               {filteredConsultations.length} RÉSULTATS
             </div>
           </div>
@@ -213,11 +213,11 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50/50 dark:bg-white/[0.02]">
-                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Bénéficiaire</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Praticien Responsable</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Session Temporelle</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Motif / Diagnostic</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Bénéficiaire</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Praticien Responsable</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Session Temporelle</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-left">Motif / Diagnostic</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
@@ -231,7 +231,7 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
                 <tr>
                   <td colSpan={5} className="py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <div className="w-20 h-20 bg-gray-50 dark:bg-white/5 rounded-[2rem] flex items-center justify-center mb-4">
+                      <div className="w-20 h-20 bg-gray-50 dark:bg-white/5 rounded-3xl flex items-center justify-center mb-4">
                         <FileText className="w-10 h-10 text-gray-300" />
                       </div>
                       <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-[10px]">Aucune session trouvée</p>
@@ -241,21 +241,21 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
               ) : (
                 filteredConsultations.map((consultation) => {
                   const patientName = consultation.patient_nom || consultationService.obtenirNomPatient(consultation.patient_id);
-                  const colors = ['bg-blue-500', 'bg-purple-500', 'bg-brand-500', 'bg-emerald-500', 'bg-amber-500'];
+                  const colors = ['bg-brand-500', 'bg-purple-500', 'bg-brand-500', 'bg-emerald-500', 'bg-amber-500'];
                   const avatarColor = colors[patientName.length % colors.length];
 
                   return (
-                    <tr key={consultation.consultation_id} className="hover:bg-white/60 dark:hover:bg-white/[0.03] transition-all duration-200 group">
+                    <tr key={consultation.consultation_id} className="hover:bg-white dark:hover:bg-white/[0.03] transition-all duration-200 group">
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-2xl ${avatarColor} flex items-center justify-center text-white font-black text-sm shadow-lg ring-4 ring-white/50 dark:ring-transparent transition-transform group-hover:scale-110`}>
+                          <div className={`w-12 h-12 rounded-2xl ${avatarColor} flex items-center justify-center text-white font-bold text-sm shadow-lg ring-4 ring-white/50 dark:ring-transparent transition-transform group-hover:scale-110`}>
                             {patientName.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                            <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">
                               {patientName}
                             </span>
-                            <span className="text-[10px] font-bold text-blue-500 uppercase">Consultation #{consultation.consultation_id}</span>
+                            <span className="text-[10px] font-bold text-brand-500 uppercase">Consultation #{consultation.consultation_id}</span>
                           </div>
                         </div>
                       </td>
@@ -271,10 +271,10 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex flex-col">
-                          <span className="text-sm font-black text-gray-900 dark:text-gray-100">
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
                             {consultation.date_consultation ? new Date(consultation.date_consultation).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                           </span>
-                          <span className="text-[10px] text-gray-400 font-black uppercase tracking-tighter italic">
+                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter italic">
                             {consultation.date_consultation ? new Date(consultation.date_consultation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
                           </span>
                         </div>
@@ -288,7 +288,7 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
                               'primary'
                             }
                             size="sm"
-                            className="w-fit font-black uppercase tracking-widest text-[9px] py-1 px-3 rounded-lg"
+                            className="w-fit font-bold uppercase tracking-widest text-[9px] py-1 px-3 rounded-lg"
                           >
                             {consultation.motif}
                           </Badge>
@@ -303,7 +303,7 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
                         <div className="flex justify-end gap-2 transition-all duration-300">
                           <button 
                             onClick={() => handleVoirConsultation(consultation.consultation_id)}
-                            className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all active:scale-90"
+                            className="p-2.5 rounded-xl bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 hover:bg-brand-600 hover:text-white transition-all active:scale-90"
                             title="Voir"
                           >
                             <Eye className="w-4 h-4" />
@@ -345,21 +345,21 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
       {modalType === 'view' && selectedConsultation && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
-          <div className="relative bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/10">
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/10">
             <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-transparent">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-600 rounded-2xl">
+                <div className="p-3 bg-brand-600 rounded-2xl">
                   <Eye className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Détails de la Session</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">Détails de la Session</h2>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Consultation #{selectedConsultation.consultation_id}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => handlePrintConsultation(selectedConsultation)}
-                  className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+                  className="p-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center gap-2"
                 >
                   <Printer className="w-5 h-5" />
                 </button>
@@ -373,14 +373,14 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Patient</label>
-                    <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Patient</label>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tight truncate">
                       {selectedConsultation.patient_nom || consultationService.obtenirNomPatient(selectedConsultation.patient_id)}
                     </p>
                   </div>
                   <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Praticien</label>
-                    <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Praticien</label>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tight truncate">
                       {selectedConsultation.medecin_nom || consultationService.obtenirNomMedecin(selectedConsultation.medecin_id)}
                     </p>
                   </div>
@@ -389,16 +389,16 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
                 <div className="space-y-6">
                   <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 flex items-center justify-between">
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Date & Heure</label>
-                      <p className="font-black text-gray-900 dark:text-white">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Date & Heure</label>
+                      <p className="font-bold text-gray-900 dark:text-white">
                         {formatDateTimeFR(selectedConsultation.date_consultation)}
                       </p>
                     </div>
-                    <Calendar className="w-8 h-8 text-blue-500 opacity-20" />
+                    <Calendar className="w-8 h-8 text-brand-500 opacity-20" />
                   </div>
-                  <div className="p-6 rounded-3xl bg-blue-600 shadow-xl shadow-blue-600/20">
-                    <label className="text-[10px] font-black text-white/60 uppercase tracking-widest block mb-1">Motif Principal</label>
-                    <p className="font-black text-white text-lg tracking-tight">
+                  <div className="p-6 rounded-3xl bg-brand-600 shadow-xl shadow-brand-600/20">
+                    <label className="text-[10px] font-bold text-white/60 uppercase tracking-widest block mb-1">Motif Principal</label>
+                    <p className="font-bold text-white text-lg tracking-tight">
                       {selectedConsultation.motif}
                     </p>
                   </div>
@@ -408,7 +408,7 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
               <div className="mt-8 space-y-6">
                 {selectedConsultation.diagnostic_principal && (
                   <div className="p-6 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Diagnostic Principal</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-3">Diagnostic Principal</label>
                     <p className="text-gray-900 dark:text-white font-medium leading-relaxed italic">
                     "{selectedConsultation.diagnostic_principal}"
                     </p>
@@ -416,7 +416,7 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
                 )}
                 {selectedConsultation.notes && (
                   <div className="p-6 rounded-3xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
-                    <label className="text-[10px] font-black text-amber-600/60 dark:text-amber-400/60 uppercase tracking-widest block mb-2">Notes & Observations</label>
+                    <label className="text-[10px] font-bold text-amber-600/60 dark:text-amber-400/60 uppercase tracking-widest block mb-2">Notes & Observations</label>
                     <p className="text-gray-800 dark:text-gray-200 font-medium whitespace-pre-wrap leading-relaxed">
                       {selectedConsultation.notes}
                     </p>

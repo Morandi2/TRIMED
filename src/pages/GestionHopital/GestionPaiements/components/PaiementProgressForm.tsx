@@ -23,7 +23,7 @@ export const PaiementProgressForm: React.FC<PaiementProgressFormProps> = ({
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
                 index + 1 <= currentStep
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-brand-600 text-white'
                   : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
               }`}
             >
@@ -32,7 +32,7 @@ export const PaiementProgressForm: React.FC<PaiementProgressFormProps> = ({
             <span
               className={`ml-2 text-sm font-medium ${
                 index + 1 <= currentStep
-                  ? 'text-blue-600 dark:text-blue-400'
+                  ? 'text-brand-600 dark:text-brand-400'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >
@@ -42,7 +42,7 @@ export const PaiementProgressForm: React.FC<PaiementProgressFormProps> = ({
               <div
                 className={`mx-4 h-0.5 w-16 ${
                   index + 1 < currentStep
-                    ? 'bg-blue-600'
+                    ? 'bg-brand-600'
                     : 'bg-gray-200 dark:bg-gray-700'
                 }`}
               />

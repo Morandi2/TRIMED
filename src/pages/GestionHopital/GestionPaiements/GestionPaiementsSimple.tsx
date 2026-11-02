@@ -57,7 +57,7 @@ export const GestionPaiementsSimple: React.FC<{ tenantId: number }> = ({ tenantI
     switch (statut) {
       case 'Payé': return 'bg-green-100 text-green-800';
       case 'En attente': return 'bg-yellow-100 text-yellow-800';
-      case 'Remboursé': return 'bg-blue-100 text-blue-800';
+      case 'Remboursé': return 'bg-brand-100 text-brand-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -76,7 +76,7 @@ export const GestionPaiementsSimple: React.FC<{ tenantId: number }> = ({ tenantI
             </p>
           </div>
 
-          <button onClick={handleNewPaiement} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+          <button onClick={handleNewPaiement} className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-700">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M3.33301 8H12.6663" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -92,7 +92,7 @@ export const GestionPaiementsSimple: React.FC<{ tenantId: number }> = ({ tenantI
             placeholder="Rechercher par patient ou méthode..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90"
           />
         </div>
 
@@ -149,7 +149,7 @@ export const GestionPaiementsSimple: React.FC<{ tenantId: number }> = ({ tenantI
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleModifier(paiement.id)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                      <button onClick={() => handleModifier(paiement.id)} className="text-brand-600 hover:text-brand-900 dark:text-brand-400 dark:hover:text-brand-300">
                         Modifier
                       </button>
                       <button onClick={() => handleSupprimer(paiement.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">

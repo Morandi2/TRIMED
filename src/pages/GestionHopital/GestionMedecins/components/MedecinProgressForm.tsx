@@ -404,13 +404,13 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
             key={step}
             onClick={() => setCurrentStep(step)}
             className={`flex flex-col items-center transition-all duration-200 flex-1 ${step <= currentStep
-              ? 'text-blue-600 dark:text-blue-400'
+              ? 'text-brand-600 dark:text-brand-400'
               : 'text-gray-400 dark:text-gray-500'
               }`}
           >
             <div
               className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 text-xs sm:text-sm ${step <= currentStep
-                ? 'bg-blue-600 border-blue-600 text-white'
+                ? 'bg-brand-600 border-brand-600 text-white'
                 : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
                 }`}
             >
@@ -426,14 +426,14 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
       </div>
       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
         <div
-          className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+          className="bg-brand-600 h-2 rounded-full transition-all duration-500"
           style={{ width: `${(currentStep / totalSteps) * 100}%` }}
         ></div>
       </div>
     </div>
   );
 
-  const inputClass = "w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all duration-200";
+  const inputClass = "w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all duration-200";
   const errorInputClass = "w-full px-4 py-3 border-2 border-red-500 dark:border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-all duration-200";
   const errorTextClass = "text-red-500 dark:text-red-400 text-sm mt-1";
 
@@ -467,9 +467,9 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
             {isLoadingData ? (
               <div className="flex flex-col items-center justify-center h-full py-20">
                 <div className="relative">
-                  <div className="w-16 h-16 border-4 border-blue-200 dark:border-blue-900 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400"></div>
+                  <div className="w-16 h-16 border-4 border-brand-200 dark:border-brand-900 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
@@ -481,8 +481,8 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
             <div className="p-6">
               {currentStep === 1 && (
                 <div className="space-y-6">
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-6">Informations Personnelles</h3>
+                  <div className="bg-brand-50 dark:bg-brand-900/20 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold text-brand-800 dark:text-brand-300 mb-6">Informations Personnelles</h3>
 
                     <div className="space-y-6">
                       {/* Foto a deplase anlè */}
@@ -492,7 +492,7 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                         </label>
                         <div
                           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive
-                            ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                            ? 'border-brand-400 bg-brand-50 dark:bg-brand-900/20'
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                             }`}
                           onDragEnter={handleDrag}
@@ -531,7 +531,7 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                               <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="text-blue-600 hover:text-blue-800 font-medium"
+                                className="text-brand-600 hover:text-brand-800 font-medium"
                               >
                                 parcourir les fichiers
                               </button>
@@ -784,7 +784,7 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                           <select
                             value={selectedSpecialite}
                             onChange={(e) => setSelectedSpecialite(e.target.value ? parseInt(e.target.value) : '')}
-                            className="flex-1 px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                            className="flex-1 px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
                           >
                             <option value="">Ajouter une spécialité</option>
                             {specialites
@@ -813,13 +813,13 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                               return (
                                 <span
                                   key={specialiteId}
-                                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-brand-100 dark:bg-brand-900 text-brand-800 dark:text-brand-200 rounded-full text-sm"
                                 >
                                   {specialite?.nom_specialite}
                                   <button
                                     type="button"
                                     onClick={() => removeSpecialite(specialiteId)}
-                                    className="text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                                    className="text-brand-600 dark:text-brand-300 hover:text-brand-800 dark:hover:text-brand-100"
                                   >
                                     ×
                                   </button>
@@ -889,7 +889,7 @@ export const MedecinProgressForm: React.FC<MedecinProgressFormProps> = ({
                     onClick={nextStep}
                     disabled={!isCurrentStepValid}
                     className={`px-6 py-3 rounded-lg font-medium transition-colors ${isCurrentStepValid
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? 'bg-brand-600 text-white hover:bg-brand-700'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                       }`}
                   >

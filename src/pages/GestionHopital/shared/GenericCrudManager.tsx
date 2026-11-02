@@ -121,7 +121,7 @@ const GenericCrudManager: React.FC<GenericCrudManagerProps> = ({
         {canEdit && (
           <button
             onClick={() => setEditing({})}
-            className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-sm transition-all active:scale-95"
           >
             <Plus className="h-4 w-4" /> Ajouter
           </button>
@@ -138,7 +138,7 @@ const GenericCrudManager: React.FC<GenericCrudManagerProps> = ({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/[0.05]">
+              <tr className="text-left text-xs font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/[0.05]">
                 {columns.map((c) => <th key={c.key} className="px-5 py-3">{c.label}</th>)}
                 {canEdit && <th className="px-5 py-3 text-right">Actions</th>}
               </tr>
@@ -276,7 +276,7 @@ const CrudFormModal: React.FC<{
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg p-8 shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-black text-gray-900 dark:text-white">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
             {isEdit ? `Modifier ${singular.toLowerCase()}` : `Ajouter ${singular.toLowerCase()}`}
           </h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">

@@ -29,8 +29,7 @@ export default function AuthLayout({
       </button>
       {/* Immersive Mesh Gradient Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-         <div className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] bg-[#00D06C]/20 rounded-full mix-blend-multiply filter blur-[120px] animate-pulse"></div>
-         <div className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[80%] bg-[#2D32FF]/20 rounded-full mix-blend-multiply filter blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+         <div className="absolute inset-0 bg-[radial-gradient(60%_55%_at_8%_0%,rgba(2,195,119,0.16),transparent_70%),radial-gradient(60%_55%_at_100%_100%,rgba(39,32,255,0.14),transparent_70%)]" aria-hidden="true" />
          <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       </div>
 

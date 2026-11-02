@@ -123,7 +123,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     return `${item.nom} - ${formattedPhone}`;
   };
 
-  const inputClass = `w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${className}`;
+  const inputClass = `w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${className}`;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -158,7 +158,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
               key={'patient_id' in item ? item.patient_id : item.medecin_id}
               type="button"
               onClick={() => handleSelect(item)}
-              className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+              className="w-full px-4 py-3 text-left hover:bg-brand-50 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-600 last:border-b-0"
             >
               <div className="font-medium text-gray-900 dark:text-white">
                 {getDisplayText(item)}

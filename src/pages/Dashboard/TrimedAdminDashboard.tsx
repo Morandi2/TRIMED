@@ -50,7 +50,7 @@ export default function TrimedAdminDashboard() {
               <h1 className="mb-2 text-3xl font-bold tracking-tight text-white">Bienvenue, équipe TRIMED</h1>
               <p className="max-w-xl text-brand-100 opacity-90">Les hôpitaux de la plateforme, leurs comptes et les inscriptions à vérifier.</p>
             </div>
-            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md">
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/20 px-4 py-2 text-sm font-medium text-white">
               {etat === "erreur"
                 ? <><AlertCircle className="h-4 w-4 text-orange-200" /> Serveur injoignable</>
                 : <><Activity className="h-4 w-4 text-green-300" /> {etat === "ok" ? "Serveur joignable" : "Connexion au serveur…"}</>}
