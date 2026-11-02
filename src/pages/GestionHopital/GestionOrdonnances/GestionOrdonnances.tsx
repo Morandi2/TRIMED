@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../../components/ui/table';
+import { useRechercheUrl } from "../../../hooks/useRechercheUrl";
 import { 
   FileText, 
   Plus, 
@@ -39,6 +40,7 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrdonnanceId, setSelectedOrdonnanceId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
+  useRechercheUrl(setSearchTerm);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;

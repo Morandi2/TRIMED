@@ -107,6 +107,9 @@ apiClient.interceptors.response.use(
                 refresh: refreshToken
               });
               const newAccessToken = refreshResponse.data.access;
+              // Si la session a changé pendant le rafraîchissement (déconnexion, autre compte),
+              // on n’écrase pas le jeton du nouveau compte avec celui de l’ancien.
+              if (localStorage.getItem('refresh_token') !== refreshToken) return Promise.reject(error);
               localStorage.setItem('access_token', newAccessToken);
               // Retry original request
               if (error.config) {

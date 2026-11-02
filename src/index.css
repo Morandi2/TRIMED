@@ -56,18 +56,19 @@
   --color-white: #ffffff;
   --color-black: #101828;
 
-  --color-brand-25: #f0f9f0;
-  --color-brand-50: #e6f5e6;
-  --color-brand-100: #c8e6c8;
-  --color-brand-200: #a7d6a7;
-  --color-brand-300: #7fc67f;
-  --color-brand-400: #4fb34f;
-  --color-brand-500: #2a9d2a;
-  --color-brand-600: #238923;
-  --color-brand-700: #1b721b;
-  --color-brand-800: #155c15;
-  --color-brand-900: #0f470f;
-  --color-brand-950: #0a300a;
+  /* Gamme « brand » de l’application : l’indigo du logo TRIMED (#2720FF en 500). */
+  --color-brand-25: #f6f6ff;
+  --color-brand-50: #eeeeff;
+  --color-brand-100: #dedcff;
+  --color-brand-200: #c0bcff;
+  --color-brand-300: #9892ff;
+  --color-brand-400: #6a62ff;
+  --color-brand-500: #2720ff;
+  --color-brand-600: #1f19dc;
+  --color-brand-700: #1a14b8;
+  --color-brand-800: #161293;
+  --color-brand-900: #121070;
+  --color-brand-950: #0b0a45;
 
   --color-blue-light-25: #f5fbff;
   --color-blue-light-50: #f0f9ff;
@@ -226,7 +227,7 @@
     cursor: pointer;
   }
   body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50;
+    @apply relative font-normal font-texte z-1 bg-gray-50;
   }
 }
 

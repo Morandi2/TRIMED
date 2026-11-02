@@ -37,6 +37,7 @@ import {
   FileText
 } from 'lucide-react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
+import { useRechercheUrl } from "../../../hooks/useRechercheUrl";
 import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 
 type MedicamentStatsType = {
@@ -92,6 +93,7 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
     statut: "Tous",
     forme_pharmaceutique: "Tous"
   });
+  useRechercheUrl((terme) => setFilters((f) => ({ ...f, searchTerm: terme })));
 
   const [currentPage, setCurrentPage] = useState(1);
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | "mouvement" | null>(null);

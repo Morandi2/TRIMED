@@ -12,6 +12,8 @@ import {
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
+import Logotype from "../components/brand/Logotype";
+import Symbole from "../components/brand/Symbole";
 
 type NavItem = {
   name: string;
@@ -26,7 +28,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Tableau de Bord",
+    name: "Tableau de bord",
     path: "/home",
     // Partagé par tous
   },
@@ -50,37 +52,37 @@ const navItems: NavItem[] = [
   },
   {
     icon: <UserRound />,
-    name: "Patient",
+    name: "Patients",
     path: "/patient",
     permission: 'canViewPatients',
   },
   {
     icon: <ScanHeart />,
-    name: "Medecin",
+    name: "Médecins",
     path: "/Medecin",
     permission: 'canViewMedecins',
   },
   {
     icon: <Stethoscope />,
-    name: "Consultation",
+    name: "Consultations",
     path: "/consultation",
     permission: 'canViewConsultations',
   },
   {
     icon: <Asterisk />,
-    name: "Ordonnance",
+    name: "Ordonnances",
     path: "/ordonnance",
     permission: 'canViewOrdonnances',
   },
   {
     icon: <FlaskConical />,
-    name: "Examen",
+    name: "Examens",
     path: "/examen",
     permission: 'canViewConsultations',
   },
   {
     icon: <Pill />,
-    name: "Medicament",
+    name: "Médicaments",
     path: "/medicament",
     permission: 'canViewMedicaments',
   },
@@ -104,13 +106,13 @@ const navItems: NavItem[] = [
   },
   {
     icon: <CreditCard />,
-    name: "Paiement",
+    name: "Abonnement",
     path: "/paiement",
-    permission: 'canViewPaiements',
+    permission: 'canGererFacturation',
   },
   {
     icon: <ShieldCheck />,
-    name: "Journal d'Audit",
+    name: "Journal d’activité",
     path: "/admin/audit-logs",
     permission: 'canViewAuditLogs',
   },
@@ -226,7 +228,7 @@ const AppSidebar: React.FC = () => {
       if (isAdminGlobal) {
          // Autoriser Tableau de Bord (partagé), Audit logs et les items explicitement globaux
          if (nav.globalAdminOnly) return true;
-         if (nav.name === "Tableau de Bord" || nav.name === "Journal d'Audit") return true;
+         if (nav.name === "Tableau de bord" || nav.name === "Journal d’activité") return true;
          return false; // Masquer tout le reste (Pasyan, Medsen, etc.)
       } else {
          // Si utilisateur normal : Interdire l'accès aux liens globaux
@@ -372,29 +374,9 @@ const AppSidebar: React.FC = () => {
       >
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <img
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <img
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
+            <Logotype taille="sm" className="dark:[&_span]:text-white" />
           ) : (
-            <img
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
+            <Symbole taille={32} titre="TRIMED" />
           )}
         </Link>
       </div>

@@ -1,124 +1,89 @@
-import apiClient from '../../../../api/apiConfig';
-import { djangoAuthApi } from '../../../../api/djangoAuthApi';
-import { AuditLog, AuditLogFilters } from '../types/AuditTypes';
+import { lireTout } from '../../../../api/listes';
+import { LIBELLES_ROLES, roleEffectif } from '../../../../types/userRoles';
+import { dateLocale, estJourSeul } from '../../../../utils/dates';
+import type { CategorieJournal, EvenementJournal, FiltresJournal } from '../types/AuditTypes';
+
+// Journal d’activité. Le serveur n’a pas encore de journal d’audit dédié (BACKEND_MODIFICATIONS.md, point 5) :
+// on rassemble les traces datées qu’il conserve déjà — dernière connexion et création de chaque compte,
+// consultations, ordonnances, examens, admissions et sorties, inscriptions d’hôpitaux. Rien n’est inventé.
+
+interface Utilisateur { utilisateur_id: number; nom_complet?: string; email: string; role: string; is_staff?: boolean; cree_le?: string; derniere_connexion?: string | null; last_login?: string | null }
+interface Consultation { consultation_id: number; date_consultation: string; motif?: string; patient_nom?: string; patient_prenom?: string; medecin_nom?: string; medecin_prenom?: string }
+interface Ordonnance { ordonnance_id: number; date_ordonnance: string; medecin_nom?: string; medecin_prenom?: string; nb_prescriptions?: number }
+interface Examen { examen_id: number; nom_examen: string; date_examen?: string; date_resultat?: string | null; patient_nom?: string; patient_prenom?: string; medecin_nom?: string }
+interface Admission { id: number; date_admission: string; date_sortie?: string | null; motif?: string; patient: number }
+interface Patient { patient_id: number; nom: string; prenom: string }
+interface Hopital { tenant_id: number; nom: string; cree_le?: string; date_verification?: string | null; statut_verification_document?: string }
+
+const UN_AN = 366 * 24 * 3600 * 1000;
+const docteur = (prenom?: string, nom?: string) => (nom ? `Dr ${prenom ?? ''} ${nom}`.replace(/\s+/g, ' ').trim() : 'Médecin');
+const personne = (prenom?: string, nom?: string) => `${prenom ?? ''} ${nom ?? ''}`.trim() || undefined;
+const sur = <T,>(p: Promise<T[]>) => p.catch(() => [] as T[]);
 
 class AuditService {
-  private findField(obj: any, targetField: string | string[]): any {
-    if (!obj || typeof obj !== 'object') return null;
+  readonly categories: CategorieJournal[] = ['Connexion', 'Compte', 'Consultation', 'Ordonnance', 'Examen', 'Hospitalisation', 'Hôpital'];
 
-    const fields = Array.isArray(targetField) ? targetField : [targetField];
-    for (const field of fields) {
-      const value = obj[field];
-      if (value !== undefined && value !== null) return value;
+  /** Tous les événements visibles par le compte connecté, du plus récent au plus ancien. */
+  async obtenirEvenements(options: { equipeTrimed: boolean }): Promise<EvenementJournal[]> {
+    const limite = Date.now() - UN_AN;
+    const ancien = (champ: string) => (e: Record<string, string>) => dateLocale(e[champ]).getTime() < limite;
+
+    const [utilisateurs, consultations, ordonnances, examens, admissions, patients, hopitaux] = await Promise.all([
+      sur(lireTout<Utilisateur>('/comptes/utilisateurs/')),
+      sur(lireTout<Consultation>('/medical/consultations/', { ordering: '-date_consultation' }, { maxPages: 20, arreterSi: ancien('date_consultation') as never })),
+      sur(lireTout<Ordonnance>('/medical/ordonnances/', { ordering: '-date_ordonnance' }, { maxPages: 20, arreterSi: ancien('date_ordonnance') as never })),
+      sur(lireTout<Examen>('/medical/examens/', { ordering: '-date_examen' }, { maxPages: 20 })),
+      sur(lireTout<Admission>('/hospitalisation/admissions/', { ordering: '-date_admission' }, { maxPages: 10 })),
+      sur(lireTout<Patient>('/patients/')),
+      options.equipeTrimed ? sur(lireTout<Hopital>('/tenants/tenants/')) : Promise.resolve([] as Hopital[]),
+    ]);
+
+    const nomPatient = new Map(patients.map((p) => [p.patient_id, personne(p.prenom, p.nom)]));
+    const ev: EvenementJournal[] = [];
+    const ajouter = (cle: string, e: Omit<EvenementJournal, 'id'>) => { if (e.date) ev.push({ ...e, id: cle }); };
+
+    for (const u of utilisateurs) {
+      const nom = u.nom_complet || u.email;
+      const role = LIBELLES_ROLES[roleEffectif(u)];
+      const connexion = u.derniere_connexion || u.last_login;
+      if (connexion) ajouter(`cx-${u.utilisateur_id}`, { date: connexion, categorie: 'Connexion', action: 'Dernière connexion', acteur: nom, details: role });
+      if (u.cree_le) ajouter(`cpt-${u.utilisateur_id}`, { date: u.cree_le, categorie: 'Compte', action: 'Compte créé', acteur: nom, details: role });
     }
-    return null;
-  }
-
-  public normaliserLog(l: any): AuditLog {
-    const find = (field: string | string[]) => this.findField(l, field);
-    
-    return {
-      id: l.id || find('log_id') || 0,
-      utilisateur: l.utilisateur || find(['user', 'username', 'user_email', 'actor', 'email']) || 'Inconnu',
-      action: l.action || find(['event_type', 'action_name', 'event', 'operation']) || 'Action standard',
-      module: l.module || find(['resource_type', 'category', 'module_name']) || 'Système',
-      date: l.date || find(['timestamp', 'created_at', 'date_joined', 'event_time']) || new Date().toISOString(),
-      ip_address: l.ip_address || find(['ip', 'remote_addr', 'client_ip']) || 'N/A',
-      details: l.details || find(['extra_data', 'metadata', 'payload']) || {}
-    };
-  }
-
-  async obtenirTousLogs(filters?: AuditLogFilters): Promise<AuditLog[]> {
-    try {
-      // 1. Essayer de récupérer les logs réels du backend
-      const logsReelsResponse = await apiClient.get('/comptes/audit-logs/').catch(() => ({ data: [] }));
-      const logsReelsRaw = Array.isArray(logsReelsResponse.data) ? logsReelsResponse.data : (logsReelsResponse.data?.results || []);
-      const logsReels = logsReelsRaw.map((l: any) => this.normaliserLog(l));
-
-      // 2. Toujours inclure les informations réelles de session (Outstanding/Blacklisted)
-      const [outstanding, blacklisted] = await Promise.all([
-        this.obtenirSessionsActives(),
-        this.obtenirTokensRevoques()
-      ]);
-
-      // Si le backend ne retourne pas de logs réels, on utilise les simulés comme base
-      const logsBase = logsReels.length > 0 ? logsReels : this.obtenirLogsSimules();
-      
-      // Mapper les sessions actives comme des événements d'audit
-      const sessionLogs: AuditLog[] = outstanding.map((s: any, index: number) => ({
-        id: 5000 + index,
-        utilisateur: s.user_email || s.username || `User #${s.user}`,
-        action: "Session Active (Outstanding)",
-        module: "Sécurité",
-        date: s.created_at || s.timestamp || s.date_joined || new Date().toISOString(),
-        ip_address: "N/A",
-        details: { token_id: s.id, expires_at: s.expires_at }
-      }));
-
-      // Mapper les tokens révoqués
-      const revokedLogs: AuditLog[] = blacklisted.map((b: any, index: number) => ({
-        id: 6000 + index,
-        utilisateur: b.token?.user_email || "N/A",
-        action: "Token Révoqué (Blacklisted)",
-        module: "Sécurité",
-        date: b.blacklisted_at || b.created_at || new Date().toISOString(),
-        ip_address: "N/A",
-        details: { blacklisted_id: b.id }
-      }));
-
-      return [...logsBase, ...sessionLogs, ...revokedLogs].sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-    } catch (error) {
-      console.error("[AuditService] Error merging logs:", error);
-      return this.obtenirLogsSimules();
+    for (const c of consultations) ajouter(`cs-${c.consultation_id}`, { date: c.date_consultation, categorie: 'Consultation', action: 'Consultation', acteur: docteur(c.medecin_prenom, c.medecin_nom), cible: personne(c.patient_prenom, c.patient_nom), details: c.motif });
+    for (const o of ordonnances) ajouter(`or-${o.ordonnance_id}`, { date: o.date_ordonnance, categorie: 'Ordonnance', action: 'Ordonnance rédigée', acteur: docteur(o.medecin_prenom, o.medecin_nom), details: o.nb_prescriptions ? `${o.nb_prescriptions} médicament${o.nb_prescriptions > 1 ? 's' : ''}` : undefined });
+    for (const x of examens) {
+      if (x.date_examen) ajouter(`ex-${x.examen_id}`, { date: x.date_examen, categorie: 'Examen', action: 'Examen prescrit', acteur: x.medecin_nom ? `Dr ${x.medecin_nom}` : 'Médecin', cible: personne(x.patient_prenom, x.patient_nom), details: x.nom_examen });
+      if (x.date_resultat) ajouter(`exr-${x.examen_id}`, { date: x.date_resultat, categorie: 'Examen', action: 'Résultat d’examen', acteur: 'Laboratoire', cible: personne(x.patient_prenom, x.patient_nom), details: x.nom_examen });
     }
+    for (const a of admissions) {
+      ajouter(`adm-${a.id}`, { date: a.date_admission, categorie: 'Hospitalisation', action: 'Admission', acteur: 'Service d’hospitalisation', cible: nomPatient.get(a.patient), details: a.motif });
+      if (a.date_sortie) ajouter(`sor-${a.id}`, { date: a.date_sortie, categorie: 'Hospitalisation', action: 'Sortie', acteur: 'Service d’hospitalisation', cible: nomPatient.get(a.patient) });
+    }
+    for (const h of hopitaux) {
+      if (h.cree_le) ajouter(`hop-${h.tenant_id}`, { date: h.cree_le, categorie: 'Hôpital', action: 'Hôpital inscrit', acteur: h.nom });
+      if (h.date_verification) ajouter(`ver-${h.tenant_id}`, { date: h.date_verification, categorie: 'Hôpital', action: h.statut_verification_document === 'rejete' ? 'Documents refusés' : 'Documents vérifiés', acteur: 'Équipe TRIMED', cible: h.nom });
+    }
+
+    const maintenant = Date.now() + 60 * 1000;
+    return ev.filter((e) => dateLocale(e.date).getTime() <= maintenant).sort((a, b) => dateLocale(b.date).getTime() - dateLocale(a.date).getTime());
   }
 
-  /**
-   * Récupérer les sessions actives (Outstanding)
-   */
-  async obtenirSessionsActives(): Promise<any[]> {
-    const response = await djangoAuthApi.getOutstandingTokens();
-    return response.success ? (response.data || []) : [];
+  /** Filtre côté interface : recherche libre, catégorie, période. */
+  filtrer(evenements: EvenementJournal[], f: FiltresJournal, maintenant = new Date()): EvenementJournal[] {
+    const debut = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate()).getTime();
+    const depuis = { jour: debut, semaine: debut - 6 * 864e5, mois: debut - 29 * 864e5, tout: 0 }[f.periode];
+    const q = f.recherche.trim().toLowerCase();
+    return evenements.filter((e) =>
+      dateLocale(e.date).getTime() >= depuis
+      && (!f.categorie || e.categorie === f.categorie)
+      && (!q || [e.action, e.acteur, e.cible, e.details].some((t) => t?.toLowerCase().includes(q))));
   }
 
-  /**
-   * Récupérer les tokens révoqués (Blacklisted)
-   */
-  async obtenirTokensRevoques(): Promise<any[]> {
-    const response = await djangoAuthApi.getBlacklistedTokens();
-    return response.success ? (response.data || []) : [];
-  }
-
-  // Simulation de données au cas où le backend n'est pas encore prêt
-  obtenirLogsSimules(): AuditLog[] {
-    const actions = [
-      { action: "Connexion réussie", module: "Authentification", user: "admin@trimed.test" },
-      { action: "Création de patient", module: "Patients", user: "dr.jean@trimed.test" },
-      { action: "Modification de tarif", module: "Facturation", user: "admin@trimed.test" },
-      { action: "Suppression de rendez-vous", module: "Rendez-vous", user: "reception@trimed.test" },
-      { action: "Mise à jour dossier", module: "Patients", user: "dr.marie@trimed.test" },
-      { action: "Ajout de médicament", module: "Pharmacie", user: "pharmacie@trimed.test" },
-      { action: "Exportation logs", module: "Sécurité", user: "admin@trimed.test" },
-      { action: "Échec de connexion", module: "Authentification", user: "inconnu@fake.com" },
-      { action: "Consultation terminée", module: "Consultations", user: "dr.jean@trimed.test" },
-      { action: "Impression facture", module: "Facturation", user: "reception@trimed.test" }
-    ];
-
-    return Array.from({ length: 30 }).map((_, i) => {
-      const template = actions[i % actions.length];
-      const timeOffset = i * 24 * 3600000 + (Math.random() * 3600000 * 8); 
-      return {
-        id: i + 1,
-        utilisateur: template.user,
-        action: template.action,
-        module: template.module,
-        date: new Date(Date.now() - timeOffset).toISOString(),
-        details: { info: "Action historique" },
-        ip_address: `192.168.1.${10 + i}`
-      };
-    });
+  /** Export CSV (séparateur « ; » pour Excel en français). */
+  enCsv(evenements: EvenementJournal[]): string {
+    const echapper = (v?: string) => `"${(v ?? '').replace(/"/g, '""')}"`;
+    const lignes = evenements.map((e) => [estJourSeul(e.date) ? dateLocale(e.date).toLocaleDateString('fr-HT') : new Date(e.date).toLocaleString('fr-HT'), e.categorie, e.action, e.acteur, e.cible, e.details].map(echapper).join(';'));
+    return ['Date;Catégorie;Action;Par;Concerne;Détails', ...lignes].join('\r\n');
   }
 }
 

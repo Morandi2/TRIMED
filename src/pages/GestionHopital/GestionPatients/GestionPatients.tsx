@@ -8,6 +8,7 @@ import { PatientViewModal } from './components/PatientViewModal';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { PatientPrintPage } from './components/PatientPrintPage';
+import { useRechercheUrl } from "../../../hooks/useRechercheUrl";
 import { 
   Users, 
   Plus, 
@@ -25,6 +26,7 @@ interface GestionPatientsProps {
 const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom }) => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  useRechercheUrl(setSearchTerm);
   const [currentPage, setCurrentPage] = useState(1);
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);

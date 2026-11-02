@@ -1,276 +1,170 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Calendar, 
-  ShieldCheck, 
-  Info, 
-  User, 
-  Activity,
-  Download
-} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Activity, BedDouble, Building2, Download, FileText, FlaskConical, LogIn, RefreshCw, Search, Stethoscope, UserPlus, Users } from 'lucide-react';
+import PageMeta from '../../../../components/common/PageMeta';
+import { useUser } from '../../../../context/UserContext';
 import { auditService } from '../services/AuditService';
-import { AuditLog, AuditLogFilters } from '../types/AuditTypes';
-import { DemoModeBanner } from '../../../../components/shared/DemoModeBanner';
-// Plus besoin de date-fns
+import type { CategorieJournal, EvenementJournal, FiltresJournal, PeriodeJournal } from '../types/AuditTypes';
+import { dateLocale, estJourSeul } from '../../../../utils/dates';
 
-export const AuditLogPage: React.FC = () => {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState<AuditLogFilters>({
-    search: '',
-    module: '',
-    date_debut: '',
-    date_fin: ''
-  });
+const ICONES: Record<CategorieJournal, { icone: typeof LogIn; teinte: string }> = {
+  Connexion: { icone: LogIn, teinte: 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300' },
+  Compte: { icone: UserPlus, teinte: 'bg-purple-50 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300' },
+  Consultation: { icone: Stethoscope, teinte: 'bg-trimed-brume text-trimed-vert-fonce dark:bg-trimed-vert/15 dark:text-trimed-menthe' },
+  Ordonnance: { icone: FileText, teinte: 'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300' },
+  Examen: { icone: FlaskConical, teinte: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300' },
+  Hospitalisation: { icone: BedDouble, teinte: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300' },
+  Hôpital: { icone: Building2, teinte: 'bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-200' },
+};
+const PERIODES: [PeriodeJournal, string][] = [['jour', 'Aujourd’hui'], ['semaine', '7 jours'], ['mois', '30 jours'], ['tout', 'Tout']];
+const PAR_PAGE = 60;
+
+const titreJour = (iso: string) => {
+  const d = dateLocale(iso), auj = new Date(), hier = new Date(auj.getFullYear(), auj.getMonth(), auj.getDate() - 1);
+  if (d.toDateString() === auj.toDateString()) return 'Aujourd’hui';
+  if (d.toDateString() === hier.toDateString()) return 'Hier';
+  return d.toLocaleDateString('fr-HT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+};
+
+// Journal d’activité : connexions et actions enregistrées sur le serveur, regroupées par jour.
+export const AuditLogPage = () => {
+  const { currentUserRole } = useUser();
+  const [evenements, setEvenements] = useState<EvenementJournal[] | null>(null);
+  const [erreur, setErreur] = useState(false);
+  const [version, setVersion] = useState(0);
+  const [filtres, setFiltres] = useState<FiltresJournal>({ recherche: '', categorie: '', periode: 'mois' });
+  const [nb, setNb] = useState(PAR_PAGE);
 
   useEffect(() => {
-    fetchLogs();
-  }, []);
+    let annule = false;
+    setErreur(false);
+    auditService.obtenirEvenements({ equipeTrimed: currentUserRole === 'admin-systeme' })
+      .then((e) => { if (!annule) setEvenements(e); })
+      .catch(() => { if (!annule) setErreur(true); });
+    return () => { annule = true; };
+  }, [currentUserRole, version]);
 
-  const fetchLogs = async () => {
-    setIsLoading(true);
-    try {
-      const data = await auditService.obtenirTousLogs();
-      // Si le backend ne retourne rien, utiliser les simulacres pour la démo
-      if (data.length === 0) {
-        setLogs(auditService.obtenirLogsSimules());
-      } else {
-        setLogs(data);
-      }
-    } catch (err) {
-      console.error(err);
-      setLogs(auditService.obtenirLogsSimules());
-    } finally {
-      setIsLoading(false);
+  const filtres_ = useMemo(() => (evenements ? auditService.filtrer(evenements, filtres) : []), [evenements, filtres]);
+  useEffect(() => setNb(PAR_PAGE), [filtres]);
+
+  // Chiffres de la semaine
+  const semaine = useMemo(() => (evenements ? auditService.filtrer(evenements, { recherche: '', categorie: '', periode: 'semaine' }) : []), [evenements]);
+  const connexionsAuj = evenements ? auditService.filtrer(evenements, { recherche: '', categorie: 'Connexion', periode: 'jour' }).length : 0;
+  const actifs7j = new Set(semaine.filter((e) => e.categorie === 'Connexion').map((e) => e.acteur)).size;
+  const actes7j = semaine.filter((e) => ['Consultation', 'Ordonnance', 'Examen', 'Hospitalisation'].includes(e.categorie)).length;
+
+  // Regroupement par jour
+  const groupes = useMemo(() => {
+    const g: { jour: string; liste: EvenementJournal[] }[] = [];
+    for (const e of filtres_.slice(0, nb)) {
+      const jour = dateLocale(e.date).toDateString();
+      if (g[g.length - 1]?.jour !== jour) g.push({ jour, liste: [] });
+      g[g.length - 1].liste.push(e);
     }
+    return g;
+  }, [filtres_, nb]);
+
+  const exporter = () => {
+    const blob = new Blob(['﻿' + auditService.enCsv(filtres_)], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `journal-activite-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
 
-  const filteredLogs = logs.filter(log => {
-    const matchesSearch = log.utilisateur.toLowerCase().includes(filters.search.toLowerCase()) || 
-                         log.action.toLowerCase().includes(filters.search.toLowerCase());
-    const matchesModule = filters.module === '' || log.module === filters.module;
-    return matchesSearch && matchesModule;
-  });
+  const champ = 'h-11 rounded-xl border border-gray-200 bg-white px-3.5 text-sm text-gray-900 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15 dark:border-gray-700 dark:bg-gray-900 dark:text-white';
 
   return (
-    <div className="p-6 space-y-6">
-      <DemoModeBanner
-        module="Journal d'audit"
-        message="Les journaux affichés sont des données de démonstration : le backend n'expose pas encore d'endpoint d'audit."
-      />
-
-      {/* Header Premium */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-3">
-            <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/20">
-              <ShieldCheck className="w-8 h-8 text-white" />
-            </div>
-            Journal d'Audit
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium italic">
-            Suivi complet des activités et de la sécurité du système
-          </p>
+    <>
+      <PageMeta title="Journal d’activité | TRIMED" description="Connexions et actions enregistrées sur le serveur." />
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="font-marque text-xl text-gray-900 sm:text-2xl dark:text-white">Journal d’activité</h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Connexions des comptes et actions enregistrées : consultations, ordonnances, examens, hospitalisations.</p>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setVersion((v) => v + 1)} className="inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"><RefreshCw className="h-4 w-4" aria-hidden="true" /> Actualiser</button>
+            <button type="button" onClick={exporter} disabled={!filtres_.length} className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-500 px-3.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-40"><Download className="h-4 w-4" aria-hidden="true" /> Exporter (CSV)</button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="group relative inline-flex items-center gap-2 px-5 py-3 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300 rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
-            <Download className="w-4.5 h-4.5 transition-transform group-hover:-translate-y-0.5" />
-            Exporter CSV
-          </button>
+
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[
+            { libelle: 'Connexions aujourd’hui', valeur: connexionsAuj, icone: LogIn },
+            { libelle: 'Comptes actifs (7 jours)', valeur: actifs7j, icone: Users },
+            { libelle: 'Actes médicaux (7 jours)', valeur: actes7j, icone: Stethoscope },
+            { libelle: 'Événements (30 jours)', valeur: evenements ? auditService.filtrer(evenements, { recherche: '', categorie: '', periode: 'mois' }).length : 0, icone: Activity },
+          ].map(({ libelle, valeur, icone: Icone }) => (
+            <div key={libelle} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+              <Icone className="h-5 w-5 text-brand-500" aria-hidden="true" />
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">{libelle}</p>
+              <p className="mt-1 font-marque text-2xl text-gray-900 dark:text-white">{evenements ? valeur : '…'}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 lg:flex-row lg:items-center dark:border-gray-800 dark:bg-white/[0.03]">
+          <label className="relative flex-1">
+            <span className="sr-only">Rechercher</span>
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+            <input className={`${champ} w-full pl-10`} placeholder="Rechercher une personne, une action, un patient…" value={filtres.recherche} onChange={(e) => setFiltres({ ...filtres, recherche: e.target.value })} />
+          </label>
+          <select className={champ} value={filtres.categorie} onChange={(e) => setFiltres({ ...filtres, categorie: e.target.value as CategorieJournal | '' })} aria-label="Catégorie">
+            <option value="">Toutes les catégories</option>
+            {auditService.categories.filter((c) => c !== 'Hôpital' || currentUserRole === 'admin-systeme').map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <div className="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800" role="group" aria-label="Période">
+            {PERIODES.map(([p, libelle]) => (
+              <button key={p} type="button" onClick={() => setFiltres({ ...filtres, periode: p })} aria-pressed={filtres.periode === p}
+                className={`rounded-lg px-3 py-1.5 text-sm ${filtres.periode === p ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>{libelle}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+          {erreur ? <p className="p-10 text-center text-sm text-gray-500">Le journal n’a pas pu être chargé. Vérifiez la connexion puis actualisez.</p>
+            : !evenements ? <div className="space-y-3 p-6">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-12 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800" />)}</div>
+            : filtres_.length === 0 ? <p className="p-10 text-center text-sm text-gray-500">Aucun événement pour ces critères.</p>
+            : (
+              <>
+                {groupes.map(({ jour, liste }) => (
+                  <div key={jour}>
+                    <p className="sticky top-0 border-b border-gray-100 bg-gray-50/90 px-5 py-2 text-xs font-medium uppercase tracking-wider text-gray-500 backdrop-blur first-letter:uppercase dark:border-gray-800 dark:bg-gray-900/90">{titreJour(liste[0].date)}</p>
+                    <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {liste.map((e) => {
+                        const { icone: Icone, teinte } = ICONES[e.categorie];
+                        return (
+                          <li key={e.id} className="flex items-start gap-4 px-5 py-3.5">
+                            <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${teinte}`}><Icone className="h-4 w-4" aria-hidden="true" /></span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm text-gray-900 dark:text-white">
+                                <span className="font-medium">{e.acteur}</span>
+                                <span className="text-gray-500"> · {e.action}</span>
+                                {e.cible && <span> · {e.cible}</span>}
+                              </p>
+                              {e.details && <p className="mt-0.5 truncate text-xs text-gray-500">{e.details}</p>}
+                            </div>
+                            <time dateTime={e.date} className="shrink-0 font-marque text-xs text-gray-500">{estJourSeul(e.date) ? '' : new Date(e.date).toLocaleTimeString('fr-HT', { hour: '2-digit', minute: '2-digit' })}</time>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
+                {filtres_.length > nb && (
+                  <div className="border-t border-gray-100 p-4 text-center dark:border-gray-800">
+                    <button type="button" onClick={() => setNb((n) => n + PAR_PAGE)} className="rounded-xl px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-white/5">
+                      Afficher plus ({filtres_.length - nb} restants)
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
         </div>
       </div>
-
-      {/* Stats Section with Glassmorphism */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="group p-6 rounded-3xl bg-white dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05] shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Activity className="w-24 h-24" />
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-              <Activity className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Total Activités</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">{logs.length}</span>
-                <span className="text-[10px] font-black text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900/30">LOGS</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="group p-6 rounded-3xl bg-white dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05] shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <User className="w-24 h-24" />
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-3 rounded-2xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
-              <User className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Collaborateurs</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">{new Set(logs.map(l => l.utilisateur)).size}</span>
-                <span className="text-[10px] font-black text-purple-600 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded-lg border border-purple-100 dark:border-purple-900/30">ACTIFS</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="group p-6 rounded-3xl bg-white dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05] shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <ShieldCheck className="w-24 h-24" />
-          </div>
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="p-3 rounded-2xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Évènements de Sécurité</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-                  {logs.filter(l => l.action.toLowerCase().includes('échec') || l.action.toLowerCase().includes('révoqué')).length}
-                </span>
-                <span className="text-[10px] font-black text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-lg border border-orange-100 dark:border-orange-900/30 uppercase">Critiques</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters Bar */}
-      <div className="bg-white/50 dark:bg-white/[0.02] backdrop-blur-sm p-4 rounded-3xl border border-gray-100 dark:border-white/[0.05] shadow-sm flex flex-col md:flex-row gap-4 items-center">
-        <div className="flex-1 w-full relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors w-5 h-5" />
-          <input 
-            type="text"
-            placeholder="Rechercher par utilisateur, action, module ou IP..."
-            className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400 text-sm"
-            value={filters.search}
-            onChange={(e) => setFilters({...filters, search: e.target.value})}
-          />
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none group-focus-within:text-blue-500" />
-            <select 
-              className="pl-10 pr-10 py-3 rounded-xl border border-gray-100 dark:border-white/10 bg-white dark:bg-gray-900/50 outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none text-sm font-bold text-gray-600 dark:text-gray-300 cursor-pointer"
-              value={filters.module}
-              onChange={(e) => setFilters({...filters, module: e.target.value})}
-            >
-              <option value="">Tous les modules</option>
-              <option value="Authentification">Authentification</option>
-              <option value="Patients">Patients</option>
-              <option value="Utilisateurs">Utilisateurs</option>
-              <option value="Facturation">Facturation</option>
-              <option value="Sécurité">Sécurité</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-white/10 rounded-xl px-4 py-2 transition-all hover:border-blue-300 dark:hover:border-blue-700">
-            <Calendar className="text-gray-400 w-4 h-4" />
-            <input type="date" className="bg-transparent outline-none dark:text-gray-200 text-sm font-bold" />
-          </div>
-        </div>
-      </div>
-
-      {/* Table Content */}
-      <div className="bg-white dark:bg-white/[0.02] rounded-3xl border border-gray-100 dark:border-white/[0.05] shadow-sm overflow-hidden transition-all duration-300">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-50/50 dark:bg-white/[0.02]">
-                <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em]">Temporel</th>
-                <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em]">Agent</th>
-                <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em]">Action</th>
-                <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em]">Module</th>
-                <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em]">Provenance IP</th>
-                <th className="px-6 py-4 text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em] text-right">Analyse</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
-              {isLoading ? (
-                Array.from({length: 8}).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td colSpan={6} className="px-6 py-5 h-16 bg-gray-50/30 dark:bg-white/[0.01]"></td>
-                  </tr>
-                ))
-              ) : filteredLogs.length > 0 ? (
-                filteredLogs.map(log => {
-                  const colors = ['bg-blue-500', 'bg-purple-500', 'bg-indigo-500', 'bg-emerald-500', 'bg-amber-500', 'bg-pink-500'];
-                  const avatarColor = colors[log.utilisateur.length % colors.length];
-                  
-                  return (
-                    <tr key={log.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-all duration-200 group">
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-black text-gray-900 dark:text-gray-100 tracking-tight">
-                            {log.date ? new Date(log.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                          </span>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                            {log.date ? new Date(log.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-2xl ${avatarColor} flex items-center justify-center text-white font-black text-[10px] shadow-md ring-4 ring-white dark:ring-transparent transition-transform group-hover:scale-110`}>
-                            {log.utilisateur.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-blue-600 transition-colors uppercase tracking-tight">
-                            {log.utilisateur.split('@')[0]}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border ${
-                          log.action.toLowerCase().includes('suppression') || log.action.toLowerCase().includes('échec')
-                            ? 'text-red-600 bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30'
-                            : log.action.toLowerCase().includes('création') || log.action.toLowerCase().includes('succès')
-                            ? 'text-emerald-600 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-900/30'
-                            : 'text-blue-600 bg-blue-50 border-blue-100 dark:bg-blue-900/20 dark:border-blue-900/30'
-                        }`}>
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10">
-                          {log.module}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap font-mono text-[10px] text-gray-400 font-bold tracking-tighter">
-                        {log.ip_address}
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap text-right">
-                        <button className="p-2.5 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-indigo-600 transition-all active:scale-90">
-                          <Info className="w-4.5 h-4.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-24 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-inner">
-                        <Search className="w-10 h-10 text-gray-300" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-gray-900 dark:text-white font-black text-sm uppercase tracking-widest">Aucun résultat</p>
-                        <p className="text-gray-500 text-[10px] font-bold italic">Essayez de modifier vos filtres de recherche</p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
+
+export default AuditLogPage;

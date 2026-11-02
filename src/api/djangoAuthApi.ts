@@ -390,6 +390,8 @@ export const djangoAuthApi = {
       const refresh = localStorage.getItem('refresh_token');
       if (!refresh) throw new Error('No refresh token');
       const response = await apiClient.post('/comptes/token/refresh/', { refresh });
+      // Session changée entre-temps (déconnexion, autre compte) : on ignore ce jeton.
+      if (localStorage.getItem('refresh_token') !== refresh) return { success: false, message: 'Session changée' };
       localStorage.setItem('access_token', response.data.access);
       return { success: true, message: 'Token rafraîchi avec succès', data: response.data };
     } catch (error: any) {

@@ -7,6 +7,7 @@ import { ConsultationPrintPage } from './components/ConsultationPrintPage';
 import { ConsultationStats } from './components/ConsultationStats';
 import { formatDateTimeFR } from '../../../utils/dateUtils';
 import Badge from '../../../components/ui/badge/Badge';
+import { useRechercheUrl } from "../../../hooks/useRechercheUrl";
 import { 
   Plus, 
   Search, 
@@ -30,6 +31,7 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
+  useRechercheUrl(setSearchTerm);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

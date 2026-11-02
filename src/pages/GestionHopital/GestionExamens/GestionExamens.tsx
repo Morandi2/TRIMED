@@ -5,6 +5,7 @@ import { consultationService } from '../GestionConsultations/services/Consultati
 import { useUser } from '../../../context/UserContext';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
+import { useRechercheUrl } from "../../../hooks/useRechercheUrl";
 import { FlaskConical, Plus, Search, ChevronLeft, ChevronRight, FileText, Trash2, X } from 'lucide-react';
 
 interface GestionExamensProps {
@@ -20,6 +21,7 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
   const [consultations, setConsultations] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  useRechercheUrl(setSearchTerm);
   const [statusFilter, setStatusFilter] = useState<'Tous' | 'attente' | 'resultat'>('Tous');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);

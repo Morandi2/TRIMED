@@ -7,6 +7,7 @@ import { MedecinViewModal } from './components/MedecinViewModal';
 import { MedecinPrintPage } from './components/MedecinPrintPage';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
+import { useRechercheUrl } from "../../../hooks/useRechercheUrl";
 import { 
   Stethoscope, 
   Plus, 
@@ -25,6 +26,7 @@ interface GestionMedecinsProps {
 const GestionMedecins: React.FC<GestionMedecinsProps> = ({ tenantId, hopitalNom }) => {
   const [medecins, setMedecins] = useState<Medecin[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  useRechercheUrl(setSearchTerm);
   const [sortBy, setSortBy] = useState<'recent' | 'ancien' | 'nom_az' | 'nom_za' | 'specialite'>('recent');
   const [currentPage, setCurrentPage] = useState(1);
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | null>(null);

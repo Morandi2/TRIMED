@@ -152,6 +152,8 @@ export const useDjangoAuth = (): UseAuthReturn => {
   const refreshToken = useCallback(async (): Promise<boolean> => {
     try {
       const response = await djangoAuthApi.refreshToken();
+      // Un autre compte s’est connecté entre-temps : sa session est valide, rien à faire ici.
+      if (!response.success && response.message === 'Session changée') return true;
       if (response.success) {
         // Récupérer le profil mis à jour
         const profileResponse = await djangoAuthApi.getProfile();
