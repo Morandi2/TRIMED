@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import hospitalApi from '../../../api/hospitalApi';
-import { patientService } from '../GestionPatients/services/PatientService';
 import { useUser } from '../../../context/UserContext';
 import GenericCrudManager, { CrudField, CrudColumn } from '../shared/GenericCrudManager';
 import { BedDouble, DoorClosed, ClipboardList } from 'lucide-react';
 import { LIBELLES_LIT, normaliserEtatLit, type EtatLit } from '../Disponibilites/etats';
-import { synchroniserLits } from '../Disponibilites/synchronisation';
+import Admissions from './Admissions';
 
 const ETATS_LIT: EtatLit[] = ['libre', 'occupe', 'reserve', 'nettoyage', 'hors_service'];
 
@@ -27,11 +26,6 @@ const STATUT_CHAMBRE = [
 ];
 // Même vocabulaire que la page « Lits et salles » (Disponibilites/etats.ts).
 const STATUT_LIT = ETATS_LIT.map((e) => ({ value: e, label: LIBELLES_LIT[e] }));
-const STATUT_ADMISSION = [
-  { value: 'hospitalise', label: 'Hospitalisé' },
-  { value: 'sorti', label: 'Sorti' },
-  { value: 'transfere', label: 'Transféré' },
-];
 
 const labelFromOptions = (opts: { value: any; label: string }[], v: any) =>
   opts.find((o) => String(o.value) === String(v))?.label ?? (v ?? '—');
@@ -41,45 +35,29 @@ const extract = (data: any): any[] =>
 
 const GestionHospitalisation: React.FC<Props> = ({ tenantId, hopitalNom }) => {
   const { permissions } = useUser();
-  const canEdit = permissions.canManageSystem || permissions.canEditConsultations;
-  const [tab, setTab] = useState<'chambres' | 'lits' | 'admissions'>('chambres');
+  // Le secrétariat tient les hospitalisations ; la configuration des chambres et des lits reste à la direction.
+  const peutConfigurer = permissions.canConfigurerHopital;
+  const [tab, setTab] = useState<'chambres' | 'lits' | 'admissions'>('admissions');
 
   const [chambres, setChambres] = useState<any[]>([]);
-  const [lits, setLits] = useState<any[]>([]);
-  const [patients, setPatients] = useState<any[]>([]);
   const [refKey, setRefKey] = useState(0);
 
   useEffect(() => {
+    if (!peutConfigurer) return;
     let alive = true;
     (async () => {
-      const [chRes, litRes] = await Promise.all([
-        hospitalApi.hospitalisation.chambres.getAll({ tenant: tenantId }).catch(() => ({ success: false })),
-        hospitalApi.hospitalisation.lits.getAll().catch(() => ({ success: false })),
-      ]);
+      const chRes = await hospitalApi.hospitalisation.chambres.getAll({ tenant: tenantId }).catch(() => ({ success: false }));
       if (!alive) return;
       setChambres((chRes as any).success ? extract((chRes as any).data) : []);
-      setLits((litRes as any).success ? extract((litRes as any).data) : []);
-      patientService.obtenirPatientsParHopital(tenantId).then((p) => alive && setPatients(p)).catch(() => {});
     })();
     return () => { alive = false; };
-  }, [tenantId, refKey]);
+  }, [tenantId, refKey, peutConfigurer]);
 
   const bumpRef = () => setRefKey((k) => k + 1);
 
   const chambreOptions = useMemo(
     () => chambres.map((c) => ({ value: c.id, label: `Chambre ${c.numero} (étage ${c.etage})` })),
     [chambres]
-  );
-  const litOptions = useMemo(
-    () => lits.map((l) => {
-      const chambre = chambres.find((c) => c.id === l.chambre);
-      return { value: l.id, label: chambre ? `Lit ${l.numero_lit} (chambre ${chambre.numero})` : `Lit ${l.numero_lit}` };
-    }),
-    [lits, chambres]
-  );
-  const patientOptions = useMemo(
-    () => patients.map((p) => ({ value: p.patient_id, label: `${p.prenom || ''} ${p.nom || ''}`.trim() || `Patient #${p.patient_id}` })),
-    [patients]
   );
 
   // ---- Chambres ----
@@ -110,27 +88,12 @@ const GestionHospitalisation: React.FC<Props> = ({ tenantId, hopitalNom }) => {
     { key: 'statut', label: 'Statut', render: (r) => LIBELLES_LIT[normaliserEtatLit(r.statut)] },
   ];
 
-  // ---- Admissions ----
-  const admissionFields: CrudField[] = [
-    { key: 'patient', label: 'Patient', type: 'select', required: true, options: patientOptions },
-    { key: 'lit', label: 'Lit', type: 'select', required: true, options: litOptions },
-    { key: 'motif', label: "Motif d'admission", type: 'text', required: true },
-    { key: 'statut', label: 'Statut', type: 'select', options: STATUT_ADMISSION },
-    { key: 'date_sortie', label: 'Date de sortie', type: 'datetime' },
-    { key: 'notes', label: 'Notes', type: 'textarea' },
-  ];
-  const admissionColumns: CrudColumn[] = [
-    { key: 'patient', label: 'Patient', render: (r) => labelFromOptions(patientOptions, r.patient) },
-    { key: 'lit', label: 'Lit', render: (r) => labelFromOptions(litOptions, r.lit) },
-    { key: 'motif', label: 'Motif' },
-    { key: 'statut', label: 'Statut', render: (r) => labelFromOptions(STATUT_ADMISSION, r.statut) },
-    { key: 'date_admission', label: 'Admis le', render: (r) => r.date_admission ? new Date(r.date_admission).toLocaleDateString('fr-FR') : '—' },
-  ];
-
   const tabs = [
-    { key: 'chambres' as const, label: 'Chambres', icon: <DoorClosed className="h-4 w-4" /> },
-    { key: 'lits' as const, label: 'Lits', icon: <BedDouble className="h-4 w-4" /> },
-    { key: 'admissions' as const, label: 'Admissions', icon: <ClipboardList className="h-4 w-4" /> },
+    { key: 'admissions' as const, label: 'Patients hospitalisés', icon: <ClipboardList className="h-4 w-4" /> },
+    ...(peutConfigurer ? [
+      { key: 'chambres' as const, label: 'Chambres', icon: <DoorClosed className="h-4 w-4" /> },
+      { key: 'lits' as const, label: 'Lits', icon: <BedDouble className="h-4 w-4" /> },
+    ] : []),
   ];
 
   return (
@@ -149,10 +112,11 @@ const GestionHospitalisation: React.FC<Props> = ({ tenantId, hopitalNom }) => {
       </div>
 
       <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm p-6 text-black dark:text-white">
-        <div className="flex gap-2 mb-6 border-b border-gray-100 dark:border-white/[0.05]">
+        {tabs.length > 1 && <div className="flex gap-2 mb-6 overflow-x-auto border-b border-gray-100 dark:border-white/[0.05]">
           {tabs.map((t) => (
             <button
               key={t.key}
+              type="button"
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 transition-colors ${
                 tab === t.key ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-400 hover:text-gray-600'
@@ -161,9 +125,9 @@ const GestionHospitalisation: React.FC<Props> = ({ tenantId, hopitalNom }) => {
               {t.icon} {t.label}
             </button>
           ))}
-        </div>
+        </div>}
 
-        {tab === 'chambres' && (
+        {tab === 'chambres' && peutConfigurer && (
           <GenericCrudManager
             api={hospitalApi.hospitalisation.chambres}
             fields={chambreFields}
@@ -171,33 +135,23 @@ const GestionHospitalisation: React.FC<Props> = ({ tenantId, hopitalNom }) => {
             singular="Chambre"
             getParams={{ tenant: tenantId }}
             injectOnCreate={{ tenant: tenantId }}
-            canEdit={canEdit}
+            canEdit={peutConfigurer}
             onChanged={bumpRef}
             refreshSignal={refKey}
           />
         )}
-        {tab === 'lits' && (
+        {tab === 'lits' && peutConfigurer && (
           <GenericCrudManager
             api={hospitalApi.hospitalisation.lits}
             fields={litFields}
             columns={litColumns}
             singular="Lit"
-            canEdit={canEdit}
+            canEdit={peutConfigurer}
             onChanged={bumpRef}
             refreshSignal={refKey}
           />
         )}
-        {tab === 'admissions' && (
-          <GenericCrudManager
-            api={hospitalApi.hospitalisation.admissions}
-            fields={admissionFields}
-            columns={admissionColumns}
-            singular="Admission"
-            canEdit={canEdit}
-            onChanged={() => { synchroniserLits(tenantId).finally(bumpRef); }}
-            refreshSignal={refKey}
-          />
-        )}
+        {tab === 'admissions' && <Admissions tenantId={tenantId} peutGerer={permissions.canGererHospitalisation} />}
       </div>
     </div>
   );

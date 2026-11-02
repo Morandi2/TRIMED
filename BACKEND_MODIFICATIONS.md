@@ -337,12 +337,24 @@ service ; toute l'équipe le voit en temps réel. Un lit avec une hospitalisatio
   `ReservationSalle` (motif « Nettoyage », « Maintenance »…).
 
 **Correction.**
-- Secrétariat : lecture des chambres, lits et admissions **en cours** de son hôpital, et `PATCH` du seul champ
-  `statut` d'un lit (pas de création, pas de suppression, pas d'autre champ).
+- Secrétariat : lecture des chambres et des lits de son hôpital, et `PATCH` du seul champ `statut` d'un lit
+  (pas de création, pas de suppression, pas d'autre champ).
+- Secrétariat, hospitalisations (c'est lui qui admet et fait sortir les patients) sur `/hospitalisation/admissions/`
+  de son hôpital seulement :
+  - `GET` (en cours et historique) ;
+  - `POST` avec `patient`, `lit`, `motif`, `notes`, `statut = "hospitalise"` ;
+  - `PATCH` de `statut` (`sorti` ou `transfere`) avec `date_sortie`, et `PATCH` de `lit` (changement de lit) ;
+  - pas de `DELETE` : une admission erronée se clôt, elle ne s'efface pas.
+- Contrôles serveur sur `Admission` : refuser une admission (ou un changement de lit) vers un lit qui a déjà
+  une admission `hospitalise`, ou un lit d'un autre hôpital ; refuser une deuxième admission en cours pour le
+  même patient ; `date_sortie` obligatoire et postérieure à `date_admission` quand le statut passe à `sorti`
+  ou `transfere`. Le frontend vérifie déjà juste avant d'enregistrer, mais deux postes peuvent agir en même temps.
+- Médecin et infirmier : lecture seule des admissions, chambres et lits de leur hôpital (plus de création ni de
+  modification). Propriétaire et administrateur de l'hôpital : inchangés (tout).
 - Infirmier et médecin : lecture des salles et de leurs réservations.
 - Ajouter des `choices` aux champs `statut` (valeurs ci-dessus) pour refuser les fautes de frappe.
-- Signal sur `Admission` : à la création (`hospitalise`), `lit.statut = "occupe"` ; à la sortie ou au transfert,
-  `lit.statut = "nettoyage"`. Le frontend le fait déjà après chaque changement dans Hospitalisation, mais une
+- Signal sur `Admission` : à la création (`hospitalise`), `lit.statut = "occupe"` ; à la sortie, au transfert ou
+  quand le patient quitte ce lit pour un autre, `lit.statut = "nettoyage"`. Le frontend le fait déjà après chaque changement dans Hospitalisation, mais une
   admission créée ailleurs ne serait pas répercutée.
 - Optionnel : un modèle `IndisponibiliteLit` (lit, début, fin, motif) pour prévoir l'indisponibilité d'un lit
   à l'avance, comme pour les salles.

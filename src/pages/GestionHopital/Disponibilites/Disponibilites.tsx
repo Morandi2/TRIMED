@@ -277,7 +277,7 @@ export default function Disponibilites() {
               {automatique ? (
                 <>
                   <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Occupé par {patients[admission?.patient ?? 0] ?? "un patient hospitalisé"}. Le lit se libère à la sortie du patient, enregistrée dans Hospitalisation.</p>
-                  {permissions.canGererHospitalisation && <Link to="/hospitalisation" className="mt-4 inline-flex rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">Ouvrir Hospitalisation</Link>}
+                  {permissions.canVoirHospitalisation && <Link to="/hospitalisation" className="mt-4 inline-flex rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">Ouvrir Hospitalisation</Link>}
                 </>
               ) : (
                 <>

@@ -65,7 +65,10 @@ export interface UserPermissions {
   canEditConsultations: boolean;
   canViewOrdonnances: boolean;
   canEditOrdonnances: boolean;
+  /** Admettre, faire sortir, changer de lit (secrétariat et administration). */
   canGererHospitalisation: boolean;
+  /** Voir les patients hospitalisés (équipe soignante, secrétariat, administration). */
+  canVoirHospitalisation: boolean;
   
   // Médicaments & Stock
   canViewMedicaments: boolean;
@@ -105,7 +108,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canEditConsultations: true,
     canViewOrdonnances: true,
     canEditOrdonnances: true,
-    canGererHospitalisation: true,
+    canGererHospitalisation: false,
+    canVoirHospitalisation: false,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: true,
@@ -135,6 +139,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewOrdonnances: true,
     canEditOrdonnances: true,
     canGererHospitalisation: true,
+    canVoirHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: true,
@@ -164,6 +169,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewOrdonnances: true,
     canEditOrdonnances: true,
     canGererHospitalisation: true,
+    canVoirHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: true,
@@ -192,7 +198,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canEditConsultations: true,
     canViewOrdonnances: true,
     canEditOrdonnances: true,
-    canGererHospitalisation: true,
+    canGererHospitalisation: false,
+    canVoirHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: false, // Médecin ne peut pas modifier le stock
@@ -221,7 +228,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canEditConsultations: true,
     canViewOrdonnances: true,
     canEditOrdonnances: false,
-    canGererHospitalisation: true,
+    canGererHospitalisation: false,
+    canVoirHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: true, // Infirmier peut modifier le stock
@@ -250,7 +258,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canEditConsultations: false,
     canViewOrdonnances: false,
     canEditOrdonnances: false,
-    canGererHospitalisation: false,
+    canGererHospitalisation: true,
+    canVoirHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: false, // Secrétaire pas de stock
@@ -280,6 +289,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewOrdonnances: false,
     canEditOrdonnances: false,
     canGererHospitalisation: false,
+    canVoirHospitalisation: false,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: true, // Personnel peut modifier le stock
@@ -309,6 +319,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewOrdonnances: false,
     canEditOrdonnances: false,
     canGererHospitalisation: false,
+    canVoirHospitalisation: false,
     canViewMedicaments: false, // Le stock de l’hôpital ne concerne pas le patient
     canGererMedicaments: false,
     canModifierStock: false,

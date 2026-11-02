@@ -11,6 +11,7 @@ import {
 import { Patient } from '../services/PatientService';
 import { Tooltip } from './Tooltip';
 import { calculateAge, formatDateFR } from '../../../../utils/dateUtils';
+import { useHospitalises } from '../../GestionHospitalisation/hospitalises';
 
 interface PatientTableProps {
   patients: Patient[];
@@ -30,6 +31,7 @@ export const PatientTable: React.FC<PatientTableProps> = ({
   onDeletePatient
 }) => {
   const { permissions } = useUser();
+  const hospitalises = useHospitalises(permissions.canVoirHospitalisation);
   const safePatients = Array.isArray(patients) ? patients : [];
   const currentPatients = safePatients.slice(
     (currentPage - 1) * patientsPerPage,
@@ -86,8 +88,13 @@ export const PatientTable: React.FC<PatientTableProps> = ({
           {currentPatients.map((patient) => (
             <TableRow key={patient.patient_id}>
               <TableCell className="py-4 px-6">
-                <div className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                <div className="flex items-center gap-2 font-medium text-gray-800 text-theme-sm dark:text-white/90">
                   {patient.prenom} {patient.nom}
+                  {hospitalises.has(patient.patient_id) && (
+                    <Badge size="sm" color="primary">
+                      {hospitalises.get(patient.patient_id) ? `Hospitalisé, lit ${hospitalises.get(patient.patient_id)}` : 'Hospitalisé'}
+                    </Badge>
+                  )}
                 </div>
                 <div className="text-gray-600 text-theme-xs dark:text-gray-400">
                   {patient.email}

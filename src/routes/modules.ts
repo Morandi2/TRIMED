@@ -20,7 +20,7 @@ type NomModule = keyof typeof modules;
 const DROITS: [NomModule, keyof UserPermissions][] = [
   ['patient', 'canViewPatients'], ['rendezVous', 'canViewRendezVous'], ['consultation', 'canViewConsultations'],
   ['medicament', 'canViewMedicaments'], ['ordonnance', 'canViewOrdonnances'], ['medecin', 'canViewMedecins'],
-  ['examen', 'canViewConsultations'], ['hospitalisation', 'canGererHospitalisation'], ['calendrier', 'canViewCalendar'], ['disponibilites', 'canSuivreDisponibilites'],
+  ['examen', 'canViewConsultations'], ['hospitalisation', 'canVoirHospitalisation'], ['calendrier', 'canViewCalendar'], ['disponibilites', 'canSuivreDisponibilites'],
 ];
 
 let fait = false;

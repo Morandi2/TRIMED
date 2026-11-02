@@ -92,7 +92,7 @@ export default function App() {
                   <Route path="/medicament" element={<ProtectedRoute requiredPermission="canViewMedicaments">{page(<Medicament />)}</ProtectedRoute>} />
                   <Route path="/ordonnance" element={<ProtectedRoute requiredPermission="canViewOrdonnances">{page(<Ordonnance />)}</ProtectedRoute>} />
                   <Route path="/examen" element={<ProtectedRoute requiredPermission="canViewConsultations">{page(<Examen />)}</ProtectedRoute>} />
-                  <Route path="/hospitalisation" element={<ProtectedRoute requiredPermission="canViewConsultations">{page(<Hospitalisation />)}</ProtectedRoute>} />
+                  <Route path="/hospitalisation" element={<ProtectedRoute requiredPermission="canVoirHospitalisation">{page(<Hospitalisation />)}</ProtectedRoute>} />
                   <Route path="/salles-medicales" element={<ProtectedRoute requiredPermission="canViewConsultations">{page(<SallesMedicales />)}</ProtectedRoute>} />
                   <Route path="/paiement" element={<ProtectedRoute requiredPermission="canGererFacturation">{page(<Paiement />)}</ProtectedRoute>} />
                   <Route path="/rendezvous" element={<ProtectedRoute requiredPermission="canViewRendezVous">{page(<RendezVous />)}</ProtectedRoute>} />
