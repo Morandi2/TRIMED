@@ -58,7 +58,7 @@ const DragDropUpload: FC<DragDropUploadProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative group cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 min-h-[160px] flex flex-col items-center justify-center p-6
+        className={`relative group cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 min-h-[112px] flex flex-col items-center justify-center p-4
           ${isDragging 
             ? 'border-brand-500 bg-brand-500/5 ring-4 ring-brand-500/10' 
             : 'border-white/20 hover:border-brand-400 bg-white/5 hover:bg-white/10 dark:bg-brand-900/10'
