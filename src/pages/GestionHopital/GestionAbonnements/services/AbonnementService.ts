@@ -16,7 +16,7 @@ interface AbonnementsCache {
   fetchedAt: number;
 }
 
-const CACHE_TTL_MS = 30 * 60 * 1000;
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes, aligné sur la mémoire partagée (api/cacheApi.ts)
 
 class AbonnementService {
   private abonnementsCache: AbonnementsCache | null = null;
@@ -42,7 +42,7 @@ class AbonnementService {
   private saveCacheToStorage() {
     try {
       if (this.abonnementsCache) {
-        localStorage.setItem('abonnements_cache', JSON.stringify(this.abonnementsCache));
+        /* Plus d’écriture sur le disque : données médicales sur un poste partagé (mémoire seulement). */
       }
     } catch (e) {}
   }

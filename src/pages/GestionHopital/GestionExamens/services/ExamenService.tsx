@@ -48,7 +48,7 @@ interface ExamensCache {
   fetchedAt: number;
 }
 
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes, aligné sur la mémoire partagée (api/cacheApi.ts)
 
 export class ExamenService {
   private static instance: ExamenService;

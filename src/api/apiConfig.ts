@@ -1,6 +1,7 @@
 import axios from 'axios';
 import config from '../config/environment';
 import { logApiError } from '../utils/apiErrorHandler';
+import { avecCache } from './cacheApi';
 
 // Configuration de base pour axios - Django Backend
 const API_BASE_URL = config.API_BASE_URL;
@@ -16,6 +17,9 @@ const apiClient = axios.create({
   xsrfCookieName: 'csrftoken',
   xsrfHeaderName: 'X-CSRFToken',
 });
+
+// Mémoire partagée des lectures : un module déjà ouvert se réaffiche sans tout retélécharger (voir cacheApi.ts).
+apiClient.defaults.adapter = avecCache(axios.getAdapter(apiClient.defaults.adapter ?? axios.defaults.adapter));
 
 // Lojik retry senp pou jere echèk rezo oswa cold starts
 const MAX_RETRIES = 3;

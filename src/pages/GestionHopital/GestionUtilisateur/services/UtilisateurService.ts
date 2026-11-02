@@ -25,7 +25,7 @@ class UtilisateurService {
   ];
 
   private utilisateursCache: { data: Utilisateur[]; tenantId: number; fetchedAt: number } | null = null;
-  private readonly CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+  private readonly CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes, aligné sur la mémoire partagée (api/cacheApi.ts)
 
   constructor() {
     this.loadCacheFromStorage();
@@ -48,7 +48,7 @@ class UtilisateurService {
   private saveCacheToStorage() {
     try {
       if (this.utilisateursCache) {
-        localStorage.setItem('utilisateurs_cache', JSON.stringify(this.utilisateursCache));
+        /* Plus d’écriture sur le disque : données médicales sur un poste partagé (mémoire seulement). */
       }
     } catch (e) {}
   }

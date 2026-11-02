@@ -9,6 +9,7 @@ import {
 } from './types/auth.types';
 import { validation } from '../utils/validation';
 import { classerErreurConnexion } from './erreursConnexion';
+import { effacerAnciensCachesDisque, viderCacheApi } from './cacheApi';
 
 /**
  * API pour l'authentification Django
@@ -35,6 +36,9 @@ export const djangoAuthApi = {
       const authUser = this.mapUserResponse(respData.user || respData, respData.tenant);
 
       // Stocker les tokens
+      // Nouveau compte : rien de la session précédente ne doit rester en mémoire.
+      viderCacheApi();
+      effacerAnciensCachesDisque();
       if (access) localStorage.setItem('access_token', access);
       if (refresh) localStorage.setItem('refresh_token', refresh);
 
@@ -399,6 +403,8 @@ export const djangoAuthApi = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');
+    viderCacheApi();
+    effacerAnciensCachesDisque();
     localStorage.removeItem('tenant_data');
   },
 
