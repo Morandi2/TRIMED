@@ -5,6 +5,7 @@ import { TenantProvider } from "./context/TenantContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { ScrollToTop } from "./components/common/ScrollToTop";
+import BanniereReseau from "./components/common/BanniereReseau";
 import Portail from "./pages/index/portail/Portail";
 import { reveillerServeur } from "./utils/reveilServeur";
 import { modules } from "./routes/modules";
@@ -59,6 +60,7 @@ export default function App() {
         <AuthProvider>
           <UserProvider>
             <ScrollToTop />
+            <BanniereReseau />
             <Suspense fallback={<Chargement pleinEcran />}>
               <Routes>
                 {/* Routes Publiques */}

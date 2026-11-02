@@ -104,7 +104,7 @@ export default function Calendar() {
             <span className="inline-flex rounded-full px-2.5 py-1 text-xs text-white" style={{ background: couleurDe(choisi) }}>{choisi.statut_nom ?? "Rendez-vous"}</span>
             <h2 className="mt-3 font-marque text-xl text-gray-900 dark:text-white">{choisi.type_nom || choisi.motif || "Rendez-vous"}</h2>
             <ul className="mt-5 space-y-3 text-sm text-gray-700 dark:text-gray-300">
-              <li className="flex items-center gap-3"><Clock className="h-4 w-4 text-brand-500" aria-hidden="true" />{new Date(choisi.date_heure).toLocaleDateString("fr-HT", { weekday: "long", day: "numeric", month: "long" })}, {heure(choisi.date_heure)}{choisi.date_fin ? ` – ${heure(choisi.date_fin)}` : ""}</li>
+              <li className="flex items-center gap-3"><Clock className="h-4 w-4 text-brand-500" aria-hidden="true" />{new Date(choisi.date_heure).toLocaleDateString("fr-HT", { weekday: "long", day: "numeric", month: "long" })}, {choisi.date_fin ? `de ${heure(choisi.date_heure)} à ${heure(choisi.date_fin)}` : `à ${heure(choisi.date_heure)}`}</li>
               <li className="flex items-center gap-3"><UserRound className="h-4 w-4 text-brand-500" aria-hidden="true" />{choisi.patient_prenom} {choisi.patient_nom}</li>
               {choisi.medecin_nom && <li className="flex items-center gap-3"><Stethoscope className="h-4 w-4 text-brand-500" aria-hidden="true" />Dr {choisi.medecin_prenom} {choisi.medecin_nom}</li>}
             </ul>

@@ -15,7 +15,7 @@ function phraseDuGardien(d: DonneesTableau) {
   const ruptures = d.statsMedicaments?.medicaments_rupture ?? 0;
   if (ruptures) points.push(`${ruptures} médicament${ruptures > 1 ? "s" : ""} en rupture`);
   else if (d.stockFaible.length) points.push(`${d.stockFaible.length} médicament${d.stockFaible.length > 1 ? "s" : ""} à réapprovisionner`);
-  return points.length ? `À surveiller : ${points.join(" · ")}.` : "Tout est en ordre. Les dossiers sont à leur place.";
+  return points.length ? `À surveiller : ${points.join(" et ")}.` : "Tout est en ordre. Les dossiers sont à leur place.";
 }
 
 // Tableau de bord de l’hôpital (propriétaire et administrateur de l’hôpital), calculé à partir des
@@ -48,7 +48,7 @@ export default function Home() {
 
         {/* Chiffres clés */}
         <div className="grid grid-cols-2 gap-4 md:gap-5 xl:grid-cols-4">
-          <Chiffre libelle="Patients" valeur={d ? d.patients.length : "…"} detail={d ? `${femmes} femmes · ${hommes} hommes` : undefined} icone={Users} teinte="bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" lien="/patient" />
+          <Chiffre libelle="Patients" valeur={d ? d.patients.length : "…"} detail={d ? `${femmes} femmes et ${hommes} hommes` : undefined} icone={Users} teinte="bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300" lien="/patient" />
           <Chiffre libelle="Rendez-vous aujourd’hui" valeur={d ? d.statsRdv?.aujourd_hui ?? "—" : "…"} detail={d?.statsRdv ? `${d.statsRdv.cette_semaine} cette semaine` : undefined} icone={CalendarClock} teinte="bg-trimed-brume text-trimed-vert-fonce dark:bg-trimed-vert/15 dark:text-trimed-menthe" lien="/rendezvous" />
           <Chiffre libelle="Consultations ce mois" valeur={d ? ceMois : "…"} detail={d ? (evolution === null || ceMois === 0 ? `${moisPasse} le mois dernier` : `${evolution >= 0 ? "+" : ""}${evolution} % par rapport au mois dernier`) : undefined} icone={Stethoscope} teinte="bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300" lien="/consultation" />
           <Chiffre libelle="Lits occupés" valeur={d ? `${occupes} / ${totalLits}` : "…"} detail={d ? `${tauxOccupation(occupes, totalLits)} % d’occupation` : undefined} icone={BedDouble} teinte="bg-purple-50 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300" lien="/hospitalisation" />

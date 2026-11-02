@@ -350,7 +350,7 @@ export default function SignUpForm() {
                 {steps[currentStep - 1].title}
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-2xl">
-                Étape {currentStep} sur {steps.length} — Remplissez les informations pour inscrire votre hôpital.
+                Étape {currentStep} sur {steps.length}. Remplissez les informations pour inscrire votre hôpital.
               </p>
             </div>
             {/* Remplissage automatique : uniquement en développement (jamais en production) */}

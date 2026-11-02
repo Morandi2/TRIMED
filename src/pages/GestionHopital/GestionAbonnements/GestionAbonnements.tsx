@@ -480,7 +480,7 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
 
       <NotificationToast
         isOpen={notification.isOpen}
-        message={`${notification.title} — ${notification.message}`}
+        message={`${notification.title}. ${notification.message}`}
         type={notification.type}
         onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
       />

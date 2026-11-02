@@ -731,7 +731,7 @@ export default function GestionConsultations() {
                       {consultation.statut}
                     </Badge>
                     {!consultation.paye && consultation.statut === "Terminée" && (
-                      <span className="ml-1 text-xs text-red-500">• Non payé</span>
+                      <span className="ml-1 text-xs text-red-500">(non payé)</span>
                     )}
                   </TableCell>
                   <TableCell className="py-3">
@@ -1479,7 +1479,7 @@ function ConsultationModalContent({ consultation, onSave, onClose, mode }: Consu
                       {prescription.medicament} - {prescription.dosage}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {prescription.duree} • {prescription.instructions}
+                      {prescription.duree}, {prescription.instructions}
                     </p>
                   </div>
                   <button
@@ -1953,7 +1953,7 @@ function ViewModalContent({ consultation, onClose }: ViewModalProps) {
                             {prescription.medicament} - {prescription.dosage}
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {prescription.duree} • {prescription.instructions}
+                            {prescription.duree}, {prescription.instructions}
                           </p>
                         </div>
                       </div>

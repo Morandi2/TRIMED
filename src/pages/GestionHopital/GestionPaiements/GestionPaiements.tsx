@@ -426,7 +426,7 @@ export const GestionPaiements: React.FC<GestionPaiementsProps> = ({ tenantId }) 
 
       <NotificationToast
         isOpen={notification.isOpen}
-        message={`${notification.title} — ${notification.message}`}
+        message={`${notification.title}. ${notification.message}`}
         type={notification.type}
         onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
       />

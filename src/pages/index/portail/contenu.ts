@@ -16,10 +16,9 @@ export const CONTACT = {
 };
 
 export const OUVERTURE = {
-  surtitre: 'Soins • Gestion • Innovation',
+  surtitre: 'Soins, gestion, innovation',
   titre: ['Chaque dossier', 'à sa place.'],
-  texte: 'TRIMED réunit le dossier de chaque patient, les consultations, les ordonnances, les rendez-vous et la pharmacie dans une seule plateforme en ligne, pensée pour les hôpitaux d’Haïti.',
-  note: 'Projet pilote à l’hôpital JCC de Carrefour'
+  texte: 'TRIMED réunit le dossier de chaque patient, les consultations, les ordonnances, les rendez-vous et la pharmacie dans une seule plateforme en ligne, pensée pour les hôpitaux d’Haïti.'
 };
 
 // Les trois chapitres que traverse le robot gardien.

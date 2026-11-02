@@ -37,7 +37,7 @@ export default function PiedDePage({ accueil = true }: { accueil?: boolean }) {
       </div>
       <div className="border-t border-trimed-indigo/10">
         <p className="ptl-cadre py-5 text-xs text-trimed-encre-douce">
-          © 2025 TRIMED · Projet de fin d’études, Université de Technologie d’Haïti (UNITECH)
+          © 2025 TRIMED. Projet de fin d’études, Université de Technologie d’Haïti (UNITECH)
         </p>
       </div>
     </footer>

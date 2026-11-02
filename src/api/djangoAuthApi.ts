@@ -8,6 +8,7 @@ import {
   AuthUser
 } from './types/auth.types';
 import { validation } from '../utils/validation';
+import { classerErreurConnexion } from './erreursConnexion';
 
 /**
  * API pour l'authentification Django
@@ -55,30 +56,13 @@ export const djangoAuthApi = {
     } catch (error: any) {
       console.error('Erreur connexion Django:', error.response?.data || error.message);
 
-      let message = 'Échec de la connexion';
       const errorData = error.response?.data;
-
-      if (errorData) {
-        if (errorData.detail) message = errorData.detail;
-        else if (errorData.error) message = errorData.error;
-        else if (errorData.non_field_errors) message = errorData.non_field_errors[0];
-        else if (typeof errorData === 'object') {
-          const firstKey = Object.keys(errorData)[0];
-          if (Array.isArray(errorData[firstKey])) {
-            message = `${errorData[firstKey][0]}`; // Just output the message part
-          }
-        }
-      }
-
-      // Détection intelligente des comptes inactifs pour afficher le message personnalisé en Créole
-      const errorStr = JSON.stringify(errorData || '').toLowerCase();
-      if (errorStr.includes('inactif') || errorStr.includes('inactive') || errorStr.includes('non actif') || errorStr.includes('pas actif')) {
-        message = 'Ce compte n\'est pas encore actif. Veuillez patienter jusqu\'à ce qu\'un administrateur l\'active.';
-      }
+      const { code, message } = classerErreurConnexion(error);
 
       return {
         success: false,
         message,
+        code,
         error: errorData
       };
     }

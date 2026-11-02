@@ -82,7 +82,7 @@ const DragDropUpload: FC<DragDropUploadProps> = ({
               {isDragging ? 'Déposez les fichiers ici' : 'Cliquez ou glissez vos documents'}
             </p>
             <p className="text-[11px] mt-1 opacity-70">
-              {acceptedTypes.join(', ').toUpperCase()} • Max {maxFiles} fichiers
+              {acceptedTypes.join(', ').toUpperCase()}, {maxFiles} fichiers au maximum
             </p>
           </div>
         </div>

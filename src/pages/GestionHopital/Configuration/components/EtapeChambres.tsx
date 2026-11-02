@@ -100,7 +100,7 @@ export function EtapeChambres({ tenantId }: { tenantId: number }) {
 
       <div>
         <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
-          {chargement ? 'Chargement…' : `${chambres.length} chambre${chambres.length > 1 ? 's' : ''} · ${totalLits} lit${totalLits > 1 ? 's' : ''}`}
+          {chargement ? 'Chargement…' : `${chambres.length} chambre${chambres.length > 1 ? 's' : ''} et ${totalLits} lit${totalLits > 1 ? 's' : ''}`}
         </p>
         {!chargement && chambres.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-gray-200 py-10 text-center text-sm text-gray-500 dark:border-gray-800">
@@ -115,7 +115,7 @@ export function EtapeChambres({ tenantId }: { tenantId: number }) {
                 <li key={c.id} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                   <div className="flex items-baseline justify-between">
                     <p className="font-marque text-base text-gray-900 dark:text-white">Chambre {c.numero}</p>
-                    <p className="text-xs text-gray-500">Étage {c.etage} · {TYPES[c.type_chambre] ?? c.type_chambre}</p>
+                    <p className="text-xs text-gray-500">Étage {c.etage}, {(TYPES[c.type_chambre] ?? c.type_chambre).toLowerCase()}</p>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {ls.length ? ls.map((l) => (

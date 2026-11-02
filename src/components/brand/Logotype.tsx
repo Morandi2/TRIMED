@@ -27,7 +27,7 @@ export default function Logotype({ taille = 'md', inverse = false, slogan = fals
         </span>
         {slogan && (
           <span className={`font-texte font-light uppercase tracking-[0.32em] mt-1.5 ${t.slogan} ${inverse ? 'text-white/80' : 'text-trimed-indigo/80'}`}>
-            Soins • Gestion • Innovation
+            Soins, gestion, innovation
           </span>
         )}
       </span>

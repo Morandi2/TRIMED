@@ -140,8 +140,8 @@ export const AuditLogPage = () => {
                             <div className="min-w-0 flex-1">
                               <p className="text-sm text-gray-900 dark:text-white">
                                 <span className="font-medium">{e.acteur}</span>
-                                <span className="text-gray-500"> · {e.action}</span>
-                                {e.cible && <span> · {e.cible}</span>}
+                                <span className="text-gray-500"> : {e.action.toLowerCase()}</span>
+                                {e.cible && <span className="text-gray-500"> ({e.cible})</span>}
                               </p>
                               {e.details && <p className="mt-0.5 truncate text-xs text-gray-500">{e.details}</p>}
                             </div>

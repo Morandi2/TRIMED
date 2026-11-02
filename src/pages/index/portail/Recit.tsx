@@ -105,10 +105,6 @@ export default function Recit() {
               <Link to="/contact" className="ptl-bouton">Demander une démonstration <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
               <Link to="/signin" className="ptl-bouton-clair">Se connecter</Link>
             </div>
-            <p className="mt-6 inline-flex items-center gap-2 text-sm text-trimed-encre-douce">
-              <span className="h-2 w-2 rounded-full bg-trimed-vert" aria-hidden="true" />
-              {OUVERTURE.note}
-            </p>
           </div>
         </div>
 

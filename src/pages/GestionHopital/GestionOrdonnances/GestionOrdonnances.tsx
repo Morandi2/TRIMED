@@ -394,7 +394,7 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
                             <p className="font-bold text-gray-900 dark:text-white">{p.medicament}</p>
                             <span className="text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-2.5 py-1 rounded-lg">{p.dosage}</span>
                           </div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">{p.duree} • {p.instructions}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">{p.duree}, {p.instructions}</p>
                         </div>
                       ))}
                     </div>

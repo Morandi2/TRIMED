@@ -43,7 +43,7 @@ export function EtapeHopital({ tenantId, nomConnu }: { tenantId: number; nomConn
     ['Abonnement', hopital?.type_abonnement ? ABONNEMENTS[hopital.type_abonnement] ?? hopital.type_abonnement : undefined],
   ];
 
-  const sujet = encodeURIComponent(`Correction des informations — ${hopital?.nom ?? nomConnu ?? 'mon hôpital'}`);
+  const sujet = encodeURIComponent(`Correction des informations de ${hopital?.nom ?? nomConnu ?? 'mon hôpital'}`);
 
   return (
     <div className="space-y-6">

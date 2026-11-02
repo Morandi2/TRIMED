@@ -6,7 +6,7 @@ interface UseAuthReturn {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string; redirectTo?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string; redirectTo?: string; code?: string }>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
   checkAuthStatus: () => void;
@@ -121,14 +121,15 @@ export const useDjangoAuth = (): UseAuthReturn => {
       } else {
         return {
           success: false,
-          message: response.message
+          message: response.message,
+          code: response.code
         };
       }
     } catch (error: any) {
       console.error('Erreur login hook:', error);
       return {
         success: false,
-        message: 'Erreur lors de la connexion'
+        message: 'La connexion n’a pas abouti. Réessayez dans un instant.'
       };
     } finally {
       setIsLoading(false);

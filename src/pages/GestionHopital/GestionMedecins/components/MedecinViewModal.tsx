@@ -90,7 +90,7 @@ export const MedecinViewModal: React.FC<MedecinViewModalProps> = ({
             <div>
               <label className="block text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1.5">Sexe & Âge</label>
               <p className="text-sm font-bold text-gray-900 dark:text-white">
-                {medecin.sexe === 'M' ? 'Masculin' : medecin.sexe === 'F' ? 'Féminin' : 'Autre'} • {calculateAge(medecin.date_naissance)} ans
+                {medecin.sexe === 'M' ? 'Masculin' : medecin.sexe === 'F' ? 'Féminin' : 'Autre'}, {calculateAge(medecin.date_naissance)} ans
               </p>
             </div>
             <div className="col-span-2">

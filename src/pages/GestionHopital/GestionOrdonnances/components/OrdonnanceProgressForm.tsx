@@ -405,7 +405,7 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
                                 {prescription.medicament} - {prescription.dosage}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {prescription.duree} • {prescription.instructions}
+                                {prescription.duree}, {prescription.instructions}
                               </p>
                             </div>
                             <button

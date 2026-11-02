@@ -87,7 +87,7 @@ export default function TrimedAdminDashboard() {
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-brand-500 dark:bg-gray-800"><Building2 className="h-5 w-5" /></div>
                     <div className="min-w-0">
                       <p className="truncate font-medium text-gray-900 dark:text-white">{h.nom}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Plan {PLANS[h.type_abonnement] ?? h.type_abonnement} · inscrit le {dateCourte(h.cree_le)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Plan {PLANS[h.type_abonnement] ?? h.type_abonnement}, inscrit le {dateCourte(h.cree_le)}</p>
                     </div>
                   </div>
                   <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${

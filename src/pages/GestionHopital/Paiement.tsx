@@ -28,7 +28,7 @@ export default function Paiement() {
   }, [user?.hopital_id]);
 
   const formule = hopital?.type_abonnement ? NOMS[hopital.type_abonnement] : undefined;
-  const sujet = encodeURIComponent(`Abonnement TRIMED — ${hopital?.nom ?? user?.hopital_nom ?? "mon hôpital"}`);
+  const sujet = encodeURIComponent(`Abonnement TRIMED de ${hopital?.nom ?? user?.hopital_nom ?? "mon hôpital"}`);
 
   return (
     <>

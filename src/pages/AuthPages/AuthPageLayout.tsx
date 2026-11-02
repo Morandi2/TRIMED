@@ -52,7 +52,6 @@ export default function AuthLayout({ children, large = false }: { children: Reac
               ))}
             </ul>
           </div>
-          <p className="relative flex items-center gap-2 text-xs text-white/75"><span className="h-2 w-2 rounded-full bg-trimed-vert" aria-hidden="true" />{OUVERTURE.note}</p>
         </aside>
 
         {/* Formulaire */}

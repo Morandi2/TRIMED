@@ -12,7 +12,7 @@ const Contact = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const sujet = `Demande de démonstration TRIMED${formData.structure ? ` – ${formData.structure}` : ''}`;
+    const sujet = `Demande de démonstration TRIMED${formData.structure ? ` pour ${formData.structure}` : ''}`;
     const corps = `${formData.message}\n\n${formData.name}\n${formData.email}${formData.structure ? `\n${formData.structure}` : ''}`;
     window.location.href = `mailto:${CONTACT.email}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
     setOuverte(true);

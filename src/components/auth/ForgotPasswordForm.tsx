@@ -5,7 +5,7 @@ import { CONTACT } from "../../pages/index/portail/contenu";
 // Mot de passe oublié. Le serveur n’envoie pas encore de lien de réinitialisation par e-mail
 // (BACKEND_MODIFICATIONS.md, point 14) : on indique qui peut redonner l’accès, sans simuler d’envoi.
 export default function ForgotPasswordForm() {
-  const sujet = encodeURIComponent("Mot de passe oublié — TRIMED");
+  const sujet = encodeURIComponent("Mot de passe oublié sur TRIMED");
   return (
     <div className="flex w-full flex-col">
       <div className="mb-8">

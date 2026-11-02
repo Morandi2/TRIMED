@@ -330,7 +330,7 @@ const PrescrireModal: React.FC<{
       );
       if (res.success) onSaved();
       else {
-        const fe = res.fieldErrors ? Object.entries(res.fieldErrors).map(([k, v]) => `${k}: ${v}`).join(' · ') : '';
+        const fe = res.fieldErrors ? Object.entries(res.fieldErrors).map(([k, v]) => `${k}: ${v}`).join(', ') : '';
         onError(fe || res.message || 'Erreur lors de la prescription.');
       }
     } finally {
@@ -358,7 +358,7 @@ const PrescrireModal: React.FC<{
               {consultations.map((c) => {
                 const id = c.consultation_id || c.id;
                 const date = c.date_consultation ? new Date(c.date_consultation).toLocaleDateString('fr-FR') : '';
-                return <option key={id} value={id}>{`#${id} — ${c.patient_nom || 'Patient'}${date ? ' (' + date + ')' : ''}`}</option>;
+                return <option key={id} value={id}>{`${c.patient_nom || 'Patient'}${date ? ', ' + date : ''} (n° ${id})`}</option>;
               })}
             </select>
           </div>
@@ -437,7 +437,7 @@ const ResultatModal: React.FC<{
           </button>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          {examen.nom_examen} — {examen.patient_nom || `Patient #${examen.patient_id}`}
+          {examen.nom_examen} pour {examen.patient_nom || `le patient n° ${examen.patient_id}`}
         </p>
         <div className="space-y-4">
           <div>

@@ -91,7 +91,7 @@ export function ListeRendezVous({ liste, vide, sansPatient = false, sansMedecin 
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{sansPatient ? (r.type_nom || r.motif || "Rendez-vous") : `${r.patient_prenom ?? ""} ${r.patient_nom ?? ""}`}</p>
             <p className="truncate text-xs text-gray-500">
-              {[!sansPatient && (r.type_nom || r.motif), !sansMedecin && r.medecin_nom && `Dr ${r.medecin_prenom ?? ""} ${r.medecin_nom}`].filter(Boolean).join(" · ") || r.motif}
+              {[!sansPatient && (r.type_nom || r.motif), !sansMedecin && r.medecin_nom && `Dr ${r.medecin_prenom ?? ""} ${r.medecin_nom}`].filter(Boolean).join(", ") || r.motif}
             </p>
           </div>
           {r.statut_nom && <span className="shrink-0 rounded-full px-2.5 py-1 text-xs text-white" style={{ background: COULEURS_STATUTS[r.statut_nom] ?? r.statut_couleur ?? COULEURS.gris }}>{r.statut_nom}</span>}
