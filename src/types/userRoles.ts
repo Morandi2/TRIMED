@@ -89,6 +89,10 @@ export interface UserPermissions {
   canModifierTenant: boolean;
   /** Paramètres et assistant de configuration de son propre hôpital (propriétaire). */
   canConfigurerHopital: boolean;
+  /** Voir les lits et salles disponibles en temps réel. */
+  canSuivreDisponibilites: boolean;
+  /** Dire quand un lit ou une salle est libre, réservé, en nettoyage ou hors service (secrétariat). */
+  canGererDisponibilites: boolean;
 }
 
 export const rolePermissions: Record<UserRole, UserPermissions> = {
@@ -118,6 +122,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewAuditLogs: true,
     canModifierTenant: true,
     canConfigurerHopital: false,
+    canSuivreDisponibilites: false,
+    canGererDisponibilites: false,
   },
   'admin-hopital': {
     canViewPatients: true,
@@ -145,6 +151,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewAuditLogs: true,
     canModifierTenant: false,
     canConfigurerHopital: true,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: true,
   },
   'proprietaire-hopital': {
     canViewPatients: true,
@@ -172,6 +180,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewAuditLogs: true,
     canModifierTenant: false,
     canConfigurerHopital: true,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: true,
   },
   'medecin': {
     canViewPatients: true,
@@ -199,6 +209,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewAuditLogs: false,
     canModifierTenant: false,
     canConfigurerHopital: false,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: false,
   },
   'infirmier': {
     canViewPatients: true,
@@ -226,6 +238,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewAuditLogs: false,
     canModifierTenant: false,
     canConfigurerHopital: false,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: false,
   },
   'secretaire': {
     canViewPatients: true,
@@ -253,6 +267,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewAuditLogs: false,
     canModifierTenant: false,
     canConfigurerHopital: false,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: true,
   },
   'personnel': {
     canViewPatients: true,
@@ -280,6 +296,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewAuditLogs: false,
     canModifierTenant: false,
     canConfigurerHopital: false,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: false,
   },
   'patient': {
     canViewPatients: false,
@@ -307,6 +325,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewAuditLogs: false,
     canModifierTenant: false,
     canConfigurerHopital: false,
+    canSuivreDisponibilites: false,
+    canGererDisponibilites: false,
   },
 };
 

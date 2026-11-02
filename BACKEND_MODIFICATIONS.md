@@ -323,6 +323,32 @@ oublié » simulait un envoi ; il indique désormais de passer par l'équipe TRI
 
 ---
 
+## 15. Disponibilité des lits et des salles (page « Lits et salles »)
+
+**Besoin.** Le secrétariat tient à jour quand un lit ou une salle est libre, réservé, en nettoyage ou hors
+service ; toute l'équipe le voit en temps réel. Un lit avec une hospitalisation en cours est « Occupé » tout seul.
+
+**Constat.**
+- Le secrétariat reçoit 403 sur `/hospitalisation/chambres/`, `/lits/` et `/admissions/` : il ne voit pas les lits.
+- L'infirmier reçoit 403 sur `/salles-medicales/...` : il ne voit pas les salles.
+- `Lit.statut`, `Chambre.statut` et `SalleMedicale.statut` sont des textes libres (valeurs par défaut « libre » et
+  « disponible »). Le frontend utilise désormais : lits `libre | occupe | reserve | nettoyage | hors_service` ;
+  salles `disponible | occupee | nettoyage | maintenance`. Les indisponibilités datées des salles passent par
+  `ReservationSalle` (motif « Nettoyage », « Maintenance »…).
+
+**Correction.**
+- Secrétariat : lecture des chambres, lits et admissions **en cours** de son hôpital, et `PATCH` du seul champ
+  `statut` d'un lit (pas de création, pas de suppression, pas d'autre champ).
+- Infirmier et médecin : lecture des salles et de leurs réservations.
+- Ajouter des `choices` aux champs `statut` (valeurs ci-dessus) pour refuser les fautes de frappe.
+- Signal sur `Admission` : à la création (`hospitalise`), `lit.statut = "occupe"` ; à la sortie ou au transfert,
+  `lit.statut = "nettoyage"`. Le frontend le fait déjà après chaque changement dans Hospitalisation, mais une
+  admission créée ailleurs ne serait pas répercutée.
+- Optionnel : un modèle `IndisponibiliteLit` (lit, début, fin, motif) pour prévoir l'indisponibilité d'un lit
+  à l'avance, comme pour les salles.
+
+---
+
 ## Côté frontend (pour mémoire)
 
 - L'assistant de configuration (`src/pages/GestionHopital/Configuration/`) est réservé à l'administrateur de

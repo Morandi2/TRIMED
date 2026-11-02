@@ -12,6 +12,7 @@ export const modules = {
   hospitalisation: () => import('../pages/GestionHopital/Hospitalisation'),
   rendezVous: () => import('../pages/GestionHopital/RendezVous'),
   calendrier: () => import('../pages/Calendar'),
+  disponibilites: () => import('../pages/GestionHopital/Disponibilites/Disponibilites'),
 };
 
 type NomModule = keyof typeof modules;
@@ -19,7 +20,7 @@ type NomModule = keyof typeof modules;
 const DROITS: [NomModule, keyof UserPermissions][] = [
   ['patient', 'canViewPatients'], ['rendezVous', 'canViewRendezVous'], ['consultation', 'canViewConsultations'],
   ['medicament', 'canViewMedicaments'], ['ordonnance', 'canViewOrdonnances'], ['medecin', 'canViewMedecins'],
-  ['examen', 'canViewConsultations'], ['hospitalisation', 'canGererHospitalisation'], ['calendrier', 'canViewCalendar'],
+  ['examen', 'canViewConsultations'], ['hospitalisation', 'canGererHospitalisation'], ['calendrier', 'canViewCalendar'], ['disponibilites', 'canSuivreDisponibilites'],
 ];
 
 let fait = false;

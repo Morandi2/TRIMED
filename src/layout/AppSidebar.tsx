@@ -93,6 +93,12 @@ const navItems: NavItem[] = [
     permission: 'canViewRendezVous',
   },
   {
+    icon: <DoorOpen />,
+    name: "Lits et salles",
+    path: "/disponibilites",
+    permission: 'canSuivreDisponibilites',
+  },
+  {
     icon: <BedDouble />,
     name: "Hospitalisation",
     path: "/hospitalisation",

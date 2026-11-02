@@ -39,6 +39,7 @@ const Configuration = lazy(() => import("./pages/GestionHopital/Configuration"))
 const AuditLogPage = lazy(() => import("./pages/GestionHopital/GestionUtilisateur/pages").then((m) => ({ default: m.AuditLogPage })));
 const UserProfiles = lazy(() => import("./pages/UserProfiles"));
 const Calendar = lazy(modules.calendrier);
+const Disponibilites = lazy(modules.disponibilites);
 
 function Chargement({ pleinEcran = false }: { pleinEcran?: boolean }) {
   return (
@@ -100,6 +101,7 @@ export default function App() {
 
                   {/* Autres Pages */}
                   <Route path="/profile" element={page(<UserProfiles />)} />
+                  <Route path="/disponibilites" element={<ProtectedRoute requiredPermission="canSuivreDisponibilites">{page(<Disponibilites />)}</ProtectedRoute>} />
                   <Route path="/calendar" element={<ProtectedRoute requiredPermission="canViewCalendar">{page(<Calendar />)}</ProtectedRoute>} />
                 </Route>
 

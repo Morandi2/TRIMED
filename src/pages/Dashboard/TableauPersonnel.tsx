@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { AlertTriangle, BedDouble, CalendarClock, CalendarPlus2, ClipboardList, FileText, FlaskConical, Pill, Stethoscope, UserPlus, Users, Wallet } from "lucide-react";
+import { AlertTriangle, BedDouble, CalendarClock, CalendarPlus2, ClipboardList, DoorOpen, FileText, FlaskConical, Pill, Stethoscope, UserPlus, Users, Wallet } from "lucide-react";
+import { etatSalle } from "../GestionHopital/Disponibilites/etats";
 import PageMeta from "../../components/common/PageMeta";
 import { useAuth } from "../../context/AuthContext";
 import { useDonneesPersonnel, type DonneesPersonnel, type RolePersonnel } from "./tableau/donneesPersonnel";
@@ -134,7 +135,7 @@ function VueSecretaire({ d }: { d: DonneesPersonnel }) {
         <Chiffre libelle="Rendez-vous aujourd’hui" valeur={d.statsRdv?.aujourd_hui ?? "—"} icone={CalendarClock} teinte={TEINTES.vert} lien="/rendezvous" />
         <Chiffre libelle="Cette semaine" valeur={d.statsRdv?.cette_semaine ?? "—"} icone={ClipboardList} teinte={TEINTES.indigo} lien="/calendar" />
         <Chiffre libelle="Patients" valeur={d.nbPatients} icone={Users} teinte={TEINTES.violet} lien="/patient" />
-        <Chiffre libelle="Médecins" valeur={d.nbMedecins} icone={Stethoscope} teinte={TEINTES.orange} lien="/medecin" />
+        <Chiffre libelle="Salles disponibles" valeur={d.salles.length ? `${d.salles.filter((s) => etatSalle(s, d.reservations).etat === "disponible").length} / ${d.salles.length}` : "—"} detail={`${d.nbMedecins} médecins dans l’équipe`} icone={DoorOpen} teinte={TEINTES.orange} lien="/disponibilites" />
       </div>
       <div className={grille}>
         <Carte titre="Prochains rendez-vous" className="col-span-12 xl:col-span-7" action={<Link to="/rendezvous" className="text-sm text-brand-600 dark:text-brand-300">Tout voir</Link>}>
@@ -142,7 +143,7 @@ function VueSecretaire({ d }: { d: DonneesPersonnel }) {
         </Carte>
         <div className="col-span-12 space-y-4 md:space-y-6 xl:col-span-5">
           <Carte titre="Accueil">
-            <Raccourcis liens={[{ libelle: "Nouveau patient", lien: "/patient", icone: UserPlus }, { libelle: "Rendez-vous", lien: "/rendezvous", icone: CalendarPlus2 }, { libelle: "Calendrier", lien: "/calendar", icone: CalendarClock }, { libelle: "Médecins", lien: "/medecin", icone: Stethoscope }]} />
+            <Raccourcis liens={[{ libelle: "Nouveau patient", lien: "/patient", icone: UserPlus }, { libelle: "Rendez-vous", lien: "/rendezvous", icone: CalendarPlus2 }, { libelle: "Lits et salles", lien: "/disponibilites", icone: DoorOpen }, { libelle: "Calendrier", lien: "/calendar", icone: CalendarClock }]} />
           </Carte>
           <Carte titre="Rendez-vous par statut">
             {statuts.length ? <Anneau libelles={statuts.map(([s]) => s)} valeurs={statuts.map(([, n]) => n)} couleurs={statuts.map(([s]) => COULEURS_STATUTS[s] ?? COULEURS.gris)} centre="rendez-vous" hauteur={230} /> : <Vide texte="Aucun rendez-vous pour l’instant." />}

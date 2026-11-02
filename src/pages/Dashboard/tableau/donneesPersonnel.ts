@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { lireOuNull, lireTout } from '../../../api/listes';
 import { dateLocale } from '../../../utils/dates';
 import type { AdmissionL, ConsultationL, LitL, MedicamentL, RendezVousL, StatsRendezVous } from './donnees';
+import type { Reservation } from '../../GestionHopital/Disponibilites/etats';
 
 export type RolePersonnel = 'medecin' | 'infirmier' | 'secretaire' | 'personnel' | 'patient';
 
@@ -23,6 +24,8 @@ export interface DonneesPersonnel {
   nomsPatients: Record<number, string>;
   nbPatients: number;
   nbMedecins: number;
+  salles: { id: number; statut?: string }[];
+  reservations: Reservation[];
 }
 
 const UN_AN = 366 * 24 * 3600 * 1000;
@@ -64,6 +67,10 @@ async function charger(role: RolePersonnel, hopitalId: number): Promise<DonneesP
     role === 'infirmier' || role === 'secretaire' || role === 'medecin' ? sur(lireTout<PatientL>('/patients/')) : Promise.resolve(patients),
     role === 'secretaire' ? lireOuNull<{ count?: number }>('/medical/medecins/') : Promise.resolve(null),
   ]);
+  // Disponibilité des salles (tenue par le secrétariat)
+  const [salles, reservations] = role === 'secretaire'
+    ? await Promise.all([sur(lireTout<{ id: number; statut?: string }>('/salles-medicales/salles/')), sur(lireTout<Reservation>('/salles-medicales/reservations/'))])
+    : [[], []];
 
   let lits: LitL[] = [];
   if (chambres.length) {
@@ -76,6 +83,8 @@ async function charger(role: RolePersonnel, hopitalId: number): Promise<DonneesP
     nomsPatients: Object.fromEntries(listePatients.map((p) => [p.patient_id, `${p.prenom} ${p.nom}`])),
     nbPatients: listePatients.length,
     nbMedecins: medecins?.count ?? 0,
+    salles,
+    reservations,
   };
 }
 

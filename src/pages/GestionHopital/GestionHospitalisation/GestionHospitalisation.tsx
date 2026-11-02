@@ -4,6 +4,10 @@ import { patientService } from '../GestionPatients/services/PatientService';
 import { useUser } from '../../../context/UserContext';
 import GenericCrudManager, { CrudField, CrudColumn } from '../shared/GenericCrudManager';
 import { BedDouble, DoorClosed, ClipboardList } from 'lucide-react';
+import { LIBELLES_LIT, normaliserEtatLit, type EtatLit } from '../Disponibilites/etats';
+import { synchroniserLits } from '../Disponibilites/synchronisation';
+
+const ETATS_LIT: EtatLit[] = ['libre', 'occupe', 'reserve', 'nettoyage', 'hors_service'];
 
 interface Props {
   tenantId: number;
@@ -16,15 +20,13 @@ const TYPE_CHAMBRE = [
   { value: 'collective', label: 'Collective' },
 ];
 const STATUT_CHAMBRE = [
-  { value: 'disponible', label: 'Disponible' },
+  { value: 'libre', label: 'Libre' },
+  { value: 'disponible', label: 'Libre' },
   { value: 'occupee', label: 'Occupée' },
   { value: 'maintenance', label: 'Maintenance' },
 ];
-const STATUT_LIT = [
-  { value: 'disponible', label: 'Disponible' },
-  { value: 'occupe', label: 'Occupé' },
-  { value: 'maintenance', label: 'Maintenance' },
-];
+// Même vocabulaire que la page « Lits et salles » (Disponibilites/etats.ts).
+const STATUT_LIT = ETATS_LIT.map((e) => ({ value: e, label: LIBELLES_LIT[e] }));
 const STATUT_ADMISSION = [
   { value: 'hospitalise', label: 'Hospitalisé' },
   { value: 'sorti', label: 'Sorti' },
@@ -69,8 +71,11 @@ const GestionHospitalisation: React.FC<Props> = ({ tenantId, hopitalNom }) => {
     [chambres]
   );
   const litOptions = useMemo(
-    () => lits.map((l) => ({ value: l.id, label: `Lit ${l.numero}` })),
-    [lits]
+    () => lits.map((l) => {
+      const chambre = chambres.find((c) => c.id === l.chambre);
+      return { value: l.id, label: chambre ? `Lit ${l.numero_lit} (chambre ${chambre.numero})` : `Lit ${l.numero_lit}` };
+    }),
+    [lits, chambres]
   );
   const patientOptions = useMemo(
     () => patients.map((p) => ({ value: p.patient_id, label: `${p.prenom || ''} ${p.nom || ''}`.trim() || `Patient #${p.patient_id}` })),
@@ -102,7 +107,7 @@ const GestionHospitalisation: React.FC<Props> = ({ tenantId, hopitalNom }) => {
   const litColumns: CrudColumn[] = [
     { key: 'numero_lit', label: 'Numéro' },
     { key: 'chambre', label: 'Chambre', render: (r) => labelFromOptions(chambreOptions, r.chambre) },
-    { key: 'statut', label: 'Statut', render: (r) => labelFromOptions(STATUT_LIT, r.statut) },
+    { key: 'statut', label: 'Statut', render: (r) => LIBELLES_LIT[normaliserEtatLit(r.statut)] },
   ];
 
   // ---- Admissions ----
@@ -189,7 +194,7 @@ const GestionHospitalisation: React.FC<Props> = ({ tenantId, hopitalNom }) => {
             columns={admissionColumns}
             singular="Admission"
             canEdit={canEdit}
-            onChanged={bumpRef}
+            onChanged={() => { synchroniserLits(tenantId).finally(bumpRef); }}
             refreshSignal={refKey}
           />
         )}

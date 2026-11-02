@@ -1,4 +1,5 @@
 import apiClient from './apiConfig';
+import { ENTETE_SANS_CACHE } from './cacheApi';
 
 /** Liste renvoyée par l’API, paginée (`results`) ou non. */
 export const enListe = <T,>(donnees: unknown): T[] => {
@@ -13,14 +14,16 @@ interface OptionsLecture<T> {
   /** Arrête la lecture dès qu’un élément remplit cette condition (ex. : trop ancien, avec un tri décroissant). */
   arreterSi?: (element: T) => boolean;
   signal?: AbortSignal;
+  /** Lecture directe sur le serveur (données en temps réel : lits, salles). */
+  sansCache?: boolean;
 }
 
 /** Lit toutes les pages d’une liste, ou jusqu’à la condition d’arrêt. */
 export async function lireTout<T>(chemin: string, params: Record<string, unknown> = {}, options: OptionsLecture<T> = {}): Promise<T[]> {
-  const { maxPages = 30, arreterSi, signal } = options;
+  const { maxPages = 30, arreterSi, signal, sansCache } = options;
   const tout: T[] = [];
   for (let page = 1; page <= maxPages; page++) {
-    const { data } = await apiClient.get(chemin, { params: { ...params, page }, signal });
+    const { data } = await apiClient.get(chemin, { params: { ...params, page }, signal, headers: sansCache ? { [ENTETE_SANS_CACHE]: '1' } : undefined });
     const elements = enListe<T>(data);
     for (const e of elements) {
       if (arreterSi?.(e)) return tout;
