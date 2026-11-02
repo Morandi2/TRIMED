@@ -113,6 +113,11 @@ def est_equipe_trimed(u):
 **Test.** Le compte 11 (admin-systeme, hôpital JCC, `is_staff = false`) doit recevoir les 7 utilisateurs de
 JCC sur `/api/comptes/utilisateurs/`, pas les 11 de la plateforme.
 
+**Résultat du 2 novembre 2026 : échec.** Le compte 11 reçoit les 11 utilisateurs de la plateforme (hôpitaux 1,
+3, 4 et les comptes sans hôpital), alors que le propriétaire de JCC en reçoit 7. Le serveur donne donc l'accès
+global à tout `admin-systeme`, `is_staff` ou non. Sur les patients, rendez-vous, chambres et salles, le compte 11
+voit les mêmes nombres que le propriétaire de JCC.
+
 
 ### 0.6 Rendez-vous visibles par tous les comptes de l'hôpital
 

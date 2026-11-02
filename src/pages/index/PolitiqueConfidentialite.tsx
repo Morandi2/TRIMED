@@ -30,7 +30,7 @@ const PolitiqueConfidentialite = () => {
               <ul className="list-disc pl-5 space-y-2">
                 <li>Protégées pendant leur transmission par une connexion sécurisée.</li>
                 <li>Accessibles uniquement par le personnel autorisé de l'hôpital client.</li>
-                <li>Hébergées en ligne, dans un espace séparé pour chaque hôpital.</li>
+                <li>Hébergées en ligne : aucun serveur à installer à l’hôpital.</li>
               </ul>
             </section>
 

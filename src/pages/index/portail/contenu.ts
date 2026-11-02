@@ -36,7 +36,7 @@ export const HISTOIRE = [
   {
     etiquette: 'En sécurité',
     titre: 'Chacun voit ce qu’il doit voir.',
-    texte: 'Chaque hôpital dispose de son propre espace, séparé de celui des autres. Et chaque membre du personnel n’accède qu’à ce que son rôle permet.'
+    texte: 'Chaque hôpital dispose de son propre espace, avec ses patients, son équipe et ses réglages. Et chaque membre du personnel n’accède qu’à ce que son rôle permet.'
   }
 ];
 
@@ -57,7 +57,7 @@ export const PARCOURS = [
 
 export const SECURITE = [
   { icone: 'cle', titre: 'Une connexion personnelle', texte: 'Chaque utilisateur entre avec son propre compte et son mot de passe.' },
-  { icone: 'espace', titre: 'Un espace par hôpital', texte: 'Les données de votre établissement restent séparées de celles des autres hôpitaux.' },
+  { icone: 'espace', titre: 'Un espace par hôpital', texte: 'Chaque établissement travaille dans son propre espace, avec ses patients, son équipe et ses réglages.' },
   { icone: 'role', titre: 'Des accès selon le rôle', texte: 'Médecin, infirmier, secrétaire, administrateur : chacun ne voit que ce dont il a besoin.' },
   { icone: 'cadenas', titre: 'Des échanges protégés', texte: 'Les informations circulent par une connexion sécurisée, comme pour une banque en ligne.' }
 ] as const;
@@ -92,7 +92,6 @@ export const QUESTIONS = [
   { q: 'Faut-il une connexion Internet ?', r: 'Oui. TRIMED fonctionne en ligne, depuis un navigateur ou l’application Android. Un mode hors ligne est prévu dans une prochaine version.' },
   { q: 'Faut-il acheter un serveur ?', r: 'Non. TRIMED est hébergé en ligne : un ordinateur, une tablette ou un téléphone suffisent.' },
   { q: 'Le patient peut-il voir son dossier ?', r: 'Oui. L’hôpital crée son compte ; le patient consulte alors son dossier et ses rendez-vous, sans pouvoir les modifier.' },
-  { q: 'Nos données sont-elles visibles par d’autres hôpitaux ?', r: 'Non. Chaque établissement a son propre espace, séparé des autres.' },
   { q: 'Que comprend la mise en service ?', r: 'Le paramétrage de votre hôpital, la formation du personnel et la reprise de vos dossiers existants, pour 300 000 HTG payés une seule fois.' },
   { q: 'Combien de temps pour démarrer ?', r: 'Le temps de paramétrer votre établissement et de former votre équipe : nous fixons le calendrier ensemble.' }
 ];
