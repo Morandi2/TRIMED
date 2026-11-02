@@ -4,12 +4,8 @@ import { useUser } from '../../context/UserContext';
 import { useAuth } from '../../context/AuthContext';
 import hospitalApi from '../../api/hospitalApi';
 import Home from './Home';
-import { MedecinDashboard } from '../GestionHopital/GestionUtilisateur/pages/MedecinDashboard';
-import { InfirmierDashboard } from '../GestionHopital/GestionUtilisateur/pages/InfirmierDashboard';
-import { ReceptionnisteDashboard } from '../GestionHopital/GestionUtilisateur/pages/ReceptionnisteDashboard';
-import { PharmacienDashboard } from '../GestionHopital/GestionUtilisateur/pages/PharmacienDashboard';
-import { PatientDashboard } from '../GestionHopital/GestionUtilisateur/pages/PatientDashboard';
 import TrimedAdminDashboard from './TrimedAdminDashboard';
+import TableauPersonnel from './TableauPersonnel';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { hopitalDejaConfigure, marquerHopitalConfigure } from '../GestionHopital/Configuration/etat';
 
@@ -41,19 +37,15 @@ export default function RoleBasedHome() {
 
   switch (role) {
     case 'medecin':
-      return <MedecinDashboard />;
     case 'infirmier':
-      return <InfirmierDashboard />;
     case 'secretaire':
-      return <ReceptionnisteDashboard />;
     case 'personnel':
-      return <PharmacienDashboard />;
+    case 'patient':
+      return <TableauPersonnel role={role} />;
     // Administrateur de l’hôpital (propriétaire ou admin délégué) : le portail de l’hôpital
     case 'proprietaire-hopital':
     case 'admin-hopital':
       return <Home />;
-    case 'patient':
-      return <PatientDashboard />;
     case 'admin-systeme':
       return <TrimedAdminDashboard />;
     default:

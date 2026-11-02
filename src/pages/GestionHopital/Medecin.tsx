@@ -10,7 +10,7 @@ export default function Medecin() {
   return (
     <div>
       <PageMeta
-        title="TRIMED"
+        title="Médecins | TRIMED"
         description="Gestion des médecins"
       />
       <PageBreadcrumb pageTitle="Médecins" />

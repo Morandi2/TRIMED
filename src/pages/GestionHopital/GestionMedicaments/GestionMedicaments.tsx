@@ -220,9 +220,7 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
   return (
     <div className="min-h-screen pb-12 space-y-8">
       {/* Header Premium */}
-      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+      <div className="relative p-6 sm:p-7 rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-trimed-brume overflow-hidden text-gray-900 dark:border-gray-800 dark:from-brand-950/40 dark:via-gray-900 dark:to-gray-900 dark:text-white">
         
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
@@ -230,13 +228,13 @@ export default function GestionMedicaments({ tenantId, hopitalNom }: GestionMedi
               <div className="p-2 bg-emerald-600 rounded-xl shadow-lg shadow-emerald-600/20">
                 <Package className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-2xl font-black uppercase tracking-tight">
+              <h1 className="font-marque text-xl sm:text-2xl">
                 Pharmacie & Stocks
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Filiale: <span className="text-gray-700 dark:text-gray-200">{hopitalNom || "Hôpital Santé Plus"}</span>
+              {hopitalNom || "Votre hôpital"}
             </p>
           </div>
 

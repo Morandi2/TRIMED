@@ -8,7 +8,7 @@ export default function SallesMedicales() {
 
   return (
     <div>
-      <PageMeta title="TRIMED" description="Gestion des salles médicales" />
+      <PageMeta title="Salles médicales | TRIMED" description="Gestion des salles médicales" />
       <PageBreadcrumb pageTitle="Salles médicales" />
 
       <div className="">

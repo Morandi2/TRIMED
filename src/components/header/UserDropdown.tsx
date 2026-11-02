@@ -21,7 +21,7 @@ export default function UserDropdown() {
   let displayName = "Chargement...";
   if (!isLoading) {
     if (user?.nom_complet && user.nom_complet !== user.email) {
-      displayName = user.nom_complet.split(' ')[0];
+      displayName = user.nom_complet.replace(/^Dr\.?\s+/i, '').split(' ')[0];
     } else if (user?.email) {
       displayName = user.email.split('@')[0];
     } else {

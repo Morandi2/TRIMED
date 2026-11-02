@@ -314,7 +314,11 @@ export const djangoAuthApi = {
    */
   getProfile: async function (): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/comptes/utilisateurs/profile/');
+      // La route « profile » du serveur répond 500 : on lit la fiche du compte par son identifiant,
+      // pris dans le jeton d’accès (BACKEND_MODIFICATIONS.md, point 13).
+      let id: number | undefined;
+      try { const charge = (localStorage.getItem('access_token') || '').split('.')[1] || ''; id = Number(JSON.parse(atob(charge.replace(/-/g, '+').replace(/_/g, '/'))).user_id) || undefined; } catch { id = undefined; }
+      const response = await apiClient.get(id ? `/comptes/utilisateurs/${id}/` : '/comptes/utilisateurs/profile/');
       return { success: true, message: 'Profil récupéré avec succès', data: response.data };
     } catch (error: any) {
       return { success: false, message: 'Erreur lors de la récupération du profil', error: error.response?.data };

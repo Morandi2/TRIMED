@@ -235,29 +235,27 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
   return (
     <div className="min-h-screen pb-12 space-y-8">
       {/* Header Premium Glassmorphism */}
-      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+      <div className="relative p-6 sm:p-7 rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-trimed-brume overflow-hidden text-gray-900 dark:border-gray-800 dark:from-brand-950/40 dark:via-gray-900 dark:to-gray-900 dark:text-white">
         
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
+              <div className="p-2 bg-brand-500 rounded-xl">
                 <CreditCard className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-2xl font-black uppercase tracking-tight">
+              <h1 className="font-marque text-xl sm:text-2xl">
                 Gestion des Abonnements
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
               Souscriptions & Licences Clients
             </p>
           </div>
 
           <button 
             onClick={() => { setEditingAbonnement(null); setShowAbonnementModal(true); }}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold shadow-lg shadow-brand-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="h-5 w-5" />
             Nouvel Abonnement
@@ -298,13 +296,13 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
               <input
                 type="text"
                 placeholder="Rechercher par ID client, Tenant ID..."
                 value={filters.searchTerm}
                 onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
-                className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-black/20 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium"
+                className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-black/20 border border-gray-100 dark:border-gray-800 rounded-2xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all font-medium"
               />
             </div>
             
@@ -343,7 +341,7 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
                   <TableRow key={abonnement.abonnement_id} className="group hover:bg-white/60 dark:hover:bg-white/[0.03] transition-all">
                     <TableCell className="py-5 px-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100 dark:border-indigo-900/30 transition-transform group-hover:scale-110">
+                        <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 shadow-sm border border-brand-100 dark:border-brand-900/30 transition-transform group-hover:scale-110">
                           <PlusCircle className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col">
@@ -429,7 +427,7 @@ export const GestionAbonnements: React.FC<GestionAbonnementsProps> = ({ tenantId
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <div className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-black text-sm shadow-lg shadow-indigo-600/20">
+              <div className="px-4 py-2 rounded-xl bg-brand-600 text-white font-black text-sm shadow-lg shadow-brand-600/20">
                 {currentPage}
               </div>
               <button 

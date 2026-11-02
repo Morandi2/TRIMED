@@ -56,7 +56,7 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
           {currentMedecins.map((medecin, index) => {
-            const colors = ['bg-blue-500', 'bg-purple-500', 'bg-indigo-500', 'bg-teal-500', 'bg-rose-500', 'bg-amber-500'];
+            const colors = ['bg-blue-500', 'bg-purple-500', 'bg-brand-500', 'bg-teal-500', 'bg-rose-500', 'bg-amber-500'];
             const colorIndex = ((medecin?.nom || '').length + (medecin?.prenom || '').length) % colors.length;
             const avatarBg = colors[colorIndex];
 

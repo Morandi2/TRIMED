@@ -154,7 +154,7 @@ const GenericCrudManager: React.FC<GenericCrudManagerProps> = ({
                   {canEdit && (
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => setEditing(row)} title="Modifier" className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 hover:bg-indigo-100 transition-colors">
+                        <button onClick={() => setEditing(row)} title="Modifier" className="p-2 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-brand-600 hover:bg-brand-100 transition-colors">
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button onClick={() => setDeleting(row)} title="Supprimer" className="p-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 transition-colors">
@@ -323,7 +323,7 @@ const CrudFormModal: React.FC<{
 
         <div className="flex gap-3 mt-8">
           <button onClick={onClose} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300">Annuler</button>
-          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50">
+          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold disabled:opacity-50">
             {saving ? 'Enregistrement...' : 'Enregistrer'}
           </button>
         </div>

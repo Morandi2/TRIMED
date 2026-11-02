@@ -1,47 +1,11 @@
 import { Link } from "react-router-dom";
-import { AlertTriangle, BedDouble, CalendarClock, ClipboardList, RefreshCw, Stethoscope, Users } from "lucide-react";
+import { AlertTriangle, BedDouble, CalendarClock, ClipboardList, Stethoscope, Users } from "lucide-react";
 import PageMeta from "../../components/common/PageMeta";
-import Symbole from "../../components/brand/Symbole";
 import { useAuth } from "../../context/AuthContext";
 import { useDonneesTableau, type DonneesTableau } from "./tableau/donnees";
 import { parJour, parMois, prochains, repartitionAges, tauxOccupation, TRANCHES_AGE, variation } from "./tableau/calculs";
 import { Anneau, BarresHorizontales, COULEURS, GraphiqueActivite, GraphiqueBarres, Jauge } from "./tableau/Graphiques";
-
-const COULEURS_STATUTS: Record<string, string> = { Planifié: COULEURS.indigo, Confirmé: COULEURS.vert, Terminé: COULEURS.encre, Annulé: COULEURS.rouge, Reporté: COULEURS.orange };
-const heure = (iso: string) => new Date(iso).toLocaleTimeString("fr-HT", { hour: "2-digit", minute: "2-digit" });
-const jourCourt = (iso: string) => {
-  const d = new Date(iso), auj = new Date();
-  const demain = new Date(auj.getFullYear(), auj.getMonth(), auj.getDate() + 1);
-  if (d.toDateString() === auj.toDateString()) return "Aujourd’hui";
-  if (d.toDateString() === demain.toDateString()) return "Demain";
-  return d.toLocaleDateString("fr-HT", { weekday: "short", day: "numeric", month: "short" });
-};
-
-function Carte({ titre, action, children, className = "" }: { titre: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
-  return (
-    <section className={`rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 dark:border-gray-800 dark:bg-white/[0.03] ${className}`}>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{titre}</h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Chiffre({ libelle, valeur, detail, icone: Icone, teinte, lien }: { libelle: string; valeur: string | number; detail?: React.ReactNode; icone: typeof Users; teinte: string; lien: string }) {
-  return (
-    <Link to={lien} className="group rounded-2xl border border-gray-200 bg-white p-5 transition-colors hover:border-brand-300 dark:border-gray-800 dark:bg-white/[0.03] dark:hover:border-brand-800">
-      <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${teinte}`}><Icone className="h-5 w-5" aria-hidden="true" /></span>
-      <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">{libelle}</p>
-      <p className="mt-1 font-marque text-2xl text-gray-900 dark:text-white">{valeur}</p>
-      {detail && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{detail}</p>}
-    </Link>
-  );
-}
-
-const Vide = ({ texte }: { texte: string }) => <p className="py-10 text-center text-sm text-gray-500 dark:text-gray-400">{texte}</p>;
-const Squelette = ({ h }: { h: string }) => <div className={`${h} animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800`} />;
+import { Accueil, Carte, Chiffre, COULEURS_STATUTS, ListeRendezVous, Squelette, Vide } from "./tableau/elements";
 
 // Phrase du robot gardien : ce qui demande l’attention aujourd’hui, sinon un mot rassurant.
 function phraseDuGardien(d: DonneesTableau) {
@@ -80,22 +44,7 @@ export default function Home() {
       <PageMeta title="Tableau de bord | TRIMED" description="L’activité de l’hôpital en un coup d’œil." />
 
       <div className="space-y-5 md:space-y-6">
-        {/* Accueil du robot gardien */}
-        <section className="relative overflow-hidden rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-trimed-brume p-6 sm:p-7 dark:border-gray-800 dark:from-brand-950/40 dark:via-gray-900 dark:to-gray-900">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-5">
-              <Symbole taille={72} vivant titre="" className="h-16 w-16 shrink-0 drop-shadow-[0_12px_24px_rgba(39,32,255,0.25)] sm:h-[72px] sm:w-[72px]" />
-              <div>
-                <p className="text-sm text-brand-600 first-letter:uppercase dark:text-brand-300">{new Date().toLocaleDateString("fr-HT", { weekday: "long", day: "numeric", month: "long" })}</p>
-                <h1 className="font-marque text-xl text-gray-900 sm:text-2xl dark:text-white">Bonjour{prenom ? `, ${prenom}` : ""}</h1>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{d ? phraseDuGardien(d) : erreur ? "Le serveur ne répond pas pour l’instant." : "Le gardien rassemble les chiffres du jour…"}</p>
-              </div>
-            </div>
-            <button type="button" onClick={actualiser} className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 sm:self-center dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-              <RefreshCw className="h-4 w-4" aria-hidden="true" /> Actualiser
-            </button>
-          </div>
-        </section>
+        <Accueil prenom={prenom} phrase={d ? phraseDuGardien(d) : erreur ? "Le serveur ne répond pas pour l’instant." : "Le gardien rassemble les chiffres du jour…"} onActualiser={actualiser} />
 
         {/* Chiffres clés */}
         <div className="grid grid-cols-2 gap-4 md:gap-5 xl:grid-cols-4">
@@ -136,22 +85,7 @@ export default function Home() {
 
           <Carte titre="Prochains rendez-vous" className="col-span-12 xl:col-span-7" action={<Link to="/rendezvous" className="text-sm text-brand-600 dark:text-brand-300">Tout voir</Link>}>
             {!d ? <Squelette h="h-48" />
-              : aVenir.length === 0 ? <Vide texte="Aucun rendez-vous à venir." />
-              : <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {aVenir.map((r) => (
-                    <li key={r.rendez_vous_id} className="flex items-center gap-4 py-3">
-                      <div className="w-20 shrink-0 text-center">
-                        <p className="text-xs text-gray-500">{jourCourt(r.date_heure)}</p>
-                        <p className="font-marque text-base text-gray-900 dark:text-white">{heure(r.date_heure)}</p>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{r.patient_prenom} {r.patient_nom}</p>
-                        <p className="truncate text-xs text-gray-500">{r.type_nom || r.motif || "Rendez-vous"} · Dr {r.medecin_prenom} {r.medecin_nom}</p>
-                      </div>
-                      {r.statut_nom && <span className="shrink-0 rounded-full px-2.5 py-1 text-xs text-white" style={{ background: COULEURS_STATUTS[r.statut_nom] ?? r.statut_couleur ?? COULEURS.gris }}>{r.statut_nom}</span>}
-                    </li>
-                  ))}
-                </ul>}
+              : <ListeRendezVous liste={aVenir} vide="Aucun rendez-vous à venir." />}
           </Carte>
 
           <Carte titre="Patients par âge" className="col-span-12 md:col-span-6 xl:col-span-5" action={<Link to="/patient" className="text-sm text-brand-600 dark:text-brand-300">Dossiers</Link>}>

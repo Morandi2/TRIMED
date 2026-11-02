@@ -291,14 +291,14 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewOrdonnances: false,
     canEditOrdonnances: false,
     canGererHospitalisation: false,
-    canViewMedicaments: true, // Peut voir médicaments hôpital
+    canViewMedicaments: false, // Le stock de l’hôpital ne concerne pas le patient
     canGererMedicaments: false,
     canModifierStock: false,
-    canViewRendezVous: true,
-    canEditRendezVous: true, // Ses propres RDV
+    canViewRendezVous: false, // Ses rendez-vous sont sur son tableau de bord
+    canEditRendezVous: false,
     canGererSalles: false,
     canViewCalendar: false,
-    canViewPaiements: true, // Peut voir ses factures
+    canViewPaiements: false,
     canGererFacturation: false,
     canManageUsers: false,
     canViewDashboard: true,

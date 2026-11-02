@@ -109,14 +109,14 @@ const GestionSallesMedicales: React.FC<Props> = ({ tenantId, hopitalNom }) => {
     <div className="min-h-screen pb-12 space-y-8">
       <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm text-black dark:text-white">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
+          <div className="p-2 bg-brand-500 rounded-xl">
             <DoorOpen className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-3xl font-black uppercase tracking-tight">Salles médicales</h1>
+          <h1 className="font-marque text-xl sm:text-2xl">Salles médicales</h1>
         </div>
         <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-          Filiale: <span className="text-gray-700 dark:text-gray-200">{hopitalNom || 'Portail Hospitalier'}</span>
+          <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+          {hopitalNom || "Votre hôpital"}
         </p>
       </div>
 
@@ -127,7 +127,7 @@ const GestionSallesMedicales: React.FC<Props> = ({ tenantId, hopitalNom }) => {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 transition-colors ${
-                tab === t.key ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-400 hover:text-gray-600'
+                tab === t.key ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-400 hover:text-gray-600'
               }`}
             >
               {t.icon} {t.label}

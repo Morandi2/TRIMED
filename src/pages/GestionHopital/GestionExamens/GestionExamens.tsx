@@ -104,18 +104,18 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
   return (
     <div className="min-h-screen pb-12 space-y-8">
       {/* Header */}
-      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="relative p-6 sm:p-7 rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-trimed-brume overflow-hidden text-gray-900 dark:border-gray-800 dark:from-brand-950/40 dark:via-gray-900 dark:to-gray-900 dark:text-white">
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
+              <div className="p-2 bg-brand-500 rounded-xl">
                 <FlaskConical className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-3xl font-black uppercase tracking-tight">Gestion des Examens</h1>
+              <h1 className="font-marque text-xl sm:text-2xl">Gestion des Examens</h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-              Filiale: <span className="text-gray-700 dark:text-gray-200">{hopitalNom || 'Portail Hospitalier'}</span>
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+              {hopitalNom || "Votre hôpital"}
             </p>
           </div>
           {canEdit && (
@@ -133,7 +133,7 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Total', value: stats.total, color: 'text-indigo-600' },
+          { label: 'Total', value: stats.total, color: 'text-brand-600' },
           { label: 'En attente', value: stats.attente, color: 'text-amber-600' },
           { label: 'Avec résultat', value: stats.resultat, color: 'text-green-600' },
         ].map((s) => (
@@ -154,13 +154,13 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
               placeholder="Rechercher par patient, examen, catégorie ou médecin..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-indigo-500/50 outline-none dark:text-white font-medium placeholder:text-gray-400"
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-brand-500/50 outline-none dark:text-white font-medium placeholder:text-gray-400"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value as any); setCurrentPage(1); }}
-            className="px-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-indigo-500/50 outline-none dark:text-white font-medium"
+            className="px-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-brand-500/50 outline-none dark:text-white font-medium"
           >
             <option value="Tous">Tous les examens</option>
             <option value="attente">En attente de résultat</option>
@@ -210,7 +210,7 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
                           <button
                             onClick={() => setResultatExamen(ex)}
                             title="Ajouter / modifier le résultat"
-                            className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                            className="p-2 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-brand-600 hover:bg-brand-100 transition-colors"
                           >
                             <FileText className="h-4 w-4" />
                           </button>
@@ -451,7 +451,7 @@ const ResultatModal: React.FC<{
         </div>
         <div className="flex gap-3 mt-8">
           <button onClick={onClose} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300">Annuler</button>
-          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50">
+          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold disabled:opacity-50">
             {saving ? 'Enregistrement...' : 'Enregistrer'}
           </button>
         </div>

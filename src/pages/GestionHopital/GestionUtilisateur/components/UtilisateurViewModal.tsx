@@ -30,7 +30,7 @@ export const UtilisateurViewModal: React.FC<UtilisateurViewModalProps> = ({
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm print:bg-white print:p-0">
       <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 print-content print:max-w-none print:rounded-none print:shadow-none">
         {/* Header */}
-        <div className="relative h-32 bg-gradient-to-r from-blue-600 to-indigo-700 p-6">
+        <div className="relative h-32 bg-gradient-to-r from-blue-600 to-brand-700 p-6">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-colors z-10"

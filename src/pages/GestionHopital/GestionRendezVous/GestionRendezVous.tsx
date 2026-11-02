@@ -219,8 +219,6 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
     <div className="min-h-screen pb-12">
       {/* Header Premium */}
       <div className="relative mb-10 p-8 rounded-[2rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
         
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
@@ -228,13 +226,13 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
               <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20">
                 <Calendar className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-2xl font-black uppercase tracking-tight">
+              <h1 className="font-marque text-xl sm:text-2xl">
                 Rendez-vous
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              Filiale: <span className="text-gray-700 dark:text-gray-200">{hopitalNom || "Hôpital"}</span>
+              {hopitalNom || "Votre hôpital"}
             </p>
           </div>
 

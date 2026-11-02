@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import ThemeTogglerTwo from "../../components/common/ThemeTogglerTwo";
 import useGoBack from "../../hooks/useGoBack";
 import { ChevronLeft } from "lucide-react";
+import Logotype from "../../components/brand/Logotype";
 
 
 export default function AuthLayout({
@@ -41,11 +42,7 @@ export default function AuthLayout({
             {/* Logo Header */}
             <div className="flex flex-col items-center mb-10 text-center">
               <Link to="/" className="mb-6 transform hover:scale-105 transition-transform duration-300 inline-block">
-                <img
-                  className="h-12 w-auto"
-                  src="/images/logo/logo.svg"
-                  alt="TRIMED"
-                />
+                <Logotype taille="md" slogan />
               </Link>
             </div>
 

@@ -8,7 +8,7 @@ export default function Hospitalisation() {
 
   return (
     <div>
-      <PageMeta title="TRIMED" description="Gestion de l'hospitalisation" />
+      <PageMeta title="Hospitalisation | TRIMED" description="Gestion de l'hospitalisation" />
       <PageBreadcrumb pageTitle="Hospitalisation" />
 
       <div className="">

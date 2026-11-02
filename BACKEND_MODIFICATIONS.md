@@ -113,6 +113,19 @@ def est_equipe_trimed(u):
 **Test.** Le compte 11 (admin-systeme, hôpital JCC, `is_staff = false`) doit recevoir les 7 utilisateurs de
 JCC sur `/api/comptes/utilisateurs/`, pas les 11 de la plateforme.
 
+
+### 0.6 Rendez-vous visibles par tous les comptes de l'hôpital
+
+**Constat** (comptes de démonstration de JCC) : `GET /api/rendez-vous/` renvoie les 8 rendez-vous de l'hôpital
+au **patient** (avec le nom des autres patients) et au médecin, alors que les consultations, ordonnances et examens
+sont déjà filtrés pour eux. `GET /api/rendez-vous/mes_rendez_vous/` répond 400 pour tous les rôles
+(« Vous n'avez pas de rendez-vous associés »).
+
+**Correction.** Dans le `get_queryset` des rendez-vous : un patient ne reçoit que ses rendez-vous
+(`patient__utilisateur=request.user`) ; un médecin reçoit les siens par défaut. Corriger `mes_rendez_vous`
+(lien compte → patient ou médecin). En attendant, le frontend filtre (`?patient=` ou `?medecin=`), mais
+la fuite reste possible par l'API.
+
 ---
 
 ## 1. Désactiver le mode DEBUG en production (urgent)
@@ -282,13 +295,31 @@ l'identifiant), ou ajouter l'identifiant en lecture seule au serializer de créa
 
 ---
 
-## 13. Profil d'un compte sans hôpital : erreur 500
+## 13. Profil du compte connecté : erreur 500
 
-**Constat.** `GET /api/comptes/utilisateurs/profile/` renvoie 500 pour le compte administrateur TRIMED
-(`admin-systeme`, sans hôpital). Le serializer du profil suppose probablement que `hopital` existe.
+**Constat.** `GET /api/comptes/utilisateurs/profile/` et `PATCH /api/comptes/utilisateurs/update_profile/` renvoient 500
+pour tous les comptes testés (administrateur TRIMED, médecin, patient). La fiche par identifiant
+(`/api/comptes/utilisateurs/{id}/`) fonctionne : l'écran « Mon profil » l'utilise en attendant.
 
 **Correction.** Rendre `hopital` / `hopital_detail` facultatifs dans le serializer du profil (`None` si absent).
 Le frontend n'appelle plus ce profil pour un administrateur TRIMED, mais d'autres écrans pourraient en avoir besoin.
+
+---
+
+## 14. Mots de passe : changement en erreur 500, pas de réinitialisation
+
+**Constat.** `POST /api/comptes/utilisateurs/{id}/change_password/` répond 500 quel que soit le corps
+(« cannot access local variable 'permission_classes' where it is not associated with a value ») : personne ne
+peut changer son mot de passe. Aucune route de réinitialisation par e-mail n'existe. L'ancien écran « Mot de passe
+oublié » simulait un envoi ; il indique désormais de passer par l'équipe TRIMED.
+
+**Correction.**
+- `change_password` : définir `permission_classes` dans l'action ; demander l'ancien mot de passe
+  (`check_password`) puis `set_password` ; seul le titulaire du compte (ou l'équipe TRIMED) peut l'appeler.
+- Réinitialisation : `PasswordResetTokenGenerator` de Django + deux routes (demande par e-mail, confirmation
+  avec jeton à durée limitée). Réponse identique que l'adresse existe ou non.
+- Optionnel : permettre à l'administrateur d'un hôpital de définir un mot de passe provisoire pour son
+  personnel (jamais pour un autre hôpital), avec changement obligatoire à la connexion suivante.
 
 ---
 

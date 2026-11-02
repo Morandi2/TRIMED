@@ -32,7 +32,7 @@ export const MedecinStats: React.FC<MedecinStatsProps> = ({ medecins, specialite
   ).length;
 
   const maxCount = Math.max(...statsSpecialites.map(s => s.count), 1);
-  const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-orange-500'];
+  const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-brand-500', 'bg-purple-500', 'bg-pink-500', 'bg-orange-500'];
 
   return (
     <div className="space-y-8 mb-10">
