@@ -366,6 +366,18 @@ service ; toute l'équipe le voit en temps réel. Un lit avec une hospitalisatio
 
 ---
 
+## 16. Liste des ordonnances sans patient
+
+**Constat (tests fonctionnels du 2 novembre 2026).** `GET /api/medical/ordonnances/` renvoie pour chaque ordonnance
+`ordonnance_id`, `date_ordonnance`, `recommandations`, `medecin_nom`, `medecin_prenom` et `nb_prescriptions`, mais
+ni le patient ni la consultation. Le détail (`/ordonnances/{id}/`) les donne (`patient_detail`,
+`consultation_detail`). Le frontend charge donc le détail de chaque ligne affichée, une requête par ordonnance,
+et la recherche par nom de patient ne porte que sur les lignes déjà complétées.
+
+**Correction.** Ajouter `patient_id`, `patient_nom`, `patient_prenom` et `consultation_id` au serializer de liste.
+
+---
+
 ## Côté frontend (pour mémoire)
 
 - L'assistant de configuration (`src/pages/GestionHopital/Configuration/`) est réservé à l'administrateur de

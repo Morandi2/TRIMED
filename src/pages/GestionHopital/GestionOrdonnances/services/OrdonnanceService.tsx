@@ -54,6 +54,7 @@ export interface Ordonnance {
   
   patient_nom?: string;
   medecin_nom?: string;
+  consultation_motif?: string | null;
 }
 
 export interface OrdonnanceFormData {
@@ -91,21 +92,29 @@ export class OrdonnanceService {
     const find = (f: string | string[]) => this.findField(data, f);
     
     const fields = data.fields || data;
-    const patient = data.patient || fields.patient || {};
-    const medecin = data.medecin || fields.medecin || {};
-    
+    // Le détail renvoie patient_detail, medecin_detail et consultation_detail ; la liste, seulement
+    // medecin_nom et medecin_prenom (pas le patient).
+    const patient = fields.patient_detail || data.patient || fields.patient || {};
+    const medecin = fields.medecin_detail || data.medecin || fields.medecin || {};
+    const consultation = fields.consultation_detail || (typeof data.consultation === 'object' ? data.consultation : null);
+
     const patientId = typeof patient === 'object' ? (patient.id || patient.patient_id) : (fields.patient_id || fields.patient || data.patient);
     const medecinId = typeof medecin === 'object' ? (medecin.id || medecin.medecin_id) : (fields.medecin_id || fields.medecin || data.medecin);
-    const consultationId = typeof data.consultation === 'object' ? data.consultation?.id : (fields.consultation_id || fields.consultation || data.consultation);
+    const consultationId = consultation ? (consultation.consultation_id || consultation.id) : (fields.consultation_id || fields.consultation || data.consultation);
 
     const dateOrd = find(['date_ordonnance', 'date', 'created_at', 'cree_le']);
 
-    const pNom = (typeof patient === 'object' && patient) 
-      ? `${patient.prenom || ''} ${patient.nom || ''}`.trim() || patient.nom_complet 
-      : (fields.patient_nom || fields.patient_nom_complet || null);
-    const mNom = (typeof medecin === 'object' && medecin) 
-      ? `Dr. ${medecin.prenom || ''} ${medecin.nom || ''}`.trim() || medecin.nom_complet 
-      : (fields.medecin_nom || fields.medecin_nom_complet || null);
+    const nom = (prenom?: string, n?: string) => `${prenom || ''} ${n || ''}`.trim() || null;
+    const pNom = (typeof patient === 'object' && nom(patient.prenom, patient.nom)) || patient.nom_complet
+      || nom(fields.patient_prenom, fields.patient_nom) || fields.patient_nom_complet || null;
+    const mNom = (typeof medecin === 'object' && nom(medecin.prenom, medecin.nom)) || medecin.nom_complet
+      || nom(fields.medecin_prenom, fields.medecin_nom) || fields.medecin_nom_complet || null;
+    const prescriptions = (fields.prescriptions || data.prescriptions || []).map((p: any) => ({
+      ...p,
+      id: p.id ?? p.prescription_id,
+      medicament: p.medicament_detail?.nom ?? p.medicament,
+      instructions: [p.frequence, p.instructions].filter(Boolean).join(', '),
+    }));
 
     return {
       ...fields,
@@ -117,11 +126,12 @@ export class OrdonnanceService {
       date_ordonnance: dateOrd || fields.date_ordonnance || '',
       recommandations: fields.recommandations || fields.notes || null,
       validite: fields.validite || fields.duree_validite || null,
-      prescriptions: fields.prescriptions || data.prescriptions || [],
+      prescriptions,
       created_at: fields.created_at || fields.cree_le || '',
       updated_at: fields.updated_at || fields.modifie_le || '',
       patient_nom: pNom,
       medecin_nom: mNom,
+      consultation_motif: consultation?.motif || null,
     };
   }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { ordonnanceService, Ordonnance } from './services/OrdonnanceService';
@@ -124,8 +124,10 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
     setSelectedOrdonnance(null);
   };
 
-  const handlePrintOrdonnance = (ordonnance: Ordonnance) => {
-    setPrintOrdonnance(ordonnance);
+  const handlePrintOrdonnance = async (ordonnance: Ordonnance) => {
+    // La liste ne contient ni le patient ni les médicaments : on imprime le détail complet.
+    const complete = await ordonnanceService.obtenirOrdonnance(ordonnance.ordonnance_id).catch(() => null);
+    setPrintOrdonnance(complete ?? ordonnance);
     setShowPrintPage(true);
   };
 
@@ -155,6 +157,18 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // Le serveur ne renvoie pas le patient dans la liste : on complète les lignes affichées avec leur détail.
+  const detailsDemandes = useRef(new Set<number>());
+  useEffect(() => {
+    const manquants = currentOrdonnances.filter((o) => !o.patient_nom && !detailsDemandes.current.has(o.ordonnance_id));
+    if (!manquants.length) return;
+    manquants.forEach((o) => detailsDemandes.current.add(o.ordonnance_id));
+    Promise.all(manquants.map((o) => ordonnanceService.obtenirOrdonnance(o.ordonnance_id).catch(() => null))).then((details) => {
+      const parId = new Map(details.filter((d): d is Ordonnance => !!d).map((d) => [d.ordonnance_id, d]));
+      if (parId.size) setOrdonnances((liste) => liste.map((o) => parId.get(o.ordonnance_id) ?? o));
+    });
+  }, [currentOrdonnances]);
 
   return (
     <div className="min-h-screen pb-12 space-y-8">
@@ -237,7 +251,7 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
                         </span>
                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 dark:text-gray-400 italic">
                           <Stethoscope className="w-3 h-3" />
-                          <span>Dr. {ordonnance.medecin_nom || ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id)}</span>
+                          <span>Dr. {ordonnance.medecin_nom || ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id).replace(/^Dr. /, '')}</span>
                         </div>
                       </div>
                     </div>
