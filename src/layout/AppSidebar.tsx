@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Asterisk, BedDouble, Building2, CalendarPlus2, CreditCard, DoorOpen, FlaskConical, Pill, ScanHeart, Settings, ShieldCheck, Stethoscope, UserRound, Users, Wallet, ShieldPlus } from 'lucide-react';
+import { Asterisk, BedDouble, Building2, CalendarPlus2, CreditCard, DoorOpen, FlaskConical, Pill, ScanHeart, Settings, ShieldCheck, Stethoscope, UserRound, Users, Wallet, ShieldPlus, Video } from 'lucide-react';
 import { useUser } from "../context/UserContext";
 
 // Supposons que ces icônes sont importées d'une bibliothèque d'icônes
@@ -91,6 +91,12 @@ const navItems: NavItem[] = [
     name: "Rendez-vous",
     path: "/rendezvous",
     permission: 'canViewRendezVous',
+  },
+  {
+    icon: <Video />,
+    name: "Téléconsultation",
+    path: "/teleconsultation",
+    permission: 'canTeleconsulter',
   },
   {
     icon: <DoorOpen />,

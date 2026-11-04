@@ -104,6 +104,8 @@ export interface UserPermissions {
   canGererAssurances: boolean;
   /** Délivrer les médicaments d'une ordonnance (pharmacie). */
   canDelivrerMedicaments: boolean;
+  /** Téléconsultation : planifier (secrétariat), consulter à distance (médecin), rejoindre (patient). */
+  canTeleconsulter: boolean;
 }
 
 export const rolePermissions: Record<UserRole, UserPermissions> = {
@@ -140,6 +142,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerCaisse: false,
     canGererAssurances: false,
     canDelivrerMedicaments: false,
+    canTeleconsulter: false,
   },
   'admin-hopital': {
     canViewPatients: true,
@@ -174,6 +177,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerCaisse: true,
     canGererAssurances: true,
     canDelivrerMedicaments: true,
+    canTeleconsulter: true,
   },
   'proprietaire-hopital': {
     canViewPatients: true,
@@ -208,6 +212,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerCaisse: true,
     canGererAssurances: true,
     canDelivrerMedicaments: true,
+    canTeleconsulter: true,
   },
   'medecin': {
     canViewPatients: true,
@@ -242,6 +247,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerCaisse: false,
     canGererAssurances: false,
     canDelivrerMedicaments: false,
+    canTeleconsulter: true,
   },
   'infirmier': {
     canViewPatients: true,
@@ -276,6 +282,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerCaisse: false,
     canGererAssurances: false,
     canDelivrerMedicaments: true,
+    canTeleconsulter: false,
   },
   'secretaire': {
     canViewPatients: true,
@@ -310,6 +317,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerCaisse: false,
     canGererAssurances: true,
     canDelivrerMedicaments: false,
+    canTeleconsulter: true,
   },
   'personnel': {
     canViewPatients: true,
@@ -344,6 +352,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerCaisse: false,
     canGererAssurances: false,
     canDelivrerMedicaments: true,
+    canTeleconsulter: false,
   },
   'patient': {
     canViewPatients: false,
@@ -378,6 +387,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerCaisse: false,
     canGererAssurances: false,
     canDelivrerMedicaments: false,
+    canTeleconsulter: true,
   },
 };
 

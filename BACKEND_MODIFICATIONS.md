@@ -7,6 +7,34 @@ corrigent des erreurs ou complètent des fonctions que le frontend utilise déj�
 
 Ordre conseillé : **0 (critique)** → 1 → 2 → 3, puis le reste.
 
+## État au 4 novembre 2026
+
+Le code du backend qui tourne sur Render est celui du dépôt `ruth10-haiti/Trimed`. Les corrections ci-dessous y
+sont écrites et testées sur la branche `securite/acces-et-cloisonnement` (en local, en attente des droits
+d'écriture pour la demande de fusion). Le détail du déploiement est dans `DEPLOIEMENT_PHASES.md`, à la racine
+de cette branche.
+
+| Point | État sur la branche |
+|---|---|
+| 0.1 Attribution des rôles | Fait (rôles du personnel et patient seulement depuis un hôpital) |
+| 0.2 Données visibles entre hôpitaux | Fait (hôpitaux, chambres, lits, admissions, salles, réservations) |
+| 0.3 Modification de son hôpital par le propriétaire | Non fait : seule l'équipe TRIMED modifie un hôpital |
+| 0.5 Équipe TRIMED = `is_staff` | Fait |
+| 0.6 Rendez-vous visibles par tous | Fait (le filtre cherchait `user.patient` au lieu de `patient_lie`) |
+| 13 Profil en erreur 500 | Fait (`profile`, `update_profile`, `change_password`, `toggle_active`) |
+| 15 Hospitalisations tenues par le secrétariat | Fait (statut des lits suivi par le serveur) |
+| 16 Patient dans la liste des ordonnances | Fait |
+| Journal d'audit, réinitialisation du mot de passe | Non faits |
+
+Trouvé et corrigé en route : inscription qui permettait de se rattacher à un hôpital existant, profil qui
+permettait de changer d'hôpital, compte patient qui voyait les allergies et signes vitaux de tous les patients,
+routes `/patients/adresses/`, `allergies/`, `suivis/`… qui n'avaient jamais fonctionné, numéros de chambre et
+codes de salle uniques sur toute la plateforme. Ajouts : visites (épisodes de soins), caisse, assurances,
+téléconsultation.
+
+Reste côté serveur : stockage durable des fichiers, `gunicorn` au lieu de `runserver`, retrait du mot de passe
+de `create_superuser.py`, unicité du numéro de dossier patient par hôpital.
+
 ---
 
 ## 0. Accès entre rôles et entre hôpitaux (critique, à faire avant tout le reste)
