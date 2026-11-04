@@ -33,6 +33,9 @@ export interface Consultation {
 
 export interface Prescription {
   id: number;
+  prescription_id?: number;
+  medicament_id?: number;
+  quantite?: number;
   medicament: string;
   dosage: string;
   duree: string;
@@ -112,6 +115,8 @@ export class OrdonnanceService {
     const prescriptions = (fields.prescriptions || data.prescriptions || []).map((p: any) => ({
       ...p,
       id: p.id ?? p.prescription_id,
+      prescription_id: p.prescription_id ?? p.id,
+      medicament_id: p.medicament_detail?.medicament_id ?? (typeof p.medicament === 'number' ? p.medicament : undefined),
       medicament: p.medicament_detail?.nom ?? p.medicament,
       instructions: [p.frequence, p.instructions].filter(Boolean).join(', '),
     }));

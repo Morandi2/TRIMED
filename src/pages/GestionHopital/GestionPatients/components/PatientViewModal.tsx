@@ -1,6 +1,7 @@
 import React from 'react';
 import { Patient, patientService } from '../services/PatientService';
 import { calculateAge, formatDateFR } from '../../../../utils/dateUtils';
+import ParcoursPatient from './ParcoursPatient';
 
 interface PatientViewModalProps {
   patient: Patient | null;
@@ -196,6 +197,54 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
                 </div>
               </div>
             )}
+
+            {/* Antécédents */}
+            {patientComplet.antecedents.length > 0 && (
+              <div>
+                <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider mb-3 flex items-center gap-2 mt-6">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  Antécédents
+                </h4>
+                <ul className="space-y-2">
+                  {patientComplet.antecedents.map((a: any, index: number) => (
+                    <li key={index} className="bg-gray-50 dark:bg-white/5 p-3 rounded-xl text-sm">
+                      <span className="font-bold">{a.type_antecedent}</span> : {a.description}
+                      {a.en_cours ? <span className="ml-2 text-xs text-amber-700">en cours</span> : null}
+                      {a.date_debut ? <span className="ml-2 text-xs text-gray-500">depuis le {formatDate(a.date_debut)}</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Signes vitaux (derniers suivis) */}
+            {(patientComplet.suivis ?? []).length > 0 && (
+              <div>
+                <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider mb-3 flex items-center gap-2 mt-6">
+                  <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+                  Signes vitaux
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[480px] text-sm">
+                    <thead><tr className="text-left text-[10px] uppercase text-gray-400"><th className="py-1">Date</th><th>T°</th><th>TA</th><th>Pouls</th><th>Poids</th><th>Observations</th></tr></thead>
+                    <tbody>
+                      {[...patientComplet.suivis].sort((x: any, y: any) => String(y.date_suivi).localeCompare(String(x.date_suivi))).slice(0, 5).map((s: any) => (
+                        <tr key={s.suivi_id} className="border-t border-gray-100 dark:border-white/5">
+                          <td className="py-1.5">{formatDate(s.date_suivi)}</td>
+                          <td>{s.temperature ?? ''}</td>
+                          <td>{s.tension_arterielle_systolique ? s.tension_arterielle_systolique + '/' + s.tension_arterielle_diastolique : ''}</td>
+                          <td>{s.pouls ?? ''}</td>
+                          <td>{s.poids ?? ''}</td>
+                          <td className="max-w-[200px] truncate">{s.observations ?? ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <ParcoursPatient patientId={patientComplet.patient.patient_id} />
           </div>
 
           {/* Action Buttons */}

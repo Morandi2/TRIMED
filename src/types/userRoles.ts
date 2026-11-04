@@ -96,6 +96,14 @@ export interface UserPermissions {
   canSuivreDisponibilites: boolean;
   /** Dire quand un lit ou une salle est libre, réservé, en nettoyage ou hors service (secrétariat). */
   canGererDisponibilites: boolean;
+  /** Caisse : factures des patients, encaissements, sessions (secrétariat et administration). */
+  canTenirCaisse: boolean;
+  /** Tarifs, réglages de la caisse, assureurs et conventions (administration de l'hôpital). */
+  canConfigurerCaisse: boolean;
+  /** Couvertures des patients, accords préalables, justificatifs, bordereaux. */
+  canGererAssurances: boolean;
+  /** Délivrer les médicaments d'une ordonnance (pharmacie). */
+  canDelivrerMedicaments: boolean;
 }
 
 export const rolePermissions: Record<UserRole, UserPermissions> = {
@@ -128,6 +136,10 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerHopital: false,
     canSuivreDisponibilites: false,
     canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: false,
   },
   'admin-hopital': {
     canViewPatients: true,
@@ -158,6 +170,10 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerHopital: true,
     canSuivreDisponibilites: true,
     canGererDisponibilites: true,
+    canTenirCaisse: true,
+    canConfigurerCaisse: true,
+    canGererAssurances: true,
+    canDelivrerMedicaments: true,
   },
   'proprietaire-hopital': {
     canViewPatients: true,
@@ -188,6 +204,10 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerHopital: true,
     canSuivreDisponibilites: true,
     canGererDisponibilites: true,
+    canTenirCaisse: true,
+    canConfigurerCaisse: true,
+    canGererAssurances: true,
+    canDelivrerMedicaments: true,
   },
   'medecin': {
     canViewPatients: true,
@@ -218,6 +238,10 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerHopital: false,
     canSuivreDisponibilites: true,
     canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: false,
   },
   'infirmier': {
     canViewPatients: true,
@@ -248,6 +272,10 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerHopital: false,
     canSuivreDisponibilites: true,
     canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: true,
   },
   'secretaire': {
     canViewPatients: true,
@@ -278,6 +306,10 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerHopital: false,
     canSuivreDisponibilites: true,
     canGererDisponibilites: true,
+    canTenirCaisse: true,
+    canConfigurerCaisse: false,
+    canGererAssurances: true,
+    canDelivrerMedicaments: false,
   },
   'personnel': {
     canViewPatients: true,
@@ -286,7 +318,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewMedecins: true,
     canViewConsultations: false,
     canEditConsultations: false,
-    canViewOrdonnances: false,
+    canViewOrdonnances: true, // lecture seule : la pharmacie délivre les médicaments prescrits
     canEditOrdonnances: false,
     canGererHospitalisation: false,
     canVoirHospitalisation: false,
@@ -308,6 +340,10 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerHopital: false,
     canSuivreDisponibilites: true,
     canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: true,
   },
   'patient': {
     canViewPatients: false,
@@ -338,6 +374,10 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canConfigurerHopital: false,
     canSuivreDisponibilites: false,
     canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: false,
   },
 };
 

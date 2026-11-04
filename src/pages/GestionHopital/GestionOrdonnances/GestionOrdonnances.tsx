@@ -5,6 +5,8 @@ import { ordonnanceService, Ordonnance } from './services/OrdonnanceService';
 import { OrdonnanceModal } from './components/OrdonnanceModal';
 import { OrdonnancePrintPage } from './components/OrdonnancePrintPage';
 import { OrdonnanceStats } from './components/OrdonnanceStats';
+import Delivrance from './components/Delivrance';
+import { useUser } from '../../../context/UserContext';
 import { formatDateTimeFR } from '../../../utils/dateUtils';
 import Badge from '../../../components/ui/badge/Badge';
 import {
@@ -36,6 +38,7 @@ interface GestionOrdonnancesProps {
 }
 
 const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopitalNom }) => {
+  const { permissions } = useUser();
   const [ordonnances, setOrdonnances] = useState<Ordonnance[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrdonnanceId, setSelectedOrdonnanceId] = useState<number | undefined>();
@@ -409,6 +412,10 @@ const GestionOrdonnances: React.FC<GestionOrdonnancesProps> = ({ tenantId, hopit
                             <span className="text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-2.5 py-1 rounded-lg">{p.dosage}</span>
                           </div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 font-medium italic">{p.duree}, {p.instructions}</p>
+                          {permissions.canDelivrerMedicaments && p.medicament_id && selectedOrdonnance.patient_id ? (
+                            <Delivrance patient={selectedOrdonnance.patient_id} ordonnance={selectedOrdonnance.ordonnance_id}
+                              prescription={p.prescription_id} medicament={p.medicament_id} quantite={p.quantite} />
+                          ) : null}
                         </div>
                       ))}
                     </div>

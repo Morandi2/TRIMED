@@ -8,7 +8,13 @@ import { synchroniserLits } from "../Disponibilites/synchronisation";
 
 interface Chambre { id: number; numero: string; etage: number }
 interface Lit { id: number; numero_lit: string; statut?: string; chambre: number }
-interface Admission { id: number; patient: number; lit: number; motif?: string; notes?: string; statut: string; date_admission: string; date_sortie?: string | null }
+interface Admission {
+  id: number; patient: number; lit: number; motif?: string; notes?: string; statut: string; date_admission: string; date_sortie?: string | null;
+  // Champs ajoutés côté serveur avec les visites (absents tant que le serveur n'est pas à jour).
+  medecin_responsable?: number | null; origine?: string; mouvements?: { lit: number; numero_lit: string; date_debut: string; date_fin: string | null }[];
+}
+interface Medecin { medecin_id: number; nom: string; prenom: string }
+const ORIGINES: Record<string, string> = { consultation: 'Consultation', urgence: 'Urgence', transfert: 'Transfert d’un autre établissement', programmee: 'Admission programmée' };
 interface Patient { patient_id: number; nom: string; prenom: string; numero_dossier_medical?: string }
 
 const champ = "h-11 w-full rounded-xl border border-gray-200 bg-white px-3.5 text-sm text-gray-900 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15 dark:border-gray-700 dark:bg-gray-900 dark:text-white";
@@ -31,6 +37,7 @@ export default function Admissions({ tenantId, peutGerer }: { tenantId: number; 
   const [lits, setLits] = useState<Lit[]>([]);
   const [admissions, setAdmissions] = useState<Admission[] | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [medecins, setMedecins] = useState<Medecin[]>([]);
   const [erreur, setErreur] = useState("");
   const [indisponible, setIndisponible] = useState(false);
   const [message, setMessage] = useState("");
@@ -39,17 +46,19 @@ export default function Admissions({ tenantId, peutGerer }: { tenantId: number; 
 
   const charger = useCallback(async () => {
     try {
-      const [ch, li, ad, pa] = await Promise.all([
+      const [ch, li, ad, pa, me] = await Promise.all([
         lireTout<Chambre>("/hospitalisation/chambres/", { tenant: tenantId }, { sansCache: true }).catch(() => [] as Chambre[]),
         lireTout<Lit>("/hospitalisation/lits/", {}, { sansCache: true, maxPages: 50 }).catch(() => [] as Lit[]),
         lireTout<Admission>("/hospitalisation/admissions/", { ordering: "-date_admission" }, { sansCache: true, maxPages: 20 }),
         lireTout<Patient>("/patients/").catch(() => [] as Patient[]),
+        lireTout<Medecin>("/medical/medecins/").catch(() => [] as Medecin[]),
       ]);
       const ids = new Set(ch.map((c) => c.id));
       setChambres(ch);
       setLits(li.filter((l) => ids.has(l.chambre)));
       setAdmissions(ad);
       setPatients(pa);
+      setMedecins(me);
       setErreur("");
       setIndisponible(false);
     } catch (e) {
@@ -62,6 +71,7 @@ export default function Admissions({ tenantId, peutGerer }: { tenantId: number; 
 
   useEffect(() => { charger(); }, [charger]);
 
+  const nomMedecin = (id: number) => { const m = medecins.find((x) => x.medecin_id === id); return m ? `${m.prenom} ${m.nom}` : `n° ${id}`; };
   const nomPatient = (id: number) => { const p = patients.find((x) => x.patient_id === id); return p ? `${p.prenom} ${p.nom}` : `Patient n° ${id}`; };
   const libelleLit = (id: number) => {
     const l = lits.find((x) => x.id === id); if (!l) return `Lit n° ${id}`;
@@ -87,7 +97,7 @@ export default function Admissions({ tenantId, peutGerer }: { tenantId: number; 
   };
 
   // ---- Nouvelle admission ----
-  const [form, setForm] = useState({ patient: "", lit: "", motif: "", notes: "", recherche: "" });
+  const [form, setForm] = useState({ patient: "", lit: "", motif: "", notes: "", recherche: "", medecin: "", origine: "" });
   const admettre = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.patient || !form.lit || !form.motif.trim()) { setErreur("Choisissez le patient, le lit et le motif."); return; }
@@ -98,8 +108,11 @@ export default function Admissions({ tenantId, peutGerer }: { tenantId: number; 
       const actives = await admissionsActives();
       if (actives.some((a) => a.lit === lit)) { setErreur(LIT_PRIS); await charger(); return; }
       if (actives.some((a) => a.patient === patient)) { setErreur("Ce patient est déjà hospitalisé."); await charger(); return; }
-      await apiClient.post("/hospitalisation/admissions/", { patient, lit, motif: form.motif.trim(), notes: form.notes.trim(), statut: "hospitalise" });
-      setForm({ patient: "", lit: "", motif: "", notes: "", recherche: "" });
+      await apiClient.post("/hospitalisation/admissions/", {
+        patient, lit, motif: form.motif.trim(), notes: form.notes.trim(), statut: "hospitalise",
+        ...(form.medecin ? { medecin_responsable: Number(form.medecin) } : {}), ...(form.origine ? { origine: form.origine } : {}),
+      });
+      setForm({ patient: "", lit: "", motif: "", notes: "", recherche: "", medecin: "", origine: "" });
       await apres(`${nomPatient(patient)} est hospitalisé(e) : ${libelleLit(lit).toLowerCase()}.`);
     } catch {
       setErreur("L’admission n’a pas pu être enregistrée.");
@@ -168,6 +181,8 @@ export default function Admissions({ tenantId, peutGerer }: { tenantId: number; 
                   <div className="min-w-0">
                     <p className="truncate font-medium text-gray-900 dark:text-white">{nomPatient(a.patient)}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">{libelleLit(a.lit)}</p>
+                    {(a.medecin_responsable || a.origine) && <p className="text-xs text-gray-500">{a.medecin_responsable ? `Dr ${nomMedecin(a.medecin_responsable)}` : ""}{a.medecin_responsable && a.origine ? ", " : ""}{a.origine ? (ORIGINES[a.origine] ?? a.origine).toLowerCase() : ""}</p>}
+                    {(a.mouvements?.length ?? 0) > 1 && <p className="text-xs text-gray-500">Lits successifs : {a.mouvements!.map((m) => m.numero_lit).join(" puis ")}</p>}
                     <p className="text-xs text-gray-500">Admis le {dateHeure(a.date_admission)}, depuis {jours(a.date_admission)} jour{jours(a.date_admission) > 1 ? "s" : ""}{a.motif ? `. ${a.motif}` : ""}</p>
                   </div>
                 </div>
@@ -216,6 +231,20 @@ export default function Admissions({ tenantId, peutGerer }: { tenantId: number; 
           <label className="block text-sm text-gray-700 dark:text-gray-300">Motif
             <input className={`${champ} mt-1.5`} value={form.motif} onChange={(e) => setForm({ ...form, motif: e.target.value })} placeholder="Ex. : observation après chirurgie" required maxLength={200} />
           </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm text-gray-700 dark:text-gray-300">Médecin responsable
+              <select className={`${champ} mt-1.5`} value={form.medecin} onChange={(e) => setForm({ ...form, medecin: e.target.value })}>
+                <option value="">Non précisé</option>
+                {medecins.map((m) => <option key={m.medecin_id} value={m.medecin_id}>Dr {m.prenom} {m.nom}</option>)}
+              </select>
+            </label>
+            <label className="block text-sm text-gray-700 dark:text-gray-300">Origine
+              <select className={`${champ} mt-1.5`} value={form.origine} onChange={(e) => setForm({ ...form, origine: e.target.value })}>
+                <option value="">Non précisée</option>
+                {Object.entries(ORIGINES).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </label>
+          </div>
           <label className="block text-sm text-gray-700 dark:text-gray-300">Notes (facultatif)
             <textarea className={`${champ} mt-1.5 h-20 py-2`} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </label>

@@ -218,7 +218,8 @@ export class PatientService {
         contacts: data.contacts || data.contacts_detail || [],
         assurances: data.assurances || data.assurances_detail || [],
         allergies: data.allergies || data.allergies_detail || [],
-        antecedents: data.antecedents || data.antecedents_detail || []
+        antecedents: data.antecedents || data.antecedents_detail || [],
+        suivis: data.suivis || []
       };
     }
     return null;

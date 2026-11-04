@@ -13,6 +13,8 @@ export const modules = {
   rendezVous: () => import('../pages/GestionHopital/RendezVous'),
   calendrier: () => import('../pages/Calendar'),
   disponibilites: () => import('../pages/GestionHopital/Disponibilites/Disponibilites'),
+  caisse: () => import('../pages/GestionHopital/Caisse/Caisse'),
+  assurances: () => import('../pages/GestionHopital/Assurances/Assurances'),
 };
 
 type NomModule = keyof typeof modules;
@@ -20,7 +22,7 @@ type NomModule = keyof typeof modules;
 const DROITS: [NomModule, keyof UserPermissions][] = [
   ['patient', 'canViewPatients'], ['rendezVous', 'canViewRendezVous'], ['consultation', 'canViewConsultations'],
   ['medicament', 'canViewMedicaments'], ['ordonnance', 'canViewOrdonnances'], ['medecin', 'canViewMedecins'],
-  ['examen', 'canViewConsultations'], ['hospitalisation', 'canVoirHospitalisation'], ['calendrier', 'canViewCalendar'], ['disponibilites', 'canSuivreDisponibilites'],
+  ['examen', 'canViewConsultations'], ['hospitalisation', 'canVoirHospitalisation'], ['calendrier', 'canViewCalendar'], ['disponibilites', 'canSuivreDisponibilites'], ['caisse', 'canTenirCaisse'], ['assurances', 'canGererAssurances'],
 ];
 
 let fait = false;
