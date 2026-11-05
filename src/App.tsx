@@ -41,6 +41,7 @@ const UserProfiles = lazy(() => import("./pages/UserProfiles"));
 const Calendar = lazy(modules.calendrier);
 const Disponibilites = lazy(modules.disponibilites);
 const Caisse = lazy(modules.caisse);
+const RapportMensuel = lazy(modules.rapportMensuel);
 const Assurances = lazy(modules.assurances);
 const Teleconsultation = lazy(modules.teleconsultation);
 
@@ -106,6 +107,7 @@ export default function App() {
                   <Route path="/profile" element={page(<UserProfiles />)} />
                   <Route path="/disponibilites" element={<ProtectedRoute requiredPermission="canSuivreDisponibilites">{page(<Disponibilites />)}</ProtectedRoute>} />
                   <Route path="/caisse" element={<ProtectedRoute requiredPermission="canTenirCaisse">{page(<Caisse />)}</ProtectedRoute>} />
+                  <Route path="/rapports/mensuel" element={<ProtectedRoute requiredPermission="canViewReports">{page(<RapportMensuel />)}</ProtectedRoute>} />
                   <Route path="/assurances" element={<ProtectedRoute requiredPermission="canGererAssurances">{page(<Assurances />)}</ProtectedRoute>} />
                   <Route path="/teleconsultation" element={<ProtectedRoute requiredPermission="canTeleconsulter">{page(<Teleconsultation />)}</ProtectedRoute>} />
                   <Route path="/calendar" element={<ProtectedRoute requiredPermission="canViewCalendar">{page(<Calendar />)}</ProtectedRoute>} />

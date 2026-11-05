@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { consultationService, ConsultationFormData } from '../services/ConsultationService';
 import { SearchableSelect } from './SearchableSelect';
 import { bornes, REGLES, verifierDate, versChamp } from '../../../../utils/contraintes';
+import { ChoixRecherche, type OptionRecherche } from '../../../../components/form/ChoixRecherche';
+import { lireTout } from '../../../../api/listes';
 
 interface ConsultationProgressFormProps {
   tenantId: number;
@@ -36,9 +38,19 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
       date_consultation: getCurrentDateTime(),
       motif: '',
       diagnostic_principal: '',
+      diagnostic_cim10: null,
       notes: ''
     }
   });
+  // Codes CIM-10 de l'hôpital (liste commune et codes ajoutés), pour le diagnostic codé.
+  const [codesCim10, setCodesCim10] = useState<OptionRecherche[] | null>(null);
+  useEffect(() => {
+    let annule = false;
+    lireTout<{ code_id: number; code: string; libelle: string }>('/medical/cim10/', { actif: true, page_size: 500 })
+      .then((liste) => { if (!annule) setCodesCim10(liste.map((x) => ({ id: x.code_id, libelle: `${x.code} ${x.libelle}`, motsCles: x.code.replace('.', '') }))); })
+      .catch(() => { if (!annule) setCodesCim10([]); });
+    return () => { annule = true; };
+  }, []);
 
   const [isModifying, setIsModifying] = useState(false);
   const [selectedPatientName, setSelectedPatientName] = useState('');
@@ -65,6 +77,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
               date_consultation: date,
               motif: consultation.motif,
               diagnostic_principal: consultation.diagnostic_principal || '',
+              diagnostic_cim10: consultation.diagnostic_cim10 ?? null,
               notes: consultation.notes || ''
             }
           });
@@ -336,6 +349,28 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
                   <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-6">Diagnostic et Notes</h3>
                 
                   <div className="space-y-6">
+                    <div>
+                      <ChoixRecherche
+                        label="Diagnostic codé (CIM-10)"
+                        options={codesCim10 ?? []}
+                        valeur={formData.consultation.diagnostic_cim10 ?? null}
+                        chargement={codesCim10 === null}
+                        placeholder="Rechercher un code ou une maladie (ex. B54, paludisme)"
+                        vide="Aucun code CIM-10 disponible"
+                        onChange={(id, o) => {
+                          updateConsultationField('diagnostic_cim10', id);
+                          // Le libellé du code propose le diagnostic en texte, s'il n'est pas déjà rédigé.
+                          if (!formData.consultation.diagnostic_principal?.trim()) updateConsultationField('diagnostic_principal', o.libelle.replace(/^\S+\s/, ''));
+                        }}
+                      />
+                      {formData.consultation.diagnostic_cim10 ? (
+                        <button type="button" onClick={() => updateConsultationField('diagnostic_cim10', null)} className="mt-1 text-xs text-gray-500 underline hover:text-gray-700 dark:text-gray-400">
+                          Retirer le code
+                        </button>
+                      ) : (
+                        <p className="mt-1 text-xs text-gray-500">Le code sert aux statistiques et au rapport mensuel ; le diagnostic détaillé reste en texte ci-dessous.</p>
+                      )}
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Diagnostic principal

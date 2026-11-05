@@ -292,8 +292,9 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
                           >
                             {consultation.motif}
                           </Badge>
-                          {consultation.diagnostic_principal && (
+                          {(consultation.diagnostic_cim10_code || consultation.diagnostic_principal) && (
                             <span className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 max-w-[200px] italic font-medium">
+                              {consultation.diagnostic_cim10_code && <span className="mr-1 not-italic font-mono font-semibold text-gray-700 dark:text-gray-300">{consultation.diagnostic_cim10_code}</span>}
                               {consultation.diagnostic_principal}
                             </span>
                           )}
@@ -408,7 +409,10 @@ const GestionConsultations: React.FC<GestionConsultationsProps> = ({ tenantId, h
               <div className="mt-8 space-y-6">
                 {selectedConsultation.diagnostic_principal && (
                   <div className="p-6 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-3">Diagnostic Principal</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-3">Diagnostic principal</label>
+                    {selectedConsultation.diagnostic_cim10_code && (
+                      <p className="mb-2 text-sm text-gray-700 dark:text-gray-300"><span className="font-mono font-semibold">{selectedConsultation.diagnostic_cim10_code}</span> {selectedConsultation.diagnostic_cim10_libelle} (CIM-10)</p>
+                    )}
                     <p className="text-gray-900 dark:text-white font-medium leading-relaxed italic">
                     "{selectedConsultation.diagnostic_principal}"
                     </p>
