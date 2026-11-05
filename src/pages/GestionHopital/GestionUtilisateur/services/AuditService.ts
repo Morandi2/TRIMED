@@ -1,11 +1,15 @@
+import axios from 'axios';
+import apiClient from '../../../../api/apiConfig';
 import { lireTout } from '../../../../api/listes';
-import { LIBELLES_ROLES, roleEffectif } from '../../../../types/userRoles';
+import { LIBELLES_ROLES, roleEffectif, type UserRole } from '../../../../types/userRoles';
 import { dateLocale, estJourSeul } from '../../../../utils/dates';
-import type { CategorieJournal, EvenementJournal, FiltresJournal } from '../types/AuditTypes';
+import type { CategorieJournal, ChargementJournal, EntreeJournalServeur, EvenementJournal, FiltresJournal } from '../types/AuditTypes';
 
-// Journal d’activité. Le serveur n’a pas encore de journal d’audit dédié (BACKEND_MODIFICATIONS.md, point 5) :
-// on rassemble les traces datées qu’il conserve déjà — dernière connexion et création de chaque compte,
-// consultations, ordonnances, examens, admissions et sorties, inscriptions d’hôpitaux. Rien n’est inventé.
+// Journal d’activité. Source principale : le journal d’audit du serveur (GET /api/comptes/audit-logs/), en ajout
+// seul : connexions, ouvertures de dossiers, créations et modifications, avec l’adresse de connexion.
+// Tant que le serveur n’a pas ce journal (réponse 404), on rassemble les traces datées qu’il conserve déjà :
+// dernière connexion et création de chaque compte, consultations, ordonnances, examens, admissions et sorties,
+// inscriptions d’hôpitaux. Rien n’est inventé.
 
 interface Utilisateur { utilisateur_id: number; nom_complet?: string; email: string; role: string; is_staff?: boolean; cree_le?: string; derniere_connexion?: string | null; last_login?: string | null }
 interface Consultation { consultation_id: number; date_consultation: string; motif?: string; patient_nom?: string; patient_prenom?: string; medecin_nom?: string; medecin_prenom?: string }
@@ -20,11 +24,91 @@ const docteur = (prenom?: string, nom?: string) => (nom ? `Dr ${prenom ?? ''} ${
 const personne = (prenom?: string, nom?: string) => `${prenom ?? ''} ${nom ?? ''}`.trim() || undefined;
 const sur = <T,>(p: Promise<T[]>) => p.catch(() => [] as T[]);
 
-class AuditService {
-  readonly categories: CategorieJournal[] = ['Connexion', 'Compte', 'Consultation', 'Ordonnance', 'Examen', 'Hospitalisation', 'Hôpital'];
+/** Ressource du serveur : catégorie du journal et nom lisible. */
+const RESSOURCES: Record<string, [CategorieJournal, string]> = {
+  compte: ['Compte', 'compte'], medecin: ['Compte', 'fiche médecin'],
+  patient: ['Dossier', 'dossier patient'], allergie: ['Dossier', 'allergie'], antecedent: ['Dossier', 'antécédent'],
+  suivi: ['Dossier', 'signes vitaux'], adresse_patient: ['Dossier', 'adresse du patient'], contact_patient: ['Dossier', 'personne à contacter'],
+  assurance_patient: ['Dossier', 'assurance du patient'], visite: ['Dossier', 'visite'],
+  consultation: ['Consultation', 'consultation'], ordonnance: ['Ordonnance', 'ordonnance'], prescription: ['Ordonnance', 'prescription'],
+  examen: ['Examen', 'examen'], admission: ['Hospitalisation', 'admission'], rendez_vous: ['Rendez-vous', 'rendez-vous'],
+  teleconsultation: ['Téléconsultation', 'téléconsultation'],
+  facture: ['Caisse', 'facture'], paiement: ['Caisse', 'paiement'], session_caisse: ['Caisse', 'session de caisse'],
+  element_facturable: ['Caisse', 'élément à facturer'], tarif: ['Caisse', 'tarif'], taux_change: ['Caisse', 'taux de change'],
+  rapport_caisse: ['Caisse', 'rapport de caisse'],
+  assureur: ['Assurance', 'assureur'], convention: ['Assurance', 'convention'], tarif_conventionne: ['Assurance', 'tarif conventionné'],
+  couverture: ['Assurance', 'couverture'], accord_prealable: ['Assurance', 'accord préalable'], justificatif: ['Assurance', 'justificatif'],
+  prise_en_charge: ['Assurance', 'prise en charge'], bordereau: ['Assurance', 'bordereau'],
+  medicament: ['Pharmacie', 'médicament'], dispensation: ['Pharmacie', 'délivrance de médicament'],
+  etablissement: ['Hôpital', 'hôpital'], parametres_hopital: ['Hôpital', 'paramètres de l’hôpital'], journal_audit: ['Hôpital', 'journal d’audit'],
+};
+const ACTIONS: Record<string, string> = {
+  lecture: 'Ouverture', creation: 'Création', modification: 'Modification', suppression: 'Suppression', export: 'Export',
+};
+/** Actions particulières (« émettre », « annuler »…) : libellé lisible. */
+const OPERATIONS: Record<string, string> = {
+  dossier_complet: 'Ouverture du dossier complet', chronologie: 'Ouverture de la chronologie', telecharger: 'Téléchargement',
+  emettre: 'Émission', annuler: 'Annulation', remise: 'Remise accordée', rembourser: 'Remboursement', ouvrir: 'Ouverture', fermer: 'Clôture',
+  cloturer: 'Clôture', rejoindre: 'Entrée en salle', consentir: 'Consentement du patient', demarrer: 'Début de séance', terminer: 'Fin de séance',
+  envoyer: 'Envoi', statuer: 'Décision de l’assureur', reglement: 'Règlement de l’assureur', repondre: 'Réponse de l’assureur',
+  toggle_active: 'Activation ou désactivation', change_password: 'Changement de mot de passe', update_profile: 'Modification du profil',
+  verifier_documents: 'Vérification des documents',
+};
+const CONNEXIONS: Record<string, string> = { connexion: 'Connexion', connexion_refusee: 'Connexion refusée', deconnexion: 'Déconnexion' };
 
-  /** Tous les événements visibles par le compte connecté, du plus récent au plus ancien. */
-  async obtenirEvenements(options: { equipeTrimed: boolean }): Promise<EvenementJournal[]> {
+const premiereLettre = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** Ligne du journal du serveur → événement affiché. */
+export function versEvenement(e: EntreeJournalServeur, equipeTrimed = false): EvenementJournal {
+  const [categorieRessource, nomRessource] = RESSOURCES[e.ressource] ?? ['Hôpital', e.ressource.replace(/_/g, ' ')];
+  const connexion = CONNEXIONS[e.action];
+  const categorie: CategorieJournal = connexion ? 'Connexion' : categorieRessource;
+  let action: string;
+  if (connexion) action = connexion;
+  else if (e.description && OPERATIONS[e.description]) action = `${OPERATIONS[e.description]} (${nomRessource})`;
+  else if (e.description && e.action !== 'export') action = `${premiereLettre(e.description.replace(/_/g, ' '))} (${nomRessource})`;
+  else action = `${ACTIONS[e.action] ?? e.action_libelle} : ${nomRessource}`;
+  const refusee = e.action === 'connexion_refusee';
+  const role = LIBELLES_ROLES[e.role as UserRole];
+  return {
+    id: `j-${e.evenement_id}`,
+    date: e.date,
+    categorie,
+    type: e.action,
+    action,
+    acteur: e.utilisateur_libelle || (refusee ? e.description || 'Adresse inconnue' : 'Compte supprimé'),
+    cible: e.patient_nom ?? undefined,
+    details: [refusee ? 'mot de passe ou compte refusé' : role, equipeTrimed ? e.tenant_nom : null, e.adresse_ip ? `adresse ${e.adresse_ip}` : null]
+      .filter(Boolean).join(', ') || undefined,
+  };
+}
+
+class AuditService {
+  readonly categories: CategorieJournal[] = ['Connexion', 'Compte', 'Dossier', 'Consultation', 'Ordonnance', 'Examen', 'Hospitalisation',
+    'Rendez-vous', 'Téléconsultation', 'Caisse', 'Assurance', 'Pharmacie', 'Hôpital'];
+
+  /** Tous les événements visibles par le compte connecté (douze derniers mois), du plus récent au plus ancien. */
+  async obtenirEvenements(options: { equipeTrimed: boolean }): Promise<ChargementJournal> {
+    try {
+      const depuis = new Date(Date.now() - UN_AN).toISOString();
+      const lignes = await lireTout<EntreeJournalServeur>('/comptes/audit-logs/', { date_debut: depuis, page_size: 500 }, { maxPages: 20, sansCache: true });
+      return { evenements: lignes.map((l) => versEvenement(l, options.equipeTrimed)), journalServeur: true };
+    } catch (e) {
+      if (!(axios.isAxiosError(e) && e.response?.status === 404)) throw e;
+    }
+    return { evenements: await this.reconstituer(options), journalServeur: false };
+  }
+
+  /** Export CSV du journal du serveur (l’export est lui-même tracé par le serveur). */
+  async exporterDuServeur(depuis?: Date): Promise<Blob> {
+    const { data } = await apiClient.get('/comptes/audit-logs/', {
+      params: { export: 'csv', ...(depuis ? { date_debut: depuis.toISOString() } : {}) }, responseType: 'blob',
+    });
+    return data as Blob;
+  }
+
+  /** Journal reconstitué à partir des traces datées, pour un serveur sans journal d’audit. */
+  private async reconstituer(options: { equipeTrimed: boolean }): Promise<EvenementJournal[]> {
     const limite = Date.now() - UN_AN;
     const ancien = (champ: string) => (e: Record<string, string>) => dateLocale(e[champ]).getTime() < limite;
 
@@ -77,6 +161,13 @@ class AuditService {
       dateLocale(e.date).getTime() >= depuis
       && (!f.categorie || e.categorie === f.categorie)
       && (!q || [e.action, e.acteur, e.cible, e.details].some((t) => t?.toLowerCase().includes(q))));
+  }
+
+  /** Début de la période choisie (pour l’export du serveur). */
+  debutPeriode(periode: FiltresJournal['periode'], maintenant = new Date()): Date | undefined {
+    const debut = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
+    const jours = { jour: 0, semaine: 6, mois: 29, tout: null }[periode];
+    return jours === null ? undefined : new Date(debut.getTime() - jours * 864e5);
   }
 
   /** Export CSV (séparateur « ; » pour Excel en français). */

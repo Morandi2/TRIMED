@@ -1,20 +1,30 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, BedDouble, Building2, Download, FileText, FlaskConical, LogIn, RefreshCw, Search, Stethoscope, UserPlus, Users } from 'lucide-react';
+import { Activity, BedDouble, Building2, CalendarDays, Download, FileText, FlaskConical, FolderOpen, LogIn, Pill, RefreshCw, Search, ShieldCheck, Stethoscope, UserPlus, Users, Video, Wallet } from 'lucide-react';
 import PageMeta from '../../../../components/common/PageMeta';
 import { useUser } from '../../../../context/UserContext';
 import { auditService } from '../services/AuditService';
 import type { CategorieJournal, EvenementJournal, FiltresJournal, PeriodeJournal } from '../types/AuditTypes';
 import { dateLocale, estJourSeul } from '../../../../utils/dates';
 
+const GRIS = 'bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-200';
 const ICONES: Record<CategorieJournal, { icone: typeof LogIn; teinte: string }> = {
   Connexion: { icone: LogIn, teinte: 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300' },
   Compte: { icone: UserPlus, teinte: 'bg-purple-50 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300' },
+  Dossier: { icone: FolderOpen, teinte: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
   Consultation: { icone: Stethoscope, teinte: 'bg-trimed-brume text-trimed-vert-fonce dark:bg-trimed-vert/15 dark:text-trimed-menthe' },
   Ordonnance: { icone: FileText, teinte: 'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300' },
   Examen: { icone: FlaskConical, teinte: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300' },
   Hospitalisation: { icone: BedDouble, teinte: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300' },
-  Hôpital: { icone: Building2, teinte: 'bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-200' },
+  'Rendez-vous': { icone: CalendarDays, teinte: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300' },
+  Téléconsultation: { icone: Video, teinte: 'bg-teal-50 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300' },
+  Caisse: { icone: Wallet, teinte: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' },
+  Assurance: { icone: ShieldCheck, teinte: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300' },
+  Pharmacie: { icone: Pill, teinte: 'bg-lime-50 text-lime-700 dark:bg-lime-500/15 dark:text-lime-300' },
+  Hôpital: { icone: Building2, teinte: GRIS },
 };
+// Avec le journal du serveur, les ouvertures de dossier et les connexions refusées ne sont pas des actes.
+const estConnexion = (e: EvenementJournal) => e.categorie === 'Connexion' && (!e.type || e.type === 'connexion');
+const estActeMedical = (e: EvenementJournal) => ['Consultation', 'Ordonnance', 'Examen', 'Hospitalisation'].includes(e.categorie) && (!e.type || e.type === 'creation');
 const PERIODES: [PeriodeJournal, string][] = [['jour', 'Aujourd’hui'], ['semaine', '7 jours'], ['mois', '30 jours'], ['tout', 'Tout']];
 const PAR_PAGE = 60;
 
@@ -29,7 +39,9 @@ const titreJour = (iso: string) => {
 export const AuditLogPage = () => {
   const { currentUserRole } = useUser();
   const [evenements, setEvenements] = useState<EvenementJournal[] | null>(null);
+  const [journalServeur, setJournalServeur] = useState(false);
   const [erreur, setErreur] = useState(false);
+  const [exportEnCours, setExportEnCours] = useState(false);
   const [version, setVersion] = useState(0);
   const [filtres, setFiltres] = useState<FiltresJournal>({ recherche: '', categorie: '', periode: 'mois' });
   const [nb, setNb] = useState(PAR_PAGE);
@@ -38,7 +50,7 @@ export const AuditLogPage = () => {
     let annule = false;
     setErreur(false);
     auditService.obtenirEvenements({ equipeTrimed: currentUserRole === 'admin-systeme' })
-      .then((e) => { if (!annule) setEvenements(e); })
+      .then((r) => { if (!annule) { setEvenements(r.evenements); setJournalServeur(r.journalServeur); } })
       .catch(() => { if (!annule) setErreur(true); });
     return () => { annule = true; };
   }, [currentUserRole, version]);
@@ -48,9 +60,9 @@ export const AuditLogPage = () => {
 
   // Chiffres de la semaine
   const semaine = useMemo(() => (evenements ? auditService.filtrer(evenements, { recherche: '', categorie: '', periode: 'semaine' }) : []), [evenements]);
-  const connexionsAuj = evenements ? auditService.filtrer(evenements, { recherche: '', categorie: 'Connexion', periode: 'jour' }).length : 0;
-  const actifs7j = new Set(semaine.filter((e) => e.categorie === 'Connexion').map((e) => e.acteur)).size;
-  const actes7j = semaine.filter((e) => ['Consultation', 'Ordonnance', 'Examen', 'Hospitalisation'].includes(e.categorie)).length;
+  const connexionsAuj = evenements ? auditService.filtrer(evenements, { recherche: '', categorie: 'Connexion', periode: 'jour' }).filter(estConnexion).length : 0;
+  const actifs7j = new Set(semaine.filter(estConnexion).map((e) => e.acteur)).size;
+  const actes7j = semaine.filter(estActeMedical).length;
 
   // Regroupement par jour
   const groupes = useMemo(() => {
@@ -63,13 +75,23 @@ export const AuditLogPage = () => {
     return g;
   }, [filtres_, nb]);
 
-  const exporter = () => {
-    const blob = new Blob(['﻿' + auditService.enCsv(filtres_)], { type: 'text/csv;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `journal-activite-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+  // Avec le journal du serveur, l’export vient du serveur (il y est tracé) ; sinon, export des événements affichés.
+  const exporter = async () => {
+    setExportEnCours(true);
+    try {
+      const blob = journalServeur
+        ? await auditService.exporterDuServeur(auditService.debutPeriode(filtres.periode))
+        : new Blob(['﻿' + auditService.enCsv(filtres_)], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `journal-${journalServeur ? 'audit' : 'activite'}-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      setErreur(true);
+    } finally {
+      setExportEnCours(false);
+    }
   };
 
   const champ = 'h-11 rounded-xl border border-gray-200 bg-white px-3.5 text-sm text-gray-900 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15 dark:border-gray-700 dark:bg-gray-900 dark:text-white';
@@ -81,11 +103,15 @@ export const AuditLogPage = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="font-marque text-xl text-gray-900 sm:text-2xl dark:text-white">Journal d’activité</h1>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Connexions des comptes et actions enregistrées : consultations, ordonnances, examens, hospitalisations.</p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              {journalServeur
+                ? 'Journal d’audit du serveur : connexions, ouvertures de dossiers, créations et modifications, avec l’adresse de connexion. Il ne peut être ni modifié ni effacé.'
+                : 'Connexions des comptes et actions enregistrées : consultations, ordonnances, examens, hospitalisations.'}
+            </p>
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={() => setVersion((v) => v + 1)} className="inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"><RefreshCw className="h-4 w-4" aria-hidden="true" /> Actualiser</button>
-            <button type="button" onClick={exporter} disabled={!filtres_.length} className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-500 px-3.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-40"><Download className="h-4 w-4" aria-hidden="true" /> Exporter (CSV)</button>
+            <button type="button" onClick={exporter} disabled={!filtres_.length || exportEnCours} className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-500 px-3.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-40"><Download className="h-4 w-4" aria-hidden="true" /> {exportEnCours ? 'Export…' : 'Exporter (CSV)'}</button>
           </div>
         </div>
 

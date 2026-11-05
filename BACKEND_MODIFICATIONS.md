@@ -1,7 +1,7 @@
 # Modifications à apporter au backend TRIMED (Django REST)
 
 Constats faits le 31 octobre 2026 sur `https://trimedh-service.onrender.com`, en préparant les données de
-démonstration (`scripts/seed/seed-demo.mjs`). Chaque point indique ce qui se passe, la correction proposée
+démonstration (`scripts/seed/seed-demo.mjs`, désormais dans le dépôt du backend). Chaque point indique ce qui se passe, la correction proposée
 et la précaution de sécurité à garder. Aucun de ces changements n'ouvre d'accès supplémentaire : ils
 corrigent des erreurs ou complètent des fonctions que le frontend utilise déjà.
 
