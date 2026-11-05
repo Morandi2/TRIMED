@@ -422,7 +422,7 @@ export const GestionRendezVous: React.FC<GestionRendezVousProps> = ({ tenantId, 
               tenantId={tenantId}
               onSave={handleSave}
               onClose={() => { setShowModal(false); setEditingRendezVous(null); }}
-              rendezVousId={editingRendezVous?.rendez_vous_id}
+              rendezVous={editingRendezVous}
             />
           </div>
         </div>

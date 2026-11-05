@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PaiementFormData, PaiementMethode, PaiementStatut } from '../types/AbonnementTypes';
+import { bornes, limites, NOMBRES, REGLES, versChamp } from '../../../../utils/contraintes';
 
 interface PaiementModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
     abonnement_id: abonnementId,
     montant: 0,
     methode_id: 1,
-    date_paiement: new Date().toISOString().split('T')[0],
+    date_paiement: versChamp(new Date(), 'date'),
     statut_id: 1,
     reference: ''
   });
@@ -76,8 +77,8 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
               </label>
               <input
                 type="number"
-                step="0.01"
                 required
+                {...limites(NOMBRES.montant)}
                 value={formData.montant}
                 onChange={(e) => setFormData(prev => ({ ...prev, montant: parseFloat(e.target.value) }))}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
@@ -109,6 +110,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
               <input
                 type="date"
                 required
+                {...bornes(REGLES.paiement, 'date')}
                 value={formData.date_paiement}
                 onChange={(e) => setFormData(prev => ({ ...prev, date_paiement: e.target.value }))}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"

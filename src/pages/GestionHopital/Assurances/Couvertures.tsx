@@ -4,6 +4,7 @@ import apiClient from '../../../api/apiConfig';
 import { assurancesApi, TYPES_JUSTIFICATIF, type AccordPrealable, type Convention, type Couverture, type Justificatif } from '../../../api/assurancesApi';
 import { montant } from '../../../api/caisseApi';
 import { alerte, bouton, boutonSecondaire, carte, champ, champBase, dateHeure, info, messageErreur, titreCarte, usePatients } from '../Caisse/ui';
+import { bornes, REGLES } from '../../../utils/contraintes';
 
 const STATUTS_ACCORD = { en_attente: 'En attente', accorde: 'Accordé', refuse: 'Refusé' } as const;
 
@@ -93,7 +94,7 @@ export default function Couvertures({ conventions }: { conventions: Convention[]
                   <input className={champ} placeholder="Lien (conjoint, enfant…)" value={nouvelle.lien_avec_assure} onChange={(e) => setNouvelle({ ...nouvelle, lien_avec_assure: e.target.value })} />
                 </>
               )}
-              <label className="text-xs text-gray-500">Valable jusqu'au (facultatif)<input type="date" className={`${champ} mt-1`} value={nouvelle.date_fin} onChange={(e) => setNouvelle({ ...nouvelle, date_fin: e.target.value })} /></label>
+              <label className="text-xs text-gray-500">Valable jusqu'au (facultatif)<input type="date" className={`${champ} mt-1`} {...bornes(REGLES.expirationCarte, 'date')} value={nouvelle.date_fin} onChange={(e) => setNouvelle({ ...nouvelle, date_fin: e.target.value })} /></label>
               <div className="flex items-end"><button type="submit" className={bouton}>Ajouter la couverture</button></div>
             </form>
           </section>
@@ -111,7 +112,7 @@ export default function Couvertures({ conventions }: { conventions: Convention[]
                         <div className="mt-2 flex flex-wrap gap-2">
                           <input className={`${champBase} h-9 w-40`} placeholder="N° d'accord" value={r.numero} onChange={(e) => setRepAccord({ ...repAccord, [a.id]: { ...r, numero: e.target.value } })} />
                           <input className={`${champBase} h-9 w-36`} placeholder="Montant accordé" inputMode="decimal" value={r.montant} onChange={(e) => setRepAccord({ ...repAccord, [a.id]: { ...r, montant: e.target.value } })} />
-                          <input type="date" aria-label="Expiration" className={`${champBase} h-9 w-44`} value={r.expiration} onChange={(e) => setRepAccord({ ...repAccord, [a.id]: { ...r, expiration: e.target.value } })} />
+                          <input type="date" aria-label="Expiration" className={`${champBase} h-9 w-44`} {...bornes(REGLES.expirationCarte, 'date')} value={r.expiration} onChange={(e) => setRepAccord({ ...repAccord, [a.id]: { ...r, expiration: e.target.value } })} />
                           <button type="button" className={`${bouton} h-9`} onClick={() => agir(() => assurancesApi.repondreAccord(a.id, { statut: 'accorde', numero_accord: r.numero, ...(r.montant ? { montant_accorde: r.montant } : {}), ...(r.expiration ? { date_expiration: r.expiration } : {}) }), 'Accord enregistré.')}>Accordé</button>
                           <button type="button" className={`${boutonSecondaire} h-9`} onClick={() => agir(() => assurancesApi.repondreAccord(a.id, { statut: 'refuse' }), 'Refus enregistré.')}>Refusé</button>
                         </div>

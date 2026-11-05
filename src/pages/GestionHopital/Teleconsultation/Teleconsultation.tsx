@@ -11,6 +11,7 @@ import {
 } from '../../../api/teleconsultationApi';
 import { alerte, bouton, boutonSecondaire, carte, champ, dateHeure, info, messageErreur, titreCarte, usePatients } from '../Caisse/ui';
 import SalleVideo from './SalleVideo';
+import { bornes, REGLES } from '../../../utils/contraintes';
 
 interface Medecin { medecin_id: number; nom: string; prenom: string }
 
@@ -159,7 +160,7 @@ export default function Teleconsultation() {
                   <option value="">Médecin</option>
                   {medecins.map((m) => <option key={m.medecin_id} value={m.medecin_id}>Dr {m.prenom} {m.nom}</option>)}
                 </select>
-                <input type="datetime-local" className={champ} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+                <input type="datetime-local" aria-label="Date et heure" className={champ} {...bornes(REGLES.teleconsultation, 'datetime-local')} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
                 <input className={champ} placeholder="Motif" value={form.motif} onChange={(e) => setForm({ ...form, motif: e.target.value })} />
                 <div className="sm:col-span-2 lg:col-span-4 flex justify-end"><button type="submit" className={bouton}>Planifier</button></div>
               </form>

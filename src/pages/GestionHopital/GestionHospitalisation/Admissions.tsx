@@ -267,7 +267,7 @@ export default function Admissions({ tenantId, peutGerer }: { tenantId: number; 
               <label className="flex items-center gap-2"><input type="radio" name="statut" checked={sortie.statut === "transfere"} onChange={() => setSortie({ ...sortie, statut: "transfere" })} /> Transfert vers un autre établissement</label>
             </fieldset>
             <label className="block text-sm text-gray-700 dark:text-gray-300">Date et heure
-              <input type="datetime-local" className={`${champ} mt-1.5`} value={sortie.date} max={pourChampDate(new Date(Date.now() + 60000))} onChange={(e) => setSortie({ ...sortie, date: e.target.value })} required />
+              <input type="datetime-local" className={`${champ} mt-1.5`} value={sortie.date} min={pourChampDate(new Date(fenetre.admission.date_admission))} max={pourChampDate(new Date(Date.now() + 60000))} onChange={(e) => setSortie({ ...sortie, date: e.target.value })} required />
             </label>
             {erreur && <p role="alert" className="text-sm text-red-600">{erreur}</p>}
             <div className="flex justify-end gap-2">

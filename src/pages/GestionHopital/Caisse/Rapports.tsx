@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
 import { caisseApi, type Rapport } from '../../../api/caisseApi';
 import { alerte, boutonSecondaire, carte, champBase, messageErreur } from './ui';
+import { bornes, REGLES } from '../../../utils/contraintes';
 
 const RAPPORTS = {
   journal_ventes: 'Journal des ventes',
@@ -41,8 +42,8 @@ export default function Rapports() {
         </select>
         {nom !== 'creances' && (
           <>
-            <label className="text-xs text-gray-500">Du<input type="date" className={`${champBase} mt-1 w-44`} value={du} onChange={(e) => setDu(e.target.value)} /></label>
-            <label className="text-xs text-gray-500">Au<input type="date" className={`${champBase} mt-1 w-44`} value={au} onChange={(e) => setAu(e.target.value)} /></label>
+            <label className="text-xs text-gray-500">Du<input type="date" className={`${champBase} mt-1 w-44`} {...bornes(REGLES.periodePassee, 'date')} value={du} onChange={(e) => setDu(e.target.value)} /></label>
+            <label className="text-xs text-gray-500">Au<input type="date" className={`${champBase} mt-1 w-44`} {...bornes(REGLES.periodePassee, 'date')} min={du || undefined} value={au} onChange={(e) => setAu(e.target.value)} /></label>
           </>
         )}
         <button type="button" className={boutonSecondaire} onClick={() => caisseApi.telechargerCsv(nom, nom === 'creances' ? {} : { du, au }).catch((e) => setErreur(messageErreur(e, 'Export impossible.')))}>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PatientFormData, patientService } from '../services/PatientService';
 import { validation } from '../../../../utils/validation';
+import { bornes, REGLES } from '../../../../utils/contraintes';
 
 interface PatientProgressFormProps {
     hopitalId: number;
@@ -455,8 +456,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 )}
                                                 onBlur={() => handleFieldBlur('date_naissance')}
                                                 className={errors.date_naissance && touched.date_naissance ? errorInputClass : inputClass}
-                                                min="1900-01-01"
-                                                max={new Date().toISOString().split('T')[0]}
+                                                {...bornes(REGLES.naissance, 'date')}
                                                 required
                                             />
                                             {errors.date_naissance && touched.date_naissance && (
@@ -783,7 +783,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                             (value) => updateListField('assurances', index, 'date_expiration', value)
                                                         )}
                                                         className={inputClass}
-                                                        min={new Date().toISOString().split('T')[0]}
+                                                        {...bornes(REGLES.expirationCarte, 'date')}
                                                     />
                                                 </div>
                                             </div>
@@ -927,7 +927,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                                 (value) => updateListField('antecedents', index, 'date_debut', value)
                                                             )}
                                                             className={inputClass}
-                                                            max={new Date().toISOString().split('T')[0]}
+                                                            {...bornes(REGLES.antecedent, 'date')}
                                                         />
                                                     </div>
 
@@ -944,7 +944,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                                 (value) => updateListField('antecedents', index, 'date_fin', value)
                                                             )}
                                                             className={inputClass}
-                                                            max={new Date().toISOString().split('T')[0]}
+                                                            {...bornes(REGLES.antecedent, 'date')} min={antecedent.date_debut || bornes(REGLES.antecedent, 'date').min}
                                                         />
                                                     </div>
                                                 </div>

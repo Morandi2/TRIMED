@@ -12,6 +12,7 @@ import {
   COULEURS_ETAT, ETATS_LIT_MANUELS, ETATS_SALLE_MANUELS, LIBELLES_LIT, LIBELLES_SALLE,
   etatLit, etatSalle, reservationsActives, type AdmissionActive, type EtatLit, type EtatSalle, type Reservation,
 } from "./etats";
+import { bornes, REGLES } from '../../../utils/contraintes';
 
 interface Chambre { id: number; numero: string; etage: number; type_chambre: string }
 interface Lit { id: number; numero_lit: string; statut?: string; chambre: number }
@@ -307,13 +308,13 @@ export default function Disponibilites() {
                 </select>
               </label>
               <label className="col-span-2 text-xs text-gray-500">Date
-                <input type="date" required className={`${champ} mt-1 w-full`} value={creneau.date} onChange={(e) => setCreneau({ ...creneau, date: e.target.value })} />
+                <input type="date" required className={`${champ} mt-1 w-full`} {...bornes(REGLES.creneau, 'date')} value={creneau.date} onChange={(e) => setCreneau({ ...creneau, date: e.target.value })} />
               </label>
               <label className="text-xs text-gray-500">De
                 <input type="time" required className={`${champ} mt-1 w-full`} value={creneau.debut} onChange={(e) => setCreneau({ ...creneau, debut: e.target.value })} />
               </label>
               <label className="text-xs text-gray-500">À
-                <input type="time" required className={`${champ} mt-1 w-full`} value={creneau.fin} onChange={(e) => setCreneau({ ...creneau, fin: e.target.value })} />
+                <input type="time" required className={`${champ} mt-1 w-full`} min={creneau.debut || undefined} value={creneau.fin} onChange={(e) => setCreneau({ ...creneau, fin: e.target.value })} />
               </label>
             </div>
             <div className="mt-5 flex justify-end gap-2">

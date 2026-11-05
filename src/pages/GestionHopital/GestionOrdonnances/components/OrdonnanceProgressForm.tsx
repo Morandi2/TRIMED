@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ordonnanceService, OrdonnanceFormData, Prescription } from '../services/OrdonnanceService';
 import { SearchableSelect } from './SearchableSelect';
+import { bornes, REGLES, verifierDate, versChamp } from '../../../../utils/contraintes';
 
 interface OrdonnanceProgressFormProps {
   tenantId: number;
@@ -21,7 +22,7 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
       consultation_id: 0,
       patient_id: 0,
       medecin_id: 0,
-      date_ordonnance: '',
+      date_ordonnance: versChamp(new Date(), 'datetime-local'),
       recommandations: '',
       validite: '',
       prescriptions: []
@@ -40,19 +41,11 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
   const [selectedPatientName, setSelectedPatientName] = useState('');
   const [selectedMedecinName, setSelectedMedecinName] = useState('');
   const [dateError, setDateError] = useState('');
+  // Date d'une ordonnance existante : elle n'est revérifiée que si on la change.
+  const [dateInitiale, setDateInitiale] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
 
   useEffect(() => {
     const loadOrdonnance = async () => {
@@ -60,12 +53,14 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
         setIsModifying(true);
         const ordonnance = await ordonnanceService.obtenirOrdonnance(ordonnanceId);
         if (ordonnance) {
+          const date = versChamp(new Date(ordonnance.date_ordonnance), 'datetime-local');
+          setDateInitiale(date);
           setFormData({
             ordonnance: {
               consultation_id: ordonnance.consultation_id,
               patient_id: ordonnance.patient_id,
               medecin_id: ordonnance.medecin_id,
-              date_ordonnance: ordonnance.date_ordonnance.replace('T', 'T').slice(0, 16),
+              date_ordonnance: date,
               recommandations: ordonnance.recommandations || '',
               validite: ordonnance.validite,
               prescriptions: ordonnance.prescriptions || []
@@ -99,14 +94,8 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
 
   const updateOrdonnanceField = (field: string, value: any) => {
     if (field === 'date_ordonnance') {
-      const selectedDate = new Date(value);
-      const currentDate = new Date();
-      
-      if (selectedDate < currentDate) {
-        setDateError('La date d\'ordonnance ne peut pas être dans le passé');
-      } else {
-        setDateError('');
-      }
+      // Ordonnance rédigée pendant ou après la consultation : pas dans le futur, au plus un an en arrière.
+      setDateError(value && value !== dateInitiale ? verifierDate(value, REGLES.ordonnance) ?? '' : '');
     }
     
     setFormData(prev => ({
@@ -348,7 +337,7 @@ export const OrdonnanceProgressForm: React.FC<OrdonnanceProgressFormProps> = ({
                         value={formData.ordonnance.date_ordonnance}
                         onChange={(e) => updateOrdonnanceField('date_ordonnance', e.target.value)}
                         onBlur={() => handleFieldBlur('date_ordonnance')}
-                        min={getCurrentDateTime()}
+                        {...(formData.ordonnance.date_ordonnance === dateInitiale ? {} : bornes(REGLES.ordonnance, 'datetime-local'))}
                         className={errors.date_ordonnance && touched.date_ordonnance || dateError ? errorInputClass : inputClass}
                         required
                       />

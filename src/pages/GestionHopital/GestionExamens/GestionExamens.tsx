@@ -6,6 +6,7 @@ import { useUser } from '../../../context/UserContext';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { useRechercheUrl } from "../../../hooks/useRechercheUrl";
+import { bornes, REGLES, verifierDate, versChamp } from '../../../utils/contraintes';
 import { FlaskConical, Plus, Search, ChevronLeft, ChevronRight, FileText, Trash2, X } from 'lucide-react';
 
 interface GestionExamensProps {
@@ -301,7 +302,8 @@ const PrescrireModal: React.FC<{
 }> = ({ tenantId, patients, consultations, onClose, onSaved, onError }) => {
   const [consultationId, setConsultationId] = useState(0);
   const [form, setForm] = useState<ExamenFormData>({
-    patient: 0, medecin_prescripteur: 0, nom_examen: '', type_examen: '', date_examen: new Date().toISOString().slice(0, 16),
+    // Heure locale (toISOString donnait l'heure UTC : cinq heures d'avance en Haïti).
+    patient: 0, medecin_prescripteur: 0, nom_examen: '', type_examen: '', date_examen: versChamp(new Date(), 'datetime-local'),
   });
   const [saving, setSaving] = useState(false);
 
@@ -322,6 +324,9 @@ const PrescrireModal: React.FC<{
       onError("Patient, nom de l'examen et date sont obligatoires.");
       return;
     }
+    // Examen fait ou prévu : au plus un an en arrière, au plus trois mois à l'avance.
+    const erreurDate = verifierDate(form.date_examen, REGLES.examen);
+    if (erreurDate) { onError(erreurDate); return; }
     setSaving(true);
     try {
       const res = await examenService.prescrireExamen(
@@ -384,7 +389,7 @@ const PrescrireModal: React.FC<{
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1">Date de l'examen *</label>
-            <input type="datetime-local" value={form.date_examen} onChange={(e) => setForm({ ...form, date_examen: e.target.value })} className={inputCls} />
+            <input type="datetime-local" aria-label="Date de l'examen" {...bornes(REGLES.examen, 'datetime-local')} value={form.date_examen} onChange={(e) => setForm({ ...form, date_examen: e.target.value })} className={inputCls} />
           </div>
         </div>
         <div className="flex gap-3 mt-8">

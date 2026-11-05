@@ -3,6 +3,7 @@ import { Send } from 'lucide-react';
 import { assurancesApi, STATUTS_BORDEREAU, TYPES_JUSTIFICATIF, type Assureur, type Bordereau } from '../../../api/assurancesApi';
 import { montant, nombre } from '../../../api/caisseApi';
 import { alerte, bouton, boutonSecondaire, carte, champBase, info, jourFr, messageErreur, titreCarte } from '../Caisse/ui';
+import { bornes, REGLES } from '../../../utils/contraintes';
 
 const jour = (d: Date) => d.toLocaleDateString('en-CA');
 
@@ -53,8 +54,8 @@ export default function Bordereaux({ assureurs }: { assureurs: Assureur[] }) {
             <option value="">Assureur</option>
             {assureurs.map((a) => <option key={a.id} value={a.id}>{a.nom}</option>)}
           </select>
-          <label className="text-xs text-gray-500">Factures émises du<input type="date" className={`${champBase} mt-1 w-44`} value={creation.debut} onChange={(e) => setCreation({ ...creation, debut: e.target.value })} /></label>
-          <label className="text-xs text-gray-500">au<input type="date" className={`${champBase} mt-1 w-44`} value={creation.fin} onChange={(e) => setCreation({ ...creation, fin: e.target.value })} /></label>
+          <label className="text-xs text-gray-500">Factures émises du<input type="date" className={`${champBase} mt-1 w-44`} {...bornes(REGLES.periodePassee, 'date')} value={creation.debut} onChange={(e) => setCreation({ ...creation, debut: e.target.value })} /></label>
+          <label className="text-xs text-gray-500">au<input type="date" className={`${champBase} mt-1 w-44`} {...bornes(REGLES.periodePassee, 'date')} min={creation.debut || undefined} value={creation.fin} onChange={(e) => setCreation({ ...creation, fin: e.target.value })} /></label>
           <button type="submit" className={bouton}>Préparer</button>
         </form>
       </section>

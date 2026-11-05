@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { consultationService, ConsultationFormData } from '../services/ConsultationService';
 import { SearchableSelect } from './SearchableSelect';
+import { bornes, REGLES, verifierDate, versChamp } from '../../../../utils/contraintes';
 
 interface ConsultationProgressFormProps {
   tenantId: number;
@@ -42,7 +43,8 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
   const [isModifying, setIsModifying] = useState(false);
   const [selectedPatientName, setSelectedPatientName] = useState('');
   const [selectedMedecinName, setSelectedMedecinName] = useState('');
-  const [selectedSalleName, setSelectedSalleName] = useState('');
+  // Date d'une consultation existante : elle n'est revérifiée que si on la change.
+  const [dateInitiale, setDateInitiale] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -53,12 +55,14 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
         setIsModifying(true);
         const consultation = await consultationService.obtenirConsultation(consultationId);
         if (consultation) {
+          const date = versChamp(new Date(consultation.date_consultation), 'datetime-local');
+          setDateInitiale(date);
           setFormData({
             consultation: {
               patient_id: consultation.patient_id,
               medecin_id: consultation.medecin_id,
               rendez_vous_id: consultation.rendez_vous_id,
-              date_consultation: consultation.date_consultation.replace('T', 'T').slice(0, 16),
+              date_consultation: date,
               motif: consultation.motif,
               diagnostic_principal: consultation.diagnostic_principal || '',
               notes: consultation.notes || ''
@@ -123,7 +127,13 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
     }
     
     if (step === 2) {
-      if (!formData.consultation.date_consultation) newErrors.date_consultation = "La date et l'heure sont obligatoires";
+      const date = formData.consultation.date_consultation;
+      if (!date) newErrors.date_consultation = "La date et l'heure sont obligatoires";
+      else if (date !== dateInitiale) {
+        // Consultation déjà faite ou en cours : pas dans le futur, au plus un an en arrière.
+        const m = verifierDate(date, REGLES.consultation);
+        if (m) newErrors.date_consultation = m;
+      }
       if (!formData.consultation.motif || !formData.consultation.motif.trim()) newErrors.motif = "Le motif est obligatoire";
       
       isValid = Object.keys(newErrors).length === 0;
@@ -143,7 +153,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
 
   // Memoize validities to prevent computation in render and potential loop triggers
   const isStep1Valid = React.useMemo(() => validateStep(1, false), [formData.consultation.patient_id, formData.consultation.medecin_id]);
-  const isStep2Valid = React.useMemo(() => validateStep(2, false), [formData.consultation.date_consultation, formData.consultation.motif]);
+  const isStep2Valid = React.useMemo(() => validateStep(2, false), [formData.consultation.date_consultation, formData.consultation.motif, dateInitiale]);
   const isCurrentStepValid = currentStep === 1 ? isStep1Valid : currentStep === 2 ? isStep2Valid : true;
 
   const handleFieldBlur = (field: string) => {
@@ -179,10 +189,6 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
     if (medecinId) {
       updateConsultationField('medecin_id', medecinId);
     }
-  };
-
-  const handleSalleChange = (salleName: string) => {
-    setSelectedSalleName(salleName);
   };
 
   const ProgressBar = () => (
@@ -273,14 +279,6 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
                       placeholder="Rechercher un médecin..."
                       error={touched.medecin_id && errors.medecin_id ? errors.medecin_id : undefined}
                     />
-
-                    <SearchableSelect
-                      value={selectedSalleName}
-                      onChange={handleSalleChange}
-                      required={true}
-                      type="salle"
-                      placeholder="Sélectionner une salle..."
-                    />
                   </div>
                 </div>
               </div>
@@ -301,7 +299,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
                         value={formData.consultation.date_consultation}
                         onChange={(e) => updateConsultationField('date_consultation', e.target.value)}
                         onBlur={() => handleFieldBlur('date_consultation')}
-                        min={getCurrentDateTime()}
+                        {...(formData.consultation.date_consultation === dateInitiale ? {} : bornes(REGLES.consultation, 'datetime-local'))}
                         className={errors.date_consultation && touched.date_consultation ? errorInputClass : inputClass}
                         required
                       />

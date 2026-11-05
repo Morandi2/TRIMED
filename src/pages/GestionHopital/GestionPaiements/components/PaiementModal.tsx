@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Paiement, PaiementFormData, MethodePaiement, StatutPaiement } from '../types/PaiementTypes';
+import { bornes, limites, NOMBRES, REGLES, versChamp } from '../../../../utils/contraintes';
 
 interface PaiementModalProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
     statut_id: 0,
     methode_paiement: '',
     statut: '',
-    date_paiement: new Date().toISOString().split('T')[0],
+    date_paiement: versChamp(new Date(), 'date'),
     reference: '',
     notes: ''
   });
@@ -46,7 +47,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
         statut_id: paiement.statut_id,
         methode_paiement: paiement.methode_paiement,
         statut: paiement.statut,
-        date_paiement: paiement.date_paiement ? paiement.date_paiement.split('T')[0] : new Date().toISOString().split('T')[0],
+        date_paiement: paiement.date_paiement ? paiement.date_paiement.split('T')[0] : versChamp(new Date(), 'date'),
         reference: paiement.reference || '',
         notes: paiement.notes || ''
       });
@@ -61,7 +62,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
         statut_id: statuts[0]?.statut_id || 0,
         methode_paiement: methodes[0]?.nom || '',
         statut: statuts[0]?.nom || '',
-        date_paiement: new Date().toISOString().split('T')[0],
+        date_paiement: versChamp(new Date(), 'date'),
         reference: '',
         notes: ''
       });
@@ -133,8 +134,8 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
               </label>
               <input
                 type="number"
-                step="0.01"
                 required
+                {...limites(NOMBRES.montant)}
                 value={formData.montant}
                 onChange={(e) => setFormData(prev => ({ ...prev, montant: parseFloat(e.target.value) }))}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
@@ -200,6 +201,7 @@ export const PaiementModal: React.FC<PaiementModalProps> = ({
               <input
                 type="date"
                 required
+                {...bornes(REGLES.paiement, 'date')}
                 value={formData.date_paiement}
                 onChange={(e) => setFormData(prev => ({ ...prev, date_paiement: e.target.value }))}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"

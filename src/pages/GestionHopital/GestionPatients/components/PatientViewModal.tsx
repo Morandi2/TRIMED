@@ -2,6 +2,8 @@ import React from 'react';
 import { Patient, patientService } from '../services/PatientService';
 import { calculateAge, formatDateFR } from '../../../../utils/dateUtils';
 import ParcoursPatient from './ParcoursPatient';
+import { SaisieSignesVitaux } from './SaisieSignesVitaux';
+import { useUser } from '../../../../context/UserContext';
 
 interface PatientViewModalProps {
   patient: Patient | null;
@@ -15,6 +17,10 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
   onPrint
 }) => {
   const [patientComplet, setPatientComplet] = React.useState<any>(null);
+  const [version, setVersion] = React.useState(0);
+  // Le médecin et l'infirmier relèvent les constantes (le serveur refuse les autres rôles).
+  const { currentUserRole } = useUser();
+  const peutSaisirConstantes = currentUserRole === 'medecin' || currentUserRole === 'infirmier';
 
   React.useEffect(() => {
     const loadPatient = async () => {
@@ -28,7 +34,7 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
       }
     };
     loadPatient();
-  }, [patient]);
+  }, [patient, version]);
 
   if (!patientComplet) {
     return (
@@ -218,13 +224,14 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
             )}
 
             {/* Signes vitaux (derniers suivis) */}
-            {(patientComplet.suivis ?? []).length > 0 && (
+            {((patientComplet.suivis ?? []).length > 0 || peutSaisirConstantes) && (
               <div>
                 <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider mb-3 flex items-center gap-2 mt-6">
                   <span className="w-2 h-2 rounded-full bg-sky-500"></span>
                   Signes vitaux
                 </h4>
-                <div className="overflow-x-auto">
+                {(patientComplet.suivis ?? []).length === 0 && <p className="text-sm text-gray-500">Aucun relevé pour l’instant.</p>}
+                <div className={(patientComplet.suivis ?? []).length ? 'overflow-x-auto' : 'hidden'}>
                   <table className="w-full min-w-[480px] text-sm">
                     <thead><tr className="text-left text-[10px] uppercase text-gray-400"><th className="py-1">Date</th><th>T°</th><th>TA</th><th>Pouls</th><th>Poids</th><th>Observations</th></tr></thead>
                     <tbody>
@@ -241,6 +248,9 @@ export const PatientViewModal: React.FC<PatientViewModalProps> = ({
                     </tbody>
                   </table>
                 </div>
+                {peutSaisirConstantes && (
+                  <SaisieSignesVitaux patientId={patientComplet.patient.patient_id} onEnregistre={() => setVersion((v) => v + 1)} />
+                )}
               </div>
             )}
 

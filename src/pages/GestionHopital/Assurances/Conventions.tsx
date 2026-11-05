@@ -3,6 +3,7 @@ import GenericCrudManager, { type CrudColumn, type CrudField } from '../shared/G
 import { assurancesApi, TYPES_JUSTIFICATIF, type Assureur, type Convention } from '../../../api/assurancesApi';
 import { crud, LIBELLES_CATEGORIE, montant, type Categorie } from '../../../api/caisseApi';
 import { alerte, bouton, boutonSecondaire, carte, champ, champBase, info, messageErreur, titreCarte } from '../Caisse/ui';
+import { bornes, REGLES } from '../../../utils/contraintes';
 
 const assureursApi = crud('/assurances/assureurs/', 'Assureur');
 const TYPES = [{ value: 'prive', label: 'Assurance privée' }, { value: 'mutuelle', label: 'Mutuelle' }, { value: 'employeur', label: 'Employeur' }, { value: 'public', label: 'Organisme public' }];
@@ -72,8 +73,8 @@ export default function Conventions({ assureurs, conventions, peutConfigurer, on
                 <option value="">Assureur</option>{assureurs.map((a) => <option key={a.id} value={a.id}>{a.nom}</option>)}
               </select>
               <input className={champ} placeholder="Référence du contrat" value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} />
-              <label className="text-xs text-gray-500">Début<input type="date" className={`${champ} mt-1`} value={form.date_debut} onChange={(e) => setForm({ ...form, date_debut: e.target.value })} /></label>
-              <label className="text-xs text-gray-500">Fin (facultatif)<input type="date" className={`${champ} mt-1`} value={form.date_fin ?? ''} onChange={(e) => setForm({ ...form, date_fin: e.target.value || null })} /></label>
+              <label className="text-xs text-gray-500">Début<input type="date" className={`${champ} mt-1`} {...bornes(REGLES.debutContrat, 'date')} value={form.date_debut} onChange={(e) => setForm({ ...form, date_debut: e.target.value })} /></label>
+              <label className="text-xs text-gray-500">Fin (facultatif)<input type="date" className={`${champ} mt-1`} {...bornes(REGLES.finContrat, 'date')} min={form.date_debut || bornes(REGLES.finContrat, 'date').min} value={form.date_fin ?? ''} onChange={(e) => setForm({ ...form, date_fin: e.target.value || null })} /></label>
             </div>
             <fieldset>
               <legend className="mb-2 text-sm text-gray-700 dark:text-gray-300">Taux de prise en charge (%) et accord préalable</legend>
