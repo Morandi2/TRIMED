@@ -274,7 +274,7 @@ export const ConsultationProgressForm: React.FC<ConsultationProgressFormProps> =
                 <div className="bg-brand-50 dark:bg-brand-900/20 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-brand-800 dark:text-brand-300 mb-6">Participants à la Consultation</h3>
                 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <SearchableSelect
                       value={selectedPatientName}
                       onChange={handlePatientChange}
