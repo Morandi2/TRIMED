@@ -9,7 +9,10 @@ interface UtilisateurModalProps {
   serverErrors?: Record<string, string>;
   generalError?: string;
   utilisateur?: Utilisateur | null;
+  /** Rôles que l’on peut attribuer (personnel de l’hôpital). */
   roles: UtilisateurRole[];
+  /** Tous les rôles, pour afficher le rôle d’un compte qu’on ne peut pas modifier. */
+  tousLesRoles?: UtilisateurRole[];
   statuts: UtilisateurStatut[];
 }
 
@@ -21,8 +24,11 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
   generalError,
   utilisateur,
   roles,
+  tousLesRoles = roles,
   statuts
 }) => {
+  // Le rôle d’un administrateur, d’un propriétaire ou d’un patient ne se change pas ici.
+  const roleVerrouille = !!utilisateur && !roles.some((r) => r.role_id === utilisateur.role_id);
   const [formData, setFormData] = useState<UtilisateurFormData>({
     nom_complet: '',
     email: '',
@@ -185,7 +191,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
               placeholder="Entrez le nom complet"
               value={formData.nom_complet}
               onChange={handleNomCompletChange}
-              className={`w-full rounded-lg border ${errors.nom_complet ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
+              className={`w-full rounded-lg border ${errors.nom_complet ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
             />
             {errors.nom_complet && <p className="mt-1 text-xs text-red-500">{errors.nom_complet}</p>}
           </div>
@@ -199,7 +205,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
               placeholder="exemple@hopital.com"
               value={formData.email}
               onChange={handleEmailChange}
-              className={`w-full rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
+              className={`w-full rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
             />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
@@ -218,7 +224,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
                 setFormData(p => ({ ...p, telephone: formatted }));
                 if (errors.telephone) setErrors(prev => ({ ...prev, telephone: '' }));
               }}
-              className={`w-full rounded-lg border ${errors.telephone ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
+              className={`w-full rounded-lg border ${errors.telephone ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400`}
             />
             {errors.telephone && <p className="mt-1 text-xs text-red-500">{errors.telephone}</p>}
           </div>
@@ -233,7 +239,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
-                  className={`w-full rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                  className={`w-full rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
                 />
                 {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
               </div>
@@ -245,7 +251,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
                   type="password"
                   value={formData.password_confirm}
                   onChange={(e) => setFormData(p => ({ ...p, password_confirm: e.target.value }))}
-                  className={`w-full rounded-lg border ${errors.password_confirm ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
+                  className={`w-full rounded-lg border ${errors.password_confirm ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white`}
                 />
                 {errors.password_confirm && <p className="mt-1 text-xs text-red-500">{errors.password_confirm}</p>}
               </div>
@@ -256,18 +262,25 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Rôle *
             </label>
-            <select
-              required
-              value={formData.role_id}
-              onChange={(e) => setFormData(prev => ({ ...prev, role_id: parseInt(e.target.value) }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            >
-              {roles.map(role => (
-                <option key={role.role_id} value={role.role_id}>
-                  {role.nom}
-                </option>
-              ))}
-            </select>
+            {roleVerrouille ? (
+              <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                {tousLesRoles.find((r) => r.role_id === formData.role_id)?.nom ?? 'Rôle particulier'}
+                <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">Ce rôle ne se modifie pas depuis ce formulaire.</span>
+              </p>
+            ) : (
+              <select
+                required
+                value={formData.role_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, role_id: parseInt(e.target.value) }))}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              >
+                {roles.map(role => (
+                  <option key={role.role_id} value={role.role_id}>
+                    {role.nom}
+                  </option>
+                ))}
+              </select>
+            )}
             
             {formData.role_id === 3 && medecinMatchWarning && (
               <div className={`mt-3 p-3 text-sm rounded-lg border ${
@@ -293,7 +306,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
               required
               value={formData.statut_id}
               onChange={(e) => setFormData(prev => ({ ...prev, statut_id: parseInt(e.target.value) }))}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             >
               {statuts.map(statut => (
                 <option key={statut.statut_id} value={statut.statut_id}>
@@ -315,7 +328,7 @@ export const UtilisateurModal: React.FC<UtilisateurModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {isSubmitting ? 'Chargement...' : (utilisateur ? 'Modifier' : 'Créer')}
             </button>

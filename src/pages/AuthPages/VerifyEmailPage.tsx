@@ -65,9 +65,7 @@ const VerifyEmailPage = () => {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-brand-900 via-brand-800 to-indigo-900 flex items-center justify-center p-4 relative overflow-hidden font-outfit">
       {/* Decorative background elements */}
-      <div className="absolute top-0 -left-4 w-72 h-72 bg-brand-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
-      <div className="absolute top-0 -right-4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
-      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000" />
+      <div className="absolute inset-0 bg-[radial-gradient(60%_55%_at_8%_0%,rgba(2,195,119,0.16),transparent_70%),radial-gradient(60%_55%_at_100%_100%,rgba(39,32,255,0.14),transparent_70%)]" aria-hidden="true" />
 
       <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-700">
         <div className="bg-white/10 dark:bg-brand-900/40 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl overflow-hidden relative group">

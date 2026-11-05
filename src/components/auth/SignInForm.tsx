@@ -5,14 +5,21 @@ import { ChevronRight } from "lucide-react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
+
+const CLE_EMAIL = "trimed-adresse-memorisee";
+
+const ESSAIS_DEMARRAGE = 6;
 import { useAuth } from "../../context/AuthContext";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
-  const [email, setEmail] = useState("");
+  // « Se souvenir de mon adresse » : seule l’adresse est gardée sur cet appareil, jamais le mot de passe.
+  const memorisee = (() => { try { return localStorage.getItem(CLE_EMAIL) || ""; } catch { return ""; } })();
+  const [isChecked, setIsChecked] = useState(!!memorisee);
+  const [email, setEmail] = useState(memorisee);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [attente, setAttente] = useState<string | null>(null);
   const [isLoadingLocal, setIsLoadingLocal] = useState(false);
 
   const { login, isAuthenticated } = useAuth();
@@ -36,14 +43,23 @@ export default function SignInForm() {
 
     setIsLoadingLocal(true);
     try {
-      const result = await login(email, password);
-      if (result.success) {
-        navigate(result.redirectTo || "/home");
-      } else {
-        setError(result.message);
+      try { if (isChecked) localStorage.setItem(CLE_EMAIL, email.trim()); else localStorage.removeItem(CLE_EMAIL); } catch { /* stockage indisponible */ }
+      // Le serveur gratuit (Render) s’endort sans activité : s’il démarre, on réessaie seul
+      // toutes les 10 secondes pendant une minute, en le disant clairement.
+      for (let essai = 0; essai <= ESSAIS_DEMARRAGE; essai++) {
+        const result = await login(email, password);
+        if (result.success) { setAttente(null); navigate(result.redirectTo || "/home"); return; }
+        if (result.code !== "demarrage") { setAttente(null); setError(result.message); return; }
+        if (essai === ESSAIS_DEMARRAGE) { setAttente(null); setError("Le serveur ne répond toujours pas. Vérifiez votre connexion, puis réessayez dans quelques minutes."); return; }
+        for (let s = 10; s > 0; s--) {
+          setAttente(`${result.message} Nouvel essai dans ${s} s.`);
+          await new Promise((fin) => setTimeout(fin, 1000));
+        }
+        setAttente("Nouvel essai en cours…");
       }
     } catch (err) {
-      setError("Une erreur inattendue est survenue");
+      setAttente(null);
+      setError("La connexion n’a pas abouti. Réessayez dans un instant.");
       console.error(err);
     } finally {
       setIsLoadingLocal(false);
@@ -61,6 +77,12 @@ export default function SignInForm() {
         </p>
       </div>
 
+      {attente && (
+        <div role="status" className="mb-6 flex items-start gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-700 dark:border-brand-800/50 dark:bg-brand-500/10 dark:text-brand-200">
+          <span className="mt-0.5 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" aria-hidden="true" />
+          <span>{attente}</span>
+        </div>
+      )}
       {error && (
         <div className="mb-6 p-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl dark:bg-red-900/20 dark:border-red-800/50 dark:text-red-400 animate-in fade-in zoom-in-95 duration-300">
           <div className="flex items-center">
@@ -129,7 +151,7 @@ export default function SignInForm() {
             className="rounded border-gray-300 text-brand-500 focus:ring-brand-500"
           />
           <label className="ml-2.5 block text-xs font-medium text-gray-500 dark:text-gray-400 cursor-pointer" onClick={() => setIsChecked(!isChecked)}>
-            Rester connecté pendant 30 jours
+            Se souvenir de mon adresse e-mail
           </label>
         </div>
 

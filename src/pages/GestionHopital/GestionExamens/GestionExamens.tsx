@@ -5,6 +5,8 @@ import { consultationService } from '../GestionConsultations/services/Consultati
 import { useUser } from '../../../context/UserContext';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
+import { useRechercheUrl } from "../../../hooks/useRechercheUrl";
+import { bornes, REGLES, verifierDate, versChamp } from '../../../utils/contraintes';
 import { FlaskConical, Plus, Search, ChevronLeft, ChevronRight, FileText, Trash2, X } from 'lucide-react';
 
 interface GestionExamensProps {
@@ -20,6 +22,7 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
   const [consultations, setConsultations] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  useRechercheUrl(setSearchTerm);
   const [statusFilter, setStatusFilter] = useState<'Tous' | 'attente' | 'resultat'>('Tous');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,24 +105,24 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
   return (
     <div className="min-h-screen pb-12 space-y-8">
       {/* Header */}
-      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="relative p-6 sm:p-7 rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-trimed-brume overflow-hidden text-gray-900 dark:border-gray-800 dark:from-brand-950/40 dark:via-gray-900 dark:to-gray-900 dark:text-white">
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
+              <div className="p-2 bg-brand-500 rounded-xl">
                 <FlaskConical className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-3xl font-black uppercase tracking-tight">Gestion des Examens</h1>
+              <h1 className="font-marque text-xl sm:text-2xl">Gestion des Examens</h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-              Filiale: <span className="text-gray-700 dark:text-gray-200">{hopitalNom || 'Portail Hospitalier'}</span>
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+              {hopitalNom || "Votre hôpital"}
             </p>
           </div>
           {canEdit && (
             <button
               onClick={() => setPrescrireOpen(true)}
-              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-green-600/20"
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-brand-500/20"
             >
               <Plus className="h-5 w-5" />
               Prescrire un examen
@@ -131,19 +134,19 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Total', value: stats.total, color: 'text-indigo-600' },
+          { label: 'Total', value: stats.total, color: 'text-brand-600' },
           { label: 'En attente', value: stats.attente, color: 'text-amber-600' },
           { label: 'Avec résultat', value: stats.resultat, color: 'text-green-600' },
         ].map((s) => (
-          <div key={s.label} className="p-5 rounded-2xl bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl">
-            <p className="text-xs font-black uppercase tracking-widest text-gray-400">{s.label}</p>
-            <p className={`text-3xl font-black mt-1 ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="p-5 rounded-2xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400">{s.label}</p>
+            <p className={`text-3xl font-bold mt-1 ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Main */}
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden text-black dark:text-white">
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05] flex flex-col lg:flex-row gap-4">
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -152,13 +155,13 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
               placeholder="Rechercher par patient, examen, catégorie ou médecin..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-indigo-500/50 outline-none dark:text-white font-medium placeholder:text-gray-400"
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-brand-500/50 outline-none dark:text-white font-medium placeholder:text-gray-400"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value as any); setCurrentPage(1); }}
-            className="px-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-indigo-500/50 outline-none dark:text-white font-medium"
+            className="px-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-brand-500/50 outline-none dark:text-white font-medium"
           >
             <option value="Tous">Tous les examens</option>
             <option value="attente">En attente de résultat</option>
@@ -177,7 +180,7 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="text-left text-xs font-black uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/[0.05]">
+                <tr className="text-left text-xs font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/[0.05]">
                   <th className="px-6 py-4">Patient</th>
                   <th className="px-6 py-4">Examen</th>
                   <th className="px-6 py-4">Catégorie</th>
@@ -208,7 +211,7 @@ const GestionExamens: React.FC<GestionExamensProps> = ({ tenantId, hopitalNom })
                           <button
                             onClick={() => setResultatExamen(ex)}
                             title="Ajouter / modifier le résultat"
-                            className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                            className="p-2 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-brand-600 hover:bg-brand-100 transition-colors"
                           >
                             <FileText className="h-4 w-4" />
                           </button>
@@ -299,7 +302,8 @@ const PrescrireModal: React.FC<{
 }> = ({ tenantId, patients, consultations, onClose, onSaved, onError }) => {
   const [consultationId, setConsultationId] = useState(0);
   const [form, setForm] = useState<ExamenFormData>({
-    patient: 0, medecin_prescripteur: 0, nom_examen: '', type_examen: '', date_examen: new Date().toISOString().slice(0, 16),
+    // Heure locale (toISOString donnait l'heure UTC : cinq heures d'avance en Haïti).
+    patient: 0, medecin_prescripteur: 0, nom_examen: '', type_examen: '', date_examen: versChamp(new Date(), 'datetime-local'),
   });
   const [saving, setSaving] = useState(false);
 
@@ -320,6 +324,9 @@ const PrescrireModal: React.FC<{
       onError("Patient, nom de l'examen et date sont obligatoires.");
       return;
     }
+    // Examen fait ou prévu : au plus un an en arrière, au plus trois mois à l'avance.
+    const erreurDate = verifierDate(form.date_examen, REGLES.examen);
+    if (erreurDate) { onError(erreurDate); return; }
     setSaving(true);
     try {
       const res = await examenService.prescrireExamen(
@@ -328,7 +335,7 @@ const PrescrireModal: React.FC<{
       );
       if (res.success) onSaved();
       else {
-        const fe = res.fieldErrors ? Object.entries(res.fieldErrors).map(([k, v]) => `${k}: ${v}`).join(' · ') : '';
+        const fe = res.fieldErrors ? Object.entries(res.fieldErrors).map(([k, v]) => `${k}: ${v}`).join(', ') : '';
         onError(fe || res.message || 'Erreur lors de la prescription.');
       }
     } finally {
@@ -343,7 +350,7 @@ const PrescrireModal: React.FC<{
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg p-8 shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-black text-gray-900 dark:text-white">Prescrire un examen</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Prescrire un examen</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">
             <X className="h-5 w-5 text-gray-400" />
           </button>
@@ -356,7 +363,7 @@ const PrescrireModal: React.FC<{
               {consultations.map((c) => {
                 const id = c.consultation_id || c.id;
                 const date = c.date_consultation ? new Date(c.date_consultation).toLocaleDateString('fr-FR') : '';
-                return <option key={id} value={id}>{`#${id} — ${c.patient_nom || 'Patient'}${date ? ' (' + date + ')' : ''}`}</option>;
+                return <option key={id} value={id}>{`${c.patient_nom || 'Patient'}${date ? ', ' + date : ''} (n° ${id})`}</option>;
               })}
             </select>
           </div>
@@ -382,12 +389,12 @@ const PrescrireModal: React.FC<{
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-600 dark:text-gray-300 mb-1">Date de l'examen *</label>
-            <input type="datetime-local" value={form.date_examen} onChange={(e) => setForm({ ...form, date_examen: e.target.value })} className={inputCls} />
+            <input type="datetime-local" aria-label="Date de l'examen" {...bornes(REGLES.examen, 'datetime-local')} value={form.date_examen} onChange={(e) => setForm({ ...form, date_examen: e.target.value })} className={inputCls} />
           </div>
         </div>
         <div className="flex gap-3 mt-8">
           <button onClick={onClose} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300">Annuler</button>
-          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold disabled:opacity-50">
+          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold disabled:opacity-50">
             {saving ? 'Enregistrement...' : 'Prescrire'}
           </button>
         </div>
@@ -429,13 +436,13 @@ const ResultatModal: React.FC<{
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-lg p-8 shadow-2xl border border-white/10">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-black text-gray-900 dark:text-white">Résultat d'examen</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Résultat d'examen</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">
             <X className="h-5 w-5 text-gray-400" />
           </button>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          {examen.nom_examen} — {examen.patient_nom || `Patient #${examen.patient_id}`}
+          {examen.nom_examen} pour {examen.patient_nom || `le patient n° ${examen.patient_id}`}
         </p>
         <div className="space-y-4">
           <div>
@@ -449,7 +456,7 @@ const ResultatModal: React.FC<{
         </div>
         <div className="flex gap-3 mt-8">
           <button onClick={onClose} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300">Annuler</button>
-          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50">
+          <button onClick={submit} disabled={saving} className="flex-1 px-4 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold disabled:opacity-50">
             {saving ? 'Enregistrement...' : 'Enregistrer'}
           </button>
         </div>

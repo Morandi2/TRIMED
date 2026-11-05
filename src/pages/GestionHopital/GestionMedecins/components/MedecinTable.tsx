@@ -56,7 +56,7 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
           {currentMedecins.map((medecin, index) => {
-            const colors = ['bg-blue-500', 'bg-purple-500', 'bg-indigo-500', 'bg-teal-500', 'bg-rose-500', 'bg-amber-500'];
+            const colors = ['bg-brand-500', 'bg-purple-500', 'bg-brand-500', 'bg-teal-500', 'bg-rose-500', 'bg-amber-500'];
             const colorIndex = ((medecin?.nom || '').length + (medecin?.prenom || '').length) % colors.length;
             const avatarBg = colors[colorIndex];
 
@@ -81,7 +81,7 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
                       <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-gray-800 ${medecin.statut === 'Actif' ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                         Dr. {medecin?.prenom || ''} {medecin?.nom || ''}
                       </div>
                       <div className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5">
@@ -92,7 +92,7 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
                   </div>
                 </td>
                 <td className="px-5 py-4">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-100 dark:border-blue-800">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 border border-brand-100 dark:border-brand-800">
                     {medecin?.specialite_principale_nom || medecinService.obtenirNomSpecialite(medecin?.specialite_principale_id, specialites)}
                   </span>
                 </td>
@@ -123,7 +123,7 @@ export const MedecinTable: React.FC<MedecinTableProps> = ({
                     <Tooltip text="Voir détails">
                       <button
                         onClick={() => medecin && onViewMedecin(medecin)}
-                        className="p-2 rounded-xl text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 transition-all active:scale-90"
+                        className="p-2 rounded-xl text-gray-400 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-900/20 transition-all active:scale-90"
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>

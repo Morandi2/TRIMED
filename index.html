@@ -1,17 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="public/images/logo/logo-icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/brand/trimed-symbole.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <meta name="description" content="TRIMED réunit le dossier de chaque patient, les consultations, les ordonnances, les rendez-vous et la pharmacie dans une seule plateforme, pensée pour les hôpitaux d’Haïti." />
+    <meta name="theme-color" content="#2720FF" />
+    <meta property="og:title" content="TRIMED — Soins, gestion, innovation" />
+    <meta property="og:description" content="La plateforme de gestion hospitalière pensée pour les hôpitaux d’Haïti." />
+    <meta property="og:image" content="/brand/trimed-symbole.svg" />
+    <!-- Le backend Render s’endort après 15 min d’inactivité : on le réveille dès l’arrivée sur le site. -->
+    <link rel="preconnect" href="https://trimedh-service.onrender.com" crossorigin />
 
-    <title>TRIMED</title>
+    <title>TRIMED — Soins, gestion, innovation</title>
   </head>
   <body class="dark:bg-gray-900">
     <div id="root"></div>
 
     <script type="module" src="/src/main.tsx"></script>
-    <script type="module" src="/src/utils/animation.js"></script>
   </body>
 </html>

@@ -6,7 +6,7 @@ interface UseAuthReturn {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string; redirectTo?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string; redirectTo?: string; code?: string }>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
   checkAuthStatus: () => void;
@@ -24,8 +24,9 @@ export const useDjangoAuth = (): UseAuthReturn => {
     if (sessionCheck.isValid && sessionCheck.user) {
       const u = sessionCheck.user;
       
-      // Si les données sont incomplètes, on tente de récupérer le profil
-      if (!u.hopital_id || (u.nom_complet ?? '').includes('undefined')) {
+      // Si les données sont incomplètes, on tente de récupérer le profil.
+      // Un administrateur TRIMED n’a pas d’hôpital : ce n’est pas un profil incomplet.
+      if ((!u.hopital_id && u.role !== 'admin-systeme') || (u.nom_complet ?? '').includes('undefined')) {
         console.warn('Session valide mais profil incomplet, récupération du profil...');
         const profileRes = await djangoAuthApi.getProfile();
         if (profileRes.success && profileRes.data) {
@@ -71,7 +72,8 @@ export const useDjangoAuth = (): UseAuthReturn => {
         // on tente de récupérer le profil complet immédiatement
         try {
           // On vérifie quelques champs clés qui pourraient manquer (nom_complet est calculé par mapUserResponse, mais s'il s'est rabattu sur l'email, on fetch)
-          const needsProfile = !finalUser.hopital_id || finalUser.role === 'personnel' || finalUser.nom_complet === finalUser.email || finalUser.nom_complet === 'Utilisateur';
+          const sansHopitalAttendu = finalUser.role === 'admin-systeme' && finalUser.is_staff === true;
+          const needsProfile = (!finalUser.hopital_id && !sansHopitalAttendu) || finalUser.role === 'personnel' || finalUser.nom_complet === finalUser.email || finalUser.nom_complet === 'Utilisateur';
           
           if (needsProfile) {
             const profileRes = await djangoAuthApi.getProfile();
@@ -119,14 +121,15 @@ export const useDjangoAuth = (): UseAuthReturn => {
       } else {
         return {
           success: false,
-          message: response.message
+          message: response.message,
+          code: response.code
         };
       }
     } catch (error: any) {
       console.error('Erreur login hook:', error);
       return {
         success: false,
-        message: 'Erreur lors de la connexion'
+        message: 'La connexion n’a pas abouti. Réessayez dans un instant.'
       };
     } finally {
       setIsLoading(false);
@@ -150,6 +153,8 @@ export const useDjangoAuth = (): UseAuthReturn => {
   const refreshToken = useCallback(async (): Promise<boolean> => {
     try {
       const response = await djangoAuthApi.refreshToken();
+      // Un autre compte s’est connecté entre-temps : sa session est valide, rien à faire ici.
+      if (!response.success && response.message === 'Session changée') return true;
       if (response.success) {
         // Récupérer le profil mis à jour
         const profileResponse = await djangoAuthApi.getProfile();

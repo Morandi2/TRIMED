@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PatientFormData, patientService } from '../services/PatientService';
 import { validation } from '../../../../utils/validation';
+import { bornes, REGLES } from '../../../../utils/contraintes';
 
 interface PatientProgressFormProps {
     hopitalId: number;
@@ -336,13 +337,13 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                         key={step}
                         onClick={() => setCurrentStep(step)}
                         className={`flex flex-col items-center transition-all duration-200 ${step <= currentStep
-                            ? 'text-blue-600 dark:text-blue-400'
+                            ? 'text-brand-600 dark:text-brand-400'
                             : 'text-gray-400 dark:text-gray-500'
                             }`}
                     >
                         <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${step <= currentStep
-                                ? 'bg-blue-600 border-blue-600 text-white'
+                                ? 'bg-brand-600 border-brand-600 text-white'
                                 : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
                                 }`}
                         >
@@ -360,14 +361,14 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                    className="bg-brand-600 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${(currentStep / totalSteps) * 100}%` }}
                 ></div>
             </div>
         </div>
     );
 
-    const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
+    const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
     const errorInputClass = "w-full px-4 py-3 border border-red-500 dark:border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white";
     const errorTextClass = "text-red-500 dark:text-red-400 text-sm mt-1";
 
@@ -401,8 +402,8 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                     <div className="p-6">
                         {currentStep === 1 && (
                             <div className="space-y-6">
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
-                                    <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-6">Informations Personnelles</h3>
+                                <div className="bg-brand-50 dark:bg-brand-900/20 p-6 rounded-lg">
+                                    <h3 className="text-lg font-semibold text-brand-800 dark:text-brand-300 mb-6">Informations Personnelles</h3>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
@@ -455,8 +456,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                 )}
                                                 onBlur={() => handleFieldBlur('date_naissance')}
                                                 className={errors.date_naissance && touched.date_naissance ? errorInputClass : inputClass}
-                                                min="1900-01-01"
-                                                max={new Date().toISOString().split('T')[0]}
+                                                {...bornes(REGLES.naissance, 'date')}
                                                 required
                                             />
                                             {errors.date_naissance && touched.date_naissance && (
@@ -783,7 +783,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                             (value) => updateListField('assurances', index, 'date_expiration', value)
                                                         )}
                                                         className={inputClass}
-                                                        min={new Date().toISOString().split('T')[0]}
+                                                        {...bornes(REGLES.expirationCarte, 'date')}
                                                     />
                                                 </div>
                                             </div>
@@ -927,7 +927,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                                 (value) => updateListField('antecedents', index, 'date_debut', value)
                                                             )}
                                                             className={inputClass}
-                                                            max={new Date().toISOString().split('T')[0]}
+                                                            {...bornes(REGLES.antecedent, 'date')}
                                                         />
                                                     </div>
 
@@ -944,7 +944,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                                                 (value) => updateListField('antecedents', index, 'date_fin', value)
                                                             )}
                                                             className={inputClass}
-                                                            max={new Date().toISOString().split('T')[0]}
+                                                            {...bornes(REGLES.antecedent, 'date')} min={antecedent.date_debut || bornes(REGLES.antecedent, 'date').min}
                                                         />
                                                     </div>
                                                 </div>
@@ -1017,7 +1017,7 @@ export const PatientProgressForm: React.FC<PatientProgressFormProps> = ({
                                     onClick={nextStep}
                                     disabled={!isStep1Valid()}
                                     className={`px-6 py-3 rounded-lg font-medium transition-colors ${isStep1Valid()
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                            ? 'bg-brand-600 text-white hover:bg-brand-700'
                                             : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                                         }`}
                                 >

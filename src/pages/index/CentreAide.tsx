@@ -1,81 +1,72 @@
-import React from 'react';
-import { Search, BookOpen, MessageCircle, HelpCircle, FileText, Settings, Mail } from 'lucide-react';
-import Navbar from './Navbar';
-import Footer from './Footer';
+import { Mail, Phone, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import EnTete from './portail/EnTete';
+import PiedDePage from './portail/PiedDePage';
+import { CONTACT, QUESTIONS } from './portail/contenu';
 
-const CentreAide = () => {
-  const categories = [
-    { icon: BookOpen, title: 'Guide de démarrage', desc: 'Apprenez les bases pour configurer votre hôpital.' },
-    { icon: Settings, title: 'Paramètres', desc: 'Gestion des utilisateurs, des rôles et des services.' },
-    { icon: FileText, title: 'Dossier Médical', desc: 'Comment gérer les consultations et prescriptions.' },
-    { icon: HelpCircle, title: 'FAQ', desc: 'Les réponses aux questions les plus fréquentes.' },
-  ];
+// Guides courts, repris du guide d’utilisation de l’application (annexe B du mémoire).
+const GUIDES = [
+  { titre: 'Se connecter', etapes: ['Ouvrez la page « Se connecter ».', 'Saisissez l’adresse e-mail et le mot de passe fournis par votre hôpital.', 'En cas d’oubli, choisissez « Mot de passe oublié ».'] },
+  { titre: 'Enregistrer un patient', etapes: ['Menu Patients, puis « Ajouter ».', 'Renseignez au moins le nom, le prénom et le numéro de dossier.', 'Enregistrez : le dossier est aussitôt visible par le personnel autorisé.'] },
+  { titre: 'Planifier un rendez-vous', etapes: ['Menu Rendez-vous, puis « Ajouter ».', 'Choisissez le patient, le médecin, la date et le type de rendez-vous.', 'Le statut passe ensuite de « Planifié » à « Confirmé », « Terminé » ou « Annulé ».'] },
+  { titre: 'Créer une ordonnance', etapes: ['Ouvrez la consultation du patient.', 'Ajoutez chaque médicament avec sa posologie et sa durée.', 'Enregistrez, puis imprimez l’ordonnance.'] },
+  { titre: 'Gérer les comptes du personnel', etapes: ['Réservé à l’administrateur de l’hôpital : menu Utilisateurs.', 'Ajoutez un membre et choisissez son rôle (médecin, infirmier, secrétaire…).', 'Chacun ne voit ensuite que ce que son rôle permet.'] },
+  { titre: 'Suivre le stock de la pharmacie', etapes: ['Menu Médicaments.', 'Les produits passés sous leur seuil minimum sont signalés.', 'Mettez le stock à jour à chaque réception.'] }
+];
 
-  return (
-    <div className="bg-slate-50 min-h-screen">
-      <Navbar />
-      
-      <div className="bg-blue-600 pt-32 pb-20 px-4">
-        <div className="max-w-4xl mx-auto text-center text-white" data-aos="fade-down">
-          <h1 className="text-4xl font-extrabold mb-6">Comment pouvons-nous vous aider ?</h1>
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <input 
-              type="text" 
-              placeholder="Rechercher un tutoriel, une solution..." 
-              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white text-slate-900 shadow-xl outline-none focus:ring-4 focus:ring-blue-400/20"
-            />
-          </div>
-        </div>
-      </div>
+const CentreAide = () => (
+  <div className="ptl min-h-screen">
+    <EnTete accueil={false} />
+    <main className="ptl-contenu ptl-cadre pb-20 pt-32">
+      <header className="mx-auto mb-12 max-w-2xl text-center">
+        <p className="ptl-surtitre justify-center">Centre d’aide</p>
+        <h1 className="ptl-titre ptl-titre--l mt-4">Comment pouvons-nous vous aider ?</h1>
+        <p className="ptl-texte mx-auto mt-4">Les gestes de tous les jours, en quelques étapes. Pour le reste, l’équipe TRIMED vous répond.</p>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 pb-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((cat, idx) => (
-            <div key={idx} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-all group cursor-pointer" data-aos="fade-up" data-aos-delay={idx * 100}>
-              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <cat.icon className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">{cat.title}</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{cat.desc}</p>
-            </div>
+      <section aria-labelledby="guides">
+        <h2 id="guides" className="ptl-titre ptl-titre--m mb-5">Guides rapides</h2>
+        <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {GUIDES.map((g) => (
+            <li key={g.titre} className="ptl-verre p-6">
+              <h3 className="font-medium text-trimed-encre">{g.titre}</h3>
+              <ol className="mt-3 grid list-decimal gap-1.5 pl-5 text-[0.95rem] text-trimed-encre-douce">
+                {g.etapes.map((e) => <li key={e}>{e}</li>)}
+              </ol>
+            </li>
           ))}
-        </div>
+        </ul>
+      </section>
 
-        <div className="mt-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div data-aos="fade-right">
-            <h2 className="text-3xl font-bold text-slate-900 mb-6">Vous ne trouvez pas la solution ?</h2>
-            <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-              Nos agents de support technique sont disponibles pour vous aider en direct ou via un ticket.
-            </p>
-            <div className="flex gap-4">
-              <button className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center gap-2">
-                <MessageCircle className="w-5 h-5" />
-                Chat en direct
-              </button>
-              <button className="px-6 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2">
-                <Mail className="w-5 h-5" />
-                Ouvrir un ticket
-              </button>
-            </div>
-          </div>
-          <div className="bg-blue-50 rounded-[2rem] p-8 md:p-12" data-aos="fade-left">
-            <h3 className="font-bold text-blue-900 mb-4 uppercase tracking-widest text-sm text-center">Articles Populaires</h3>
-            <ul className="space-y-4">
-              {['Gérer les rendez-vous en ligne', 'Configuration du profil médecin', 'Exportation des rapports mensuels', 'Sécuriser l\'accès administratif'].map((item, i) => (
-                <li key={i} className="bg-white p-4 rounded-xl shadow-sm flex items-center justify-between hover:translate-x-1 transition-transform cursor-pointer">
-                  <span className="font-medium text-slate-700">{item}</span>
-                  <BookOpen className="w-4 h-4 text-slate-400" />
-                </li>
+      <section aria-labelledby="faq" className="mt-16 grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+        <div>
+          <h2 id="faq" className="ptl-titre ptl-titre--m">Questions fréquentes</h2>
+          <div className="ptl-verre mt-6 p-6">
+            <h3 className="font-medium text-trimed-encre">Vous ne trouvez pas la réponse ?</h3>
+            <ul className="mt-3 grid gap-2 text-[0.95rem]">
+              <li><a href={`mailto:${CONTACT.email}`} className="inline-flex items-center gap-2 text-trimed-indigo hover:underline"><Mail className="h-4 w-4" aria-hidden="true" />{CONTACT.email}</a></li>
+              {CONTACT.telephones.map((t) => (
+                <li key={t}><a href={`tel:${t.replace(/\s/g, '')}`} className="inline-flex items-center gap-2 text-trimed-encre-douce hover:text-trimed-indigo"><Phone className="h-4 w-4" aria-hidden="true" />{t}</a></li>
               ))}
             </ul>
+            <Link to="/contact" className="ptl-bouton mt-5 w-full">Écrire à l’équipe</Link>
           </div>
         </div>
-      </div>
-
-      <Footer />
-    </div>
-  );
-};
+        <div className="grid content-start gap-3">
+          {QUESTIONS.map((q) => (
+            <details key={q.q} className="ptl-verre px-6 py-5">
+              <summary className="flex items-center justify-between gap-4 font-medium text-trimed-encre">
+                {q.q}
+                <Plus className="ptl-plus h-5 w-5 shrink-0 text-trimed-indigo" aria-hidden="true" />
+              </summary>
+              <p className="ptl-texte mt-3 text-[0.95rem]">{q.r}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+    </main>
+    <PiedDePage accueil={false} />
+  </div>
+);
 
 export default CentreAide;

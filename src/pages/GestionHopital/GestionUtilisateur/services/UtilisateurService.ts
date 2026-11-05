@@ -1,14 +1,21 @@
 import { Utilisateur, UtilisateurFormData, UtilisateurStats, UtilisateurRole, UtilisateurStatut } from '../types/UtilisateurTypes';
 import { djangoAuthApi } from '../../../../api/djangoAuthApi';
 
+// Rôles qu’un hôpital peut attribuer à son personnel. Le propriétaire et l’administrateur de l’hôpital
+// (rôle serveur admin-systeme, sans « statut équipe ») ne s’attribuent pas depuis le formulaire, tant que
+// le serveur ne limite pas ce rôle à son hôpital (BACKEND_MODIFICATIONS.md, point 0.5).
+export const ROLES_ATTRIBUABLES = [3, 4, 5, 6];
+const MESSAGE_ROLE_REFUSE = 'Ce rôle ne peut pas être attribué depuis un hôpital. Choisissez médecin, infirmier, secrétaire ou personnel.';
+
 class UtilisateurService {
   private roles: UtilisateurRole[] = [
-    { role_id: 1, nom: 'Administrateur Systeme', description: 'Accès total à la plateforme' },
-    { role_id: 2, nom: 'Proprietaire hopital', description: 'Gérant de l\'hôpital' },
-    { role_id: 3, nom: 'Medecin', description: 'Accès aux dossiers patients' },
+    { role_id: 1, nom: 'Administrateur de l’hôpital', description: 'Administre l’hôpital avec le propriétaire' },
+    { role_id: 2, nom: 'Propriétaire de l’hôpital', description: 'Responsable de l’établissement' },
+    { role_id: 3, nom: 'Médecin', description: 'Accès aux dossiers patients' },
     { role_id: 4, nom: 'Infirmier', description: 'Saisie des constantes et soins' },
-    { role_id: 5, nom: 'Secretaire', description: 'Accueil et rendez-vous' },
-    { role_id: 6, nom: 'Personnel', description: 'Accès limité au service' }
+    { role_id: 5, nom: 'Secrétaire', description: 'Accueil et rendez-vous' },
+    { role_id: 6, nom: 'Personnel', description: 'Accès limité au service' },
+    { role_id: 7, nom: 'Patient', description: 'Accès à son propre dossier' }
   ];
   
   private statuts: UtilisateurStatut[] = [
@@ -18,7 +25,7 @@ class UtilisateurService {
   ];
 
   private utilisateursCache: { data: Utilisateur[]; tenantId: number; fetchedAt: number } | null = null;
-  private readonly CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+  private readonly CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes, aligné sur la mémoire partagée (api/cacheApi.ts)
 
   constructor() {
     this.loadCacheFromStorage();
@@ -41,7 +48,7 @@ class UtilisateurService {
   private saveCacheToStorage() {
     try {
       if (this.utilisateursCache) {
-        localStorage.setItem('utilisateurs_cache', JSON.stringify(this.utilisateursCache));
+        /* Plus d’écriture sur le disque : données médicales sur un poste partagé (mémoire seulement). */
       }
     } catch (e) {}
   }
@@ -242,9 +249,11 @@ class UtilisateurService {
       case 'secretary': 
       case 'receptionist': return 5;
       
-      case 'personnel': 
+      case 'personnel':
       case 'staff': return 6;
-      
+
+      case 'patient': return 7;
+
       default: return 6;
     }
   }
@@ -257,6 +266,7 @@ class UtilisateurService {
       case 4: return 'infirmier';
       case 5: return 'secretaire';
       case 6: return 'personnel';
+      case 7: return 'patient';
       default: return 'personnel';
     }
   }
@@ -264,10 +274,13 @@ class UtilisateurService {
   async creerUtilisateur(data: UtilisateurFormData, tenantId: number): Promise<{ success: boolean; data?: Utilisateur; fieldErrors?: Record<string, string>; message?: string }> {
     if (!tenantId || tenantId === 0) {
       console.error('Erreur: ID Hôpital manquant (tenantId=0)');
-      return { 
-        success: false, 
-        message: "Erreur de configuration : ID d'hôpital non trouvé. Veuillez vous reconnecter." 
+      return {
+        success: false,
+        message: "Erreur de configuration : ID d'hôpital non trouvé. Veuillez vous reconnecter."
       };
+    }
+    if (!ROLES_ATTRIBUABLES.includes(Number(data.role_id))) {
+      return { success: false, fieldErrors: { role_id: MESSAGE_ROLE_REFUSE }, message: MESSAGE_ROLE_REFUSE };
     }
 
     // Utilisation de l'endpoint d'inscription pour garantir le bon hachage des mots de passe
@@ -317,10 +330,14 @@ class UtilisateurService {
       nom_complet: data.nom_complet,
       first_name: data.nom_complet.split(' ')[0] || '',
       last_name: data.nom_complet.split(' ').slice(1).join(' ') || data.nom_complet,
-      role: this.mapIdToRole(data.role_id),
       is_active: data.statut_id === 1,
       telephone: data.telephone
     };
+    // Le rôle n’est envoyé que s’il fait partie des rôles du personnel : le rôle d’un
+    // administrateur, d’un propriétaire ou d’un patient reste tel quel.
+    if (ROLES_ATTRIBUABLES.includes(Number(data.role_id))) {
+      apiData.role = this.mapIdToRole(data.role_id);
+    }
 
     // Envoyer l'email uniquement s'il a changé pour éviter un conflit "Email déjà utilisé"
     if (!originalEmail || data.email !== originalEmail) {
@@ -370,6 +387,11 @@ class UtilisateurService {
 
   obtenirRoles(): UtilisateurRole[] {
     return this.roles;
+  }
+
+  /** Rôles proposés dans le formulaire d’un hôpital (personnel uniquement). */
+  obtenirRolesAttribuables(): UtilisateurRole[] {
+    return this.roles.filter((r) => ROLES_ATTRIBUABLES.includes(r.role_id));
   }
 
   obtenirStatuts(): UtilisateurStatut[] {

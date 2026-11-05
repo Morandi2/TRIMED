@@ -26,8 +26,8 @@ export const MedicamentStats: React.FC<MedicamentStatsProps> = ({ medicaments })
       label: 'Total Produits',
       value: stats.total,
       icon: Pill,
-      gradient: 'from-blue-500/10 to-blue-600/5',
-      iconColor: 'text-blue-600',
+      gradient: 'from-brand-500/10 to-brand-600/5',
+      iconColor: 'text-brand-600',
     },
     {
       label: 'En Stock',
@@ -57,7 +57,7 @@ export const MedicamentStats: React.FC<MedicamentStatsProps> = ({ medicaments })
       {statCards.map((card, index) => (
         <div 
           key={index}
-          className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] backdrop-blur-xl p-6 shadow-sm group hover:shadow-md transition-all duration-300"
+          className="relative overflow-hidden rounded-3xl border border-white/20 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 shadow-sm group hover:shadow-md transition-all duration-300"
         >
           <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${card.gradient} rounded-bl-[100px] -mr-8 -mt-8 opacity-50 group-hover:scale-110 transition-transform duration-500`} />
           
@@ -70,7 +70,7 @@ export const MedicamentStats: React.FC<MedicamentStatsProps> = ({ medicaments })
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-0.5">
                 {card.label}
               </p>
-              <h4 className="text-2xl font-black text-gray-900 dark:text-white">
+              <h4 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {card.value}
               </h4>
             </div>

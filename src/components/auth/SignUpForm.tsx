@@ -313,7 +313,7 @@ export default function SignUpForm() {
 
   return (
     <div className="flex flex-col w-full">
-      <div className="flex flex-col w-full py-4">
+      <div className="flex flex-col w-full">
         {/* Progress Bar */}
         <div className="mb-12 relative">
           <div className="absolute top-5 left-0 w-full h-[2px] bg-gray-100 dark:bg-gray-800 -z-10" />
@@ -343,24 +343,24 @@ export default function SignUpForm() {
           </div>
         </div>
 
-        <div className="mt-6">
-          <div className="mb-10 flex justify-between items-start">
+        <div className="mt-2">
+          <div className="mb-6 flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3 tracking-tight">
+              <h1 className="font-marque text-2xl text-gray-900 dark:text-white mb-1.5">
                 {steps[currentStep - 1].title}
               </h1>
-              <p className="text-base text-gray-500 dark:text-gray-400 max-w-2xl">
-                Étape {currentStep} sur {steps.length} — Remplissez les informations pour inscrire votre hôpital.
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-2xl">
+                Étape {currentStep} sur {steps.length}. Remplissez les informations pour inscrire votre hôpital.
               </p>
             </div>
-            {/* Bouton de remplissage auto (affiché en développement ou pour les tests) */}
-            <button 
+            {/* Remplissage automatique : uniquement en développement (jamais en production) */}
+            {import.meta.env.DEV && <button 
               type="button" 
               onClick={fillTestData}
               className="flex items-center gap-1 text-xs font-bold bg-brand-100/50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 hover:bg-brand-100 hover:scale-105 transition-all px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-800 shadow-sm"
             >
               <span className="text-lg leading-none">⚡</span> Auto-Fill
-            </button>
+            </button>}
           </div>
 
           {error && (
@@ -373,7 +373,7 @@ export default function SignUpForm() {
             <div className="space-y-6">
               {/* STEP 1: General Info */}
               {currentStep === 1 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                   <div className="md:col-span-2">
                     <Label>Nom de l'hôpital<span className="text-brand-500 font-bold ml-1">*</span></Label>
                     <Input name="nom" placeholder="Ex: Hôpital JCC de Carrefour" value={formData.nom} onChange={handleChange} required />
@@ -425,7 +425,7 @@ export default function SignUpForm() {
 
               {/* STEP 2: Address */}
               {currentStep === 2 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                   <div>
                     <Label>Pays<span className="text-error-500">*</span></Label>
                     <Input name="pays" value={formData.pays} disabled readOnly />
@@ -461,7 +461,7 @@ export default function SignUpForm() {
 
               {/* STEP 3: Contact */}
               {currentStep === 3 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                   <div>
                     <Label>Téléphone Principal<span className="text-error-500">*</span></Label>
                     <Input type="tel" name="telephone" placeholder="+509 0000-0000" value={formData.telephone} onChange={handleChange} required />
@@ -483,7 +483,7 @@ export default function SignUpForm() {
 
               {/* STEP 4: Admin Account */}
               {currentStep === 4 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                   <div>
                     <Label>Prénom<span className="text-error-500">*</span></Label>
                     <Input name="prenomAdmin" placeholder="Jean" value={formData.prenomAdmin} onChange={handleChange} required />
@@ -526,7 +526,7 @@ export default function SignUpForm() {
 
               {/* STEP 5: Operational Config */}
               {currentStep === 5 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                   <div>
                     <Label>Directeur de l'Établissement<span className="text-brand-500 font-bold ml-1">*</span></Label>
                     <Input name="directeur" placeholder="Dr. Jean Dupont" value={formData.directeur} onChange={handleChange} required />
@@ -614,7 +614,7 @@ export default function SignUpForm() {
                   <div className="flex items-start gap-4 p-4 border border-brand-100 dark:border-brand-800 rounded-2xl bg-brand-50/30">
                     <Checkbox checked={isChecked} onChange={setIsChecked} className="mt-1" />
                     <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                      En cliquant ici, j'accepte les <span className="text-brand-600 font-semibold cursor-pointer">Termes et Conditions</span> ainsi que la <span className="text-brand-600 font-semibold cursor-pointer">Politique de Confidentialité</span> de TRIMEDH.
+                      En cliquant ici, j'accepte les <a href="/conditions-utilisation" target="_blank" rel="noopener" className="text-brand-600 font-semibold hover:underline">Conditions d’utilisation</a> ainsi que la <a href="/politique-de-confidentialite" target="_blank" rel="noopener" className="text-brand-600 font-semibold hover:underline">Politique de confidentialité</a> de TRIMED.
                     </p>
                   </div>
                 </div>

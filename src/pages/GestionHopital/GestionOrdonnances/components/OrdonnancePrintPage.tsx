@@ -13,6 +13,9 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
   onClose
 }) => {
   if (!ordonnance) return null;
+  const patient = ordonnance.patient_nom || ordonnanceService.obtenirNomPatient(ordonnance.patient_id);
+  const medecin = ordonnance.medecin_nom ? `Dr. ${ordonnance.medecin_nom}` : ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id);
+  const motif = ordonnance.consultation_motif || ordonnanceService.obtenirConsultationInfo(ordonnance.consultation_id)?.motif;
 
 
 
@@ -63,13 +66,13 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
           <div className="grid grid-cols-2 gap-6 text-black">
             <div>
               <p className="text-black"><strong className="text-black">N° Ordonnance:</strong> #{ordonnance.ordonnance_id}</p>
-              <p className="text-black"><strong className="text-black">Patient:</strong> {ordonnanceService.obtenirNomPatient(ordonnance.patient_id)}</p>
-              <p className="text-black"><strong className="text-black">Médecin:</strong> {ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id)}</p>
+              <p className="text-black"><strong className="text-black">Patient:</strong> {patient}</p>
+              <p className="text-black"><strong className="text-black">Médecin:</strong> {medecin}</p>
             </div>
             <div>
               <p className="text-black"><strong className="text-black">Date d'ordonnance:</strong> {formatDateTimeFR(ordonnance.date_ordonnance)}</p>
-              <p className="text-black"><strong className="text-black">Validité:</strong> {ordonnance.validite}</p>
-              <p className="text-black"><strong className="text-black">Consultation:</strong> {ordonnanceService.obtenirConsultationInfo(ordonnance.consultation_id)?.motif || 'N/A'}</p>
+              {ordonnance.validite && <p className="text-black"><strong className="text-black">Validité:</strong> {ordonnance.validite}</p>}
+              <p className="text-black"><strong className="text-black">Consultation:</strong> {motif || 'Non renseignée'}</p>
             </div>
           </div>
         </div>
@@ -101,7 +104,7 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
                         <p className="font-semibold text-black text-lg">{prescription.medicament}</p>
                         <p className="text-black mt-1"><strong>Dosage:</strong> {prescription.dosage}</p>
                         <p className="text-black"><strong>Durée:</strong> {prescription.duree}</p>
-                        <p className="text-black"><strong>Instructions:</strong> {prescription.instructions}</p>
+                        {prescription.instructions && <p className="text-black"><strong>Instructions:</strong> {prescription.instructions}</p>}
                       </div>
                       <div className="text-right text-sm text-gray-600">
                         #{index + 1}
@@ -132,10 +135,10 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
             Validité et Instructions
           </h3>
           <div className="bg-yellow-50 p-4 rounded-lg">
-            <p className="text-black"><strong>Validité:</strong> {ordonnance.validite}</p>
+            {ordonnance.validite && <p className="text-black"><strong>Validité:</strong> {ordonnance.validite}</p>}
             <p className="text-black mt-2"><strong>Instructions:</strong></p>
             <ul className="list-disc list-inside text-black mt-2 space-y-1">
-              <li>Cette ordonnance est valide pour {ordonnance.validite}</li>
+              {ordonnance.validite && <li>Cette ordonnance est valide pour {ordonnance.validite}</li>}
               <li>Respecter les dosages prescrits</li>
               <li>Consulter le médecin en cas d'effets secondaires</li>
               <li>Ne pas dépasser la date de validité</li>
@@ -151,7 +154,7 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
           <div className="bg-gray-50 p-6 rounded-lg">
             <div className="flex justify-between items-end">
               <div>
-                <p className="text-black"><strong>Médecin:</strong> {ordonnanceService.obtenirNomMedecin(ordonnance.medecin_id)}</p>
+                <p className="text-black"><strong>Médecin:</strong> {medecin}</p>
                 <p className="text-black"><strong>Date:</strong> {formatDateTimeFR(ordonnance.date_ordonnance)}</p>
               </div>
               <div className="text-center">
@@ -165,7 +168,7 @@ export const OrdonnancePrintPage: React.FC<OrdonnancePrintPageProps> = ({
         {/* Pied de page */}
         <div className="mt-12 pt-6 border-t-2 border-gray-300 text-center text-sm text-gray-600">
           <p>Cette ordonnance est confidentielle et destinée uniquement à un usage médical.</p>
-          <p>Généré automatiquement par le système de gestion hospitalière TRIMEDH</p>
+          <p>Généré automatiquement par le système de gestion hospitalière TRIMED</p>
           <p className="mt-2"><strong>Créé le:</strong> {formatDateTimeFR(ordonnance.created_at)}</p>
         </div>
       </div>

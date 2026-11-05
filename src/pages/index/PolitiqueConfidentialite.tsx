@@ -1,13 +1,13 @@
 import React from 'react';
-import Navbar from './Navbar';
-import Footer from './Footer';
+import EnTete from './portail/EnTete';
+import PiedDePage from './portail/PiedDePage';
 
 const PolitiqueConfidentialite = () => {
   return (
-    <div className="bg-slate-50 min-h-screen">
-      <Navbar />
+    <div className="ptl min-h-screen">
+      <EnTete accueil={false} />
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-slate-100" data-aos="fade-up">
+        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-slate-100">
           <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-8 pb-4 border-b border-slate-100">
             Politique de Confidentialité
           </h1>
@@ -18,7 +18,7 @@ const PolitiqueConfidentialite = () => {
             <section>
               <h2 className="text-xl font-bold text-slate-900 mb-3">1. Introduction</h2>
               <p>
-                TRIMEDH s'engage à protéger la vie privée des utilisateurs de sa plateforme de gestion hospitalière. Cette politique explique comment nous collectons, utilisons et protégeons les informations personnelles et médicales.
+                TRIMED s'engage à protéger la vie privée des utilisateurs de sa plateforme de gestion hospitalière. Cette politique explique comment nous collectons, utilisons et protégeons les informations personnelles et médicales.
               </p>
             </section>
 
@@ -28,9 +28,9 @@ const PolitiqueConfidentialite = () => {
                 La sécurité des dossiers médicaux est notre priorité absolue. Les données de santé des patients sont :
               </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Chiffrées de bout en bout durant le transit et le stockage.</li>
+                <li>Protégées pendant leur transmission par une connexion sécurisée.</li>
                 <li>Accessibles uniquement par le personnel autorisé de l'hôpital client.</li>
-                <li>Hébergées sur des serveurs sécurisés répondant aux standards internationaux.</li>
+                <li>Hébergées en ligne : aucun serveur à installer à l’hôpital.</li>
               </ul>
             </section>
 
@@ -44,20 +44,20 @@ const PolitiqueConfidentialite = () => {
             <section>
               <h2 className="text-xl font-bold text-slate-900 mb-3">4. Vos Droits</h2>
               <p>
-                En tant que client TRIMEDH, vous conservez la pleine propriété des données de votre établissement. Vous pouvez exporter vos dossiers à tout moment ou demander la suppression définitive d'un compte.
+                En tant que client TRIMED, vous conservez la pleine propriété des données de votre établissement. Vous pouvez demander une copie de vos dossiers ou la suppression définitive d'un compte.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-bold text-slate-900 mb-3">5. Contact</h2>
               <p>
-                Pour toute question relative à vos données, contactez notre Délégué à la Protection des Données à : <span className="font-semibold text-blue-600">trimedht@gmail.com</span>
+                Pour toute question relative à vos données, contactez l'équipe TRIMED à : <span className="font-semibold text-blue-600">trimedht@gmail.com</span>
               </p>
             </section>
           </div>
         </div>
       </div>
-      <Footer />
+      <PiedDePage accueil={false} />
     </div>
   );
 };

@@ -6,10 +6,10 @@ export default function SignUp() {
   return (
     <>
       <PageMeta
-        title="TRIMEDH"
-        description="TRIMEDH est une plateforme de gestion de santé visant à améliorer l'accès et l'efficacité des services de santé grâce à une technologie avancée."
+        title="TRIMED"
+        description="TRIMED est une plateforme de gestion de santé visant à améliorer l'accès et l'efficacité des services de santé grâce à une technologie avancée."
       />
-      <AuthLayout maxWidth="max-w-4xl">
+      <AuthLayout large>
         <SignUpForm />
       </AuthLayout>
     </>

@@ -125,6 +125,8 @@ export interface AuthUser {
   photo?: string | null;
   hopital_id?: number;
   hopital_nom?: string;
+  /** Membre de l’équipe TRIMED (case « statut équipe » de l’admin Django, non modifiable par l’API). */
+  is_staff?: boolean;
 }
 
 export interface SessionData {
@@ -141,6 +143,8 @@ export interface ApiResponse<T = any> {
   message: string;
   data?: T;
   error?: string;
+  /** Cause d’un échec de connexion (voir api/erreursConnexion.ts). */
+  code?: string;
 }
 
 export interface ConnexionResponse {

@@ -432,7 +432,7 @@ export default function GestionMedecins() {
             <Tooltip text="Ajouter un nouveau médecin">
               <button 
                 onClick={handleAddMedecin}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-brand-700"
               >
                 <svg
                   width="16"
@@ -466,8 +466,8 @@ export default function GestionMedecins() {
         <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
-                <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/20">
+                <svg className="h-6 w-6 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
               </div>
@@ -531,7 +531,7 @@ export default function GestionMedecins() {
                 placeholder="Rechercher par nom, matricule ou email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pl-10 text-theme-sm text-gray-800 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-gray-400 dark:focus:border-blue-500"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 pl-10 text-theme-sm text-gray-800 placeholder:text-gray-500 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-gray-400 dark:focus:border-brand-500"
               />
               <svg
                 className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400"
@@ -554,7 +554,7 @@ export default function GestionMedecins() {
             <select
               value={selectedSpecialite}
               onChange={(e) => setSelectedSpecialite(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-blue-500"
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-500"
             >
               {specialites.map(spec => (
                 <option key={spec} value={spec}>{spec}</option>
@@ -564,7 +564,7 @@ export default function GestionMedecins() {
             <select
               value={selectedDepartement}
               onChange={(e) => setSelectedDepartement(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-blue-500"
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-500"
             >
               {departements.map(dept => (
                 <option key={dept} value={dept}>{dept}</option>
@@ -574,7 +574,7 @@ export default function GestionMedecins() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-blue-500"
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-500"
             >
               {statusList.map(status => (
                 <option key={status} value={status}>{status}</option>
@@ -710,7 +710,7 @@ export default function GestionMedecins() {
                       <Tooltip text="Modifier">
                         <button 
                           onClick={() => handleEdit(medecin)}
-                          className="rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                          className="rounded p-1.5 text-brand-600 hover:bg-brand-50 hover:text-brand-700 dark:text-brand-400 dark:hover:bg-brand-900/20"
                         >
                           <svg
                             width="16"
@@ -826,7 +826,7 @@ export default function GestionMedecins() {
                         onClick={() => setCurrentPage(page)}
                         className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                           currentPage === page
-                            ? 'bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                            ? 'bg-brand-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600'
                             : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
                         }`}
                       >
@@ -1051,7 +1051,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                   value={formData.fullName}
                   onChange={(e) => handleInputChange('fullName', e.target.value)}
                   placeholder="Ex: Dr. Marie Laurent"
-                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${
                     errors.fullName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 />
@@ -1070,7 +1070,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="prenom.nom@hopital.com"
-                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${
                     errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 />
@@ -1089,7 +1089,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                   value={formData.phone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   placeholder="+509 48 12 34 56"
-                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 placeholder:text-gray-500 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 dark:placeholder:text-gray-400 ${
                     errors.phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 />
@@ -1108,7 +1108,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                   max="50"
                   value={formData.consultationsParJour}
                   onChange={(e) => handleInputChange('consultationsParJour', parseInt(e.target.value) || 0)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
               </div>
             </div>
@@ -1124,7 +1124,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                 <select
                   value={formData.specialite}
                   onChange={(e) => handleInputChange('specialite', e.target.value)}
-                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 ${
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 ${
                     errors.specialite ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   required
@@ -1146,7 +1146,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                 <select
                   value={formData.sousSpecialite}
                   onChange={(e) => handleInputChange('sousSpecialite', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                   disabled={!formData.specialite || getAvailableSousSpecialites().length === 0}
                 >
                   <option value="">{getAvailableSousSpecialites().length === 0 ? "Aucune sous-spécialité disponible" : "Sélectionner une sous-spécialité"}</option>
@@ -1163,7 +1163,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                 <select
                   value={formData.departement}
                   onChange={(e) => handleInputChange('departement', e.target.value)}
-                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-blue-500 dark:bg-gray-700 dark:text-white/90 ${
+                  className={`w-full rounded-lg border px-3 py-2 text-sm text-gray-800 focus:ring-brand-500 dark:bg-gray-700 dark:text-white/90 ${
                     errors.departement ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   required
@@ -1186,7 +1186,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                   <select
                     value={formData.grade}
                     onChange={(e) => handleInputChange('grade', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                   >
                     {GRADES_MEDICAUX.map(grade => (
                       <option key={grade} value={grade}>{grade}</option>
@@ -1204,7 +1204,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                     max="50"
                     value={formData.anneesExperience}
                     onChange={(e) => handleInputChange('anneesExperience', parseInt(e.target.value) || 0)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                   />
                 </div>
               </div>
@@ -1223,24 +1223,24 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                   value={newFormation}
                   onChange={(e) => setNewFormation(e.target.value)}
                   placeholder="Ajouter une formation"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 <button
                   type="button"
                   onClick={addFormation}
-                  className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
                 >
                   Ajouter
                 </button>
               </div>
               <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                 {formData.formations.map((formation, index) => (
-                  <span key={index} className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                  <span key={index} className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-1 text-xs text-brand-800 dark:bg-brand-900/20 dark:text-brand-300">
                     {formation}
                     <button
                       type="button"
                       onClick={() => removeFormation(index)}
-                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                      className="text-brand-600 hover:text-brand-800 transition-colors"
                     >
                       ×
                     </button>
@@ -1259,12 +1259,12 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                   value={newCertification}
                   onChange={(e) => setNewCertification(e.target.value)}
                   placeholder="Ajouter une certification"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 <button
                   type="button"
                   onClick={addCertification}
-                  className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
                 >
                   Ajouter
                 </button>
@@ -1295,12 +1295,12 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                   value={newLangue}
                   onChange={(e) => setNewLangue(e.target.value)}
                   placeholder="Ajouter une langue"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
                 />
                 <button
                   type="button"
                   onClick={addLangue}
-                  className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
                 >
                   Ajouter
                 </button>
@@ -1333,7 +1333,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                 value={formData.salleConsultation}
                 onChange={(e) => handleInputChange('salleConsultation', e.target.value)}
                 placeholder="Ex: Salle 101"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white/90"
               />
             </div>
 
@@ -1343,7 +1343,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
                 id="urgence"
                 checked={formData.urgence}
                 onChange={(e) => handleInputChange('urgence', e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
               />
               <label htmlFor="urgence" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Service d'Urgence
@@ -1361,7 +1361,7 @@ function MedecinModalContent({ medecin, onSave, onClose, mode }: MedecinModalPro
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 transition-colors"
             >
               {mode === "edit" ? "Modifier" : "Ajouter"}
             </button>
@@ -1538,7 +1538,7 @@ function ViewModalContent({ medecin, onClose }: ViewModalProps) {
                 <h5 className="font-medium text-gray-800 dark:text-white/90 mb-3">Formations</h5>
                 <div className="flex flex-wrap gap-2">
                   {medecin.formations.map((formation, index) => (
-                    <span key={index} className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                    <span key={index} className="inline-flex rounded-full bg-brand-100 px-2 py-1 text-xs text-brand-800 dark:bg-brand-900/20 dark:text-brand-300">
                       {formation}
                     </span>
                   ))}

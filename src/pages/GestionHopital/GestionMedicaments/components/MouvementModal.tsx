@@ -212,7 +212,7 @@ export const MouvementModal: React.FC<MouvementModalProps> = ({
                                         type="number"
                                         value={formData.quantite}
                                         onChange={(e) => handleInputChange('quantite', parseInt(e.target.value) || 0)}
-                                        className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-blue-500 focus:ring-blue-500"
+                                        className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-brand-500 focus:ring-brand-500"
                                         min="1"
                                         required
                                     />
@@ -227,7 +227,7 @@ export const MouvementModal: React.FC<MouvementModalProps> = ({
                                         value={formData.motif}
                                         onChange={(e) => handleInputChange('motif', e.target.value)}
                                         placeholder="Ex: Réapprovisionnement, Dispensation..."
-                                        className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-blue-500 focus:ring-blue-500"
+                                        className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-brand-500 focus:ring-brand-500"
                                         required
 
                                     />
@@ -243,7 +243,7 @@ export const MouvementModal: React.FC<MouvementModalProps> = ({
                                                 type="text"
                                                 value={formData.fournisseur}
                                                 onChange={(e) => handleInputChange('fournisseur', e.target.value)}
-                                                className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-blue-500 focus:ring-blue-500"
+                                                className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-brand-500 focus:ring-brand-500"
                                             />
                                         </div>
                                         <div>
@@ -255,7 +255,7 @@ export const MouvementModal: React.FC<MouvementModalProps> = ({
                                                 step="0.01"
                                                 value={formData.cout_unitaire || ''}
                                                 onChange={(e) => handleInputChange('cout_unitaire', parseFloat(e.target.value) || 0)}
-                                                className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-blue-500 focus:ring-blue-500"
+                                                className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-brand-500 focus:ring-brand-500"
                                             />
                                         </div>
                                     </>
@@ -270,7 +270,7 @@ export const MouvementModal: React.FC<MouvementModalProps> = ({
                                             type="text"
                                             value={formData.destination}
                                             onChange={(e) => handleInputChange('destination', e.target.value)}
-                                            className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-blue-500 focus:ring-blue-500"
+                                            className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-brand-500 focus:ring-brand-500"
                                         />
                                     </div>
                                 )}
@@ -283,7 +283,7 @@ export const MouvementModal: React.FC<MouvementModalProps> = ({
                                         type="text"
                                         value={formData.numero_lot}
                                         onChange={(e) => handleInputChange('numero_lot', e.target.value)}
-                                        className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-blue-500 focus:ring-blue-500"
+                                        className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-brand-500 focus:ring-brand-500"
                                     />
                                 </div>
 
@@ -295,7 +295,7 @@ export const MouvementModal: React.FC<MouvementModalProps> = ({
                                         type="date"
                                         value={formData.date_peremption}
                                         onChange={(e) => handleInputChange('date_peremption', e.target.value)}
-                                        className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-blue-500 focus:ring-blue-500"
+                                        className="w-full rounded-lg border-2 border-gray-700 dark:border-yellow-400 px-3 py-2 text-sm text-gray-900 dark:text-yellow-200 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-yellow-400 focus:border-brand-500 focus:ring-brand-500"
                                     />
                                 </div>
                             </div>
@@ -303,9 +303,9 @@ export const MouvementModal: React.FC<MouvementModalProps> = ({
 
                         {/* Résumé */}
                         {formData.cout_unitaire && type === 'Entrée' && (
-                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                                <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Résumé financier</h4>
-                                <div className="text-sm text-blue-700 dark:text-blue-400">
+                            <div className="bg-brand-50 dark:bg-brand-900/20 rounded-lg p-4">
+                                <h4 className="font-medium text-brand-800 dark:text-brand-300 mb-2">Résumé financier</h4>
+                                <div className="text-sm text-brand-700 dark:text-brand-400">
                                     <p>Coût total: {(formData.quantite * formData.cout_unitaire).toFixed(2)} €</p>
                                 </div>
                             </div>
@@ -325,7 +325,7 @@ export const MouvementModal: React.FC<MouvementModalProps> = ({
                         type="submit"
                         disabled={formData.quantite <= 0 || isSaving}
                         onClick={handleSubmit}
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                        className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                     >
                         {isSaving ? (
                             <>

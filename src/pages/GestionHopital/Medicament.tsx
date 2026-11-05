@@ -10,7 +10,7 @@ export default function Medicament() {
   return (
     <div>
       <PageMeta
-        title="TRIMEDH"
+        title="Médicaments | TRIMED"
         description="Gestion des médicaments"
       />
       <PageBreadcrumb pageTitle="Médicaments" />

@@ -13,7 +13,7 @@ export default function Blank() {
   return (
     <div>
       <PageMeta
-        title="TRIMEDH"
+        title="Utilisateurs | TRIMED"
         description="Gestion hopital"
       />
       <PageBreadcrumb pageTitle="Utilisateurs" />

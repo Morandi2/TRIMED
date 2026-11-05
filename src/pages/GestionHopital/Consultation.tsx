@@ -10,7 +10,7 @@ export default function Consultation() {
   return (
     <div>
       <PageMeta
-        title="TRIMEDH"
+        title="Consultations | TRIMED"
         description="Gestion des consultations"
       />
       <PageBreadcrumb pageTitle="Consultations" />

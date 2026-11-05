@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Abonnement, AbonnementFormData, AbonnementStatut } from '../types/AbonnementTypes';
+import { bornes, REGLES, versChamp } from '../../../../utils/contraintes';
 
 interface AbonnementModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
   const [formData, setFormData] = useState<AbonnementFormData>({
     tenant_id: tenantId,
     plan_id: 1,
-    date_debut: new Date().toISOString().split('T')[0],
+    date_debut: versChamp(new Date(), 'date'),
     date_fin: '',
     statut_id: 1
   });
@@ -42,12 +43,12 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
       
       setFormData(prev => {
         // Only update if fundamentally different to avoid loop from prop statuts reference
-        if (prev.tenant_id === tenantId && prev.date_debut === dateDebut.toISOString().split('T')[0] && !abonnement) return prev;
+        if (prev.tenant_id === tenantId && prev.date_debut === versChamp(dateDebut, 'date') && !abonnement) return prev;
         return {
           tenant_id: tenantId,
           plan_id: 1,
-          date_debut: dateDebut.toISOString().split('T')[0],
-          date_fin: dateFin.toISOString().split('T')[0],
+          date_debut: versChamp(dateDebut, 'date'),
+          date_fin: versChamp(dateFin, 'date'),
           statut_id: statuts[0]?.statut_id || 1
         };
       });
@@ -89,7 +90,7 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
                 required
                 value={formData.tenant_id}
                 onChange={(e) => setFormData(prev => ({ ...prev, tenant_id: parseInt(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -101,7 +102,7 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
                 required
                 value={formData.plan_id}
                 onChange={(e) => setFormData(prev => ({ ...prev, plan_id: parseInt(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 <option value={1}>Plan Basique</option>
                 <option value={2}>Plan Professionnel</option>
@@ -116,9 +117,10 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
               <input
                 type="date"
                 required
+                {...bornes(REGLES.debutContrat, 'date')}
                 value={formData.date_debut}
                 onChange={(e) => setFormData(prev => ({ ...prev, date_debut: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -129,9 +131,11 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
               <input
                 type="date"
                 required
+                min={formData.date_debut || undefined}
+                max={bornes(REGLES.finContrat, 'date').max}
                 value={formData.date_fin}
                 onChange={(e) => setFormData(prev => ({ ...prev, date_fin: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
@@ -143,7 +147,7 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
                 required
                 value={formData.statut_id}
                 onChange={(e) => setFormData(prev => ({ ...prev, statut_id: parseInt(e.target.value) }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
                 {statuts.map(statut => (
                   <option key={statut.statut_id} value={statut.statut_id}>
@@ -164,7 +168,7 @@ export const AbonnementModal: React.FC<AbonnementModalProps> = ({
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
               {abonnement ? 'Modifier' : 'Créer'}
             </button>

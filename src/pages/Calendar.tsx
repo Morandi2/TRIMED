@@ -1,353 +1,123 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import frLocale from "@fullcalendar/core/locales/fr";
-import { EventInput, DateSelectArg, EventClickArg } from "@fullcalendar/core";
+import type { EventClickArg, EventInput } from "@fullcalendar/core";
+import { CalendarPlus2, Clock, RefreshCw, Stethoscope, UserRound } from "lucide-react";
 import { Modal } from "../components/ui/modal";
-import { useModal } from "../hooks/useModal";
 import PageMeta from "../components/common/PageMeta";
+import PageBreadcrumb from "../components/common/PageBreadCrumb";
+import { lireTout } from "../api/listes";
+import { useUser } from "../context/UserContext";
+import { COULEURS } from "./Dashboard/tableau/Graphiques";
+import { COULEURS_STATUTS } from "./Dashboard/tableau/elements";
+import type { RendezVousL } from "./Dashboard/tableau/donnees";
 
-interface CalendarEvent extends EventInput {
- extendedProps: {
- calendar: string;
- patient?: string;
- doctor?: string;
- room?: string;
- };
+const heure = (iso?: string) => (iso ? new Date(iso).toLocaleTimeString("fr-HT", { hour: "2-digit", minute: "2-digit" }) : "");
+const couleurDe = (r: RendezVousL) => COULEURS_STATUTS[r.statut_nom ?? ""] ?? r.statut_couleur ?? COULEURS.gris;
+
+// Calendrier des rendez-vous réels de l’hôpital (le médecin ne voit que les siens).
+// La création et la modification se font dans le module Rendez-vous, qui vérifie les créneaux.
+export default function Calendar() {
+  const { currentUserRole, permissions } = useUser();
+  const [rdv, setRdv] = useState<RendezVousL[] | null>(null);
+  const [erreur, setErreur] = useState(false);
+  const [version, setVersion] = useState(0);
+  const [choisi, setChoisi] = useState<RendezVousL | null>(null);
+
+  useEffect(() => {
+    let annule = false;
+    setErreur(false);
+    (async () => {
+      let filtre: Record<string, unknown> = {};
+      if (currentUserRole === "medecin") {
+        const moi = (await lireTout<{ medecin_id: number }>("/medical/medecins/", {}, { maxPages: 1 }))[0];
+        filtre = moi ? { medecin: moi.medecin_id } : {};
+      }
+      return lireTout<RendezVousL>("/rendez-vous/", { ordering: "-date_heure", ...filtre }, { maxPages: 30 });
+    })()
+      .then((liste) => { if (!annule) setRdv(liste); })
+      .catch(() => { if (!annule) setErreur(true); });
+    return () => { annule = true; };
+  }, [currentUserRole, version]);
+
+  const evenements: EventInput[] = useMemo(() => (rdv ?? []).map((r) => ({
+    id: String(r.rendez_vous_id),
+    title: `${r.patient_prenom ?? ""} ${r.patient_nom ?? ""}`.trim() || r.motif || "Rendez-vous",
+    start: r.date_heure,
+    end: r.date_fin,
+    backgroundColor: couleurDe(r),
+    borderColor: couleurDe(r),
+    textColor: "#ffffff",
+    extendedProps: r,
+  })), [rdv]);
+
+  const statuts = useMemo(() => [...new Set((rdv ?? []).map((r) => r.statut_nom).filter(Boolean))] as string[], [rdv]);
+  const surClic = (info: EventClickArg) => setChoisi(info.event.extendedProps as RendezVousL);
+
+  return (
+    <>
+      <PageMeta title="Calendrier | TRIMED" description="Les rendez-vous de l’hôpital, jour par jour." />
+      <PageBreadcrumb pageTitle="Calendrier" />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
+          {statuts.map((s) => (
+            <span key={s} className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: COULEURS_STATUTS[s] ?? COULEURS.gris }} />{s}</span>
+          ))}
+          {rdv && <span className="text-gray-400">· {rdv.length} rendez-vous</span>}
+        </div>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setVersion((v) => v + 1)} className="inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"><RefreshCw className="h-4 w-4" aria-hidden="true" /> Actualiser</button>
+          {permissions.canEditRendezVous && (
+            <Link to="/rendezvous" className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-500 px-3.5 text-sm font-medium text-white hover:bg-brand-600"><CalendarPlus2 className="h-4 w-4" aria-hidden="true" /> Nouveau rendez-vous</Link>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-2 sm:p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+        {erreur && <p className="p-6 text-center text-sm text-gray-500">Les rendez-vous n’ont pas pu être chargés. Actualisez dans un instant.</p>}
+        {!rdv && !erreur && <div className="h-[520px] animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800" />}
+        {rdv && (
+          <div className="custom-calendar">
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              locale={frLocale}
+              headerToolbar={{ left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,timeGridDay" }}
+              events={evenements}
+              eventClick={surClic}
+              eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
+              eventDisplay="block"
+              dayMaxEvents={3}
+              height="auto"
+            />
+          </div>
+        )}
+      </div>
+
+      <Modal isOpen={!!choisi} onClose={() => setChoisi(null)} className="max-w-[520px] p-6 lg:p-8">
+        {choisi && (
+          <div>
+            <span className="inline-flex rounded-full px-2.5 py-1 text-xs text-white" style={{ background: couleurDe(choisi) }}>{choisi.statut_nom ?? "Rendez-vous"}</span>
+            <h2 className="mt-3 font-marque text-xl text-gray-900 dark:text-white">{choisi.type_nom || choisi.motif || "Rendez-vous"}</h2>
+            <ul className="mt-5 space-y-3 text-sm text-gray-700 dark:text-gray-300">
+              <li className="flex items-center gap-3"><Clock className="h-4 w-4 text-brand-500" aria-hidden="true" />{new Date(choisi.date_heure).toLocaleDateString("fr-HT", { weekday: "long", day: "numeric", month: "long" })}, {choisi.date_fin ? `de ${heure(choisi.date_heure)} à ${heure(choisi.date_fin)}` : `à ${heure(choisi.date_heure)}`}</li>
+              <li className="flex items-center gap-3"><UserRound className="h-4 w-4 text-brand-500" aria-hidden="true" />{choisi.patient_prenom} {choisi.patient_nom}</li>
+              {choisi.medecin_nom && <li className="flex items-center gap-3"><Stethoscope className="h-4 w-4 text-brand-500" aria-hidden="true" />Dr {choisi.medecin_prenom} {choisi.medecin_nom}</li>}
+            </ul>
+            {choisi.motif && <p className="mt-4 rounded-xl bg-gray-50 p-3 text-sm text-gray-700 dark:bg-white/5 dark:text-gray-300">{choisi.motif}</p>}
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={() => setChoisi(null)} className="rounded-xl px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5">Fermer</button>
+              {permissions.canViewRendezVous && (
+                <Link to={`/rendezvous?recherche=${encodeURIComponent(`${choisi.patient_nom ?? ""}`)}`} className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">Ouvrir dans Rendez-vous</Link>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
+    </>
+  );
 }
-
-const Calendar: React.FC = () => {
- const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
- null
- );
- const [eventTitle, setEventTitle] = useState("");
- const [eventPatient, setEventPatient] = useState("");
- const [eventDoctor, setEventDoctor] = useState("");
- const [eventRoom, setEventRoom] = useState("");
- const [eventStartDate, setEventStartDate] = useState("");
- const [eventEndDate, setEventEndDate] = useState("");
- const [eventLevel, setEventLevel] = useState("Routine");
- const [events, setEvents] = useState<CalendarEvent[]>([]);
- const calendarRef = useRef<FullCalendar>(null);
- const { isOpen, openModal, closeModal } = useModal();
-
- const calendarsEvents = {
- Urgent: "danger",
- Routine: "success",
- Suivi: "primary",
- Spécialisé: "warning",
- };
-
- useEffect(() => {
- // Initialisation avec des rendez-vous médicaux
- setEvents([
- {
- id: "1",
- title: "Chirurgie Cardiaque",
- start: new Date().toISOString().split("T")[0],
- extendedProps: {
- calendar: "Urgent",
- patient: "Jean Dupont",
- doctor: "Dr. Valmé",
- room: "Bloc A"
- },
- },
- {
- id: "2",
- title: "Consultation Routine",
- start: new Date(Date.now() + 86400000).toISOString().split("T")[0],
- extendedProps: {
- calendar: "Routine",
- patient: "Marie Louise",
- doctor: "Dr. Pierre",
- room: "Salle 102"
- },
- },
- {
- id: "3",
- title: "Examen Labo",
- start: new Date(Date.now() + 172800000).toISOString().split("T")[0],
- end: new Date(Date.now() + 259200000).toISOString().split("T")[0],
- extendedProps: {
- calendar: "Suivi",
- patient: "Luc Desir",
- doctor: "Dr. Jean-Baptiste",
- room: "Laboratoire"
- },
- },
- ]);
- }, []);
-
- const handleDateSelect = (selectInfo: DateSelectArg) => {
- resetModalFields();
- setEventStartDate(selectInfo.startStr);
- setEventEndDate(selectInfo.endStr || selectInfo.startStr);
- openModal();
- };
-
- const handleEventClick = (clickInfo: EventClickArg) => {
- const event = clickInfo.event;
- setSelectedEvent(event as unknown as CalendarEvent);
- setEventTitle(event.title);
- setEventPatient(event.extendedProps.patient || "");
- setEventDoctor(event.extendedProps.doctor || "");
- setEventRoom(event.extendedProps.room || "");
- setEventStartDate(event.start?.toISOString().split("T")[0] || "");
- setEventEndDate(event.end?.toISOString().split("T")[0] || "");
- setEventLevel(event.extendedProps.calendar);
- openModal();
- };
-
- const handleAddOrUpdateEvent = () => {
- if (selectedEvent) {
- // Mettre à jour le rendez-vous
- setEvents((prevEvents) =>
- prevEvents.map((event) =>
- event.id === selectedEvent.id
- ? {
- ...event,
- title: eventTitle,
- start: eventStartDate,
- end: eventEndDate,
- extendedProps: {
- calendar: eventLevel,
- patient: eventPatient,
- doctor: eventDoctor,
- room: eventRoom
- },
- }
- : event
- )
- );
- } else {
- // Ajouter un nouveau rendez-vous
- const newEvent: CalendarEvent = {
- id: Date.now().toString(),
- title: eventTitle,
- start: eventStartDate,
- end: eventEndDate,
- allDay: true,
- extendedProps: {
- calendar: eventLevel,
- patient: eventPatient,
- doctor: eventDoctor,
- room: eventRoom
- },
- };
- setEvents((prevEvents) => [...prevEvents, newEvent]);
- }
- closeModal();
- resetModalFields();
- };
-
- const resetModalFields = () => {
- setEventTitle("");
- setEventPatient("");
- setEventDoctor("");
- setEventRoom("");
- setEventStartDate("");
- setEventEndDate("");
- setEventLevel("Routine");
- setSelectedEvent(null);
- };
-
- return (
- <>
- <PageMeta
- title="Calendrier Médical | TRIMEDH"
- description="Gestion des rendez-vous et plannings médicaux pour TRIMEDH."
- />
- <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
- <div className="custom-calendar">
- <FullCalendar
- ref={calendarRef}
- plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
- initialView="dayGridMonth"
- locale={frLocale}
- locales={[frLocale]}
- headerToolbar={{
- left: "prev,next addEventButton",
- center: "title",
- right: "dayGridMonth,timeGridWeek,timeGridDay",
- }}
- events={events}
- selectable={true}
- select={handleDateSelect}
- eventClick={handleEventClick}
- eventContent={renderEventContent}
- customButtons={{
- addEventButton: {
- text: "Nouveau RDV +",
- click: openModal,
- },
- }}
- />
- </div>
- <Modal
- isOpen={isOpen}
- onClose={closeModal}
- className="max-w-[700px] p-6 lg:p-10"
- >
- <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
- <div>
- <h5 className="mb-2 font-semibold text-gray-800 modal-title text-theme-xl dark:text-white/90 lg:text-2xl">
- {selectedEvent ? "Modifier le Rendez-vous" : "Nouveau Rendez-vous"}
- </h5>
- <p className="text-sm text-gray-500 dark:text-gray-400">
- Planifiez vos consultations et interventions pour un suivi optimal des patients.
- </p>
- </div>
- <div className="mt-8">
- <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
- <div className="sm:col-span-2">
- <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
- Sujet du Rendez-vous
- </label>
- <input
- type="text"
- value={eventTitle}
- onChange={(e) => setEventTitle(e.target.value)}
- placeholder="Ex: Consultation Cardiologie"
- className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
- />
- </div>
-
- <div>
- <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
- Patient
- </label>
- <input
- type="text"
- value={eventPatient}
- onChange={(e) => setEventPatient(e.target.value)}
- placeholder="Nom du patient"
- className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
- />
- </div>
-
- <div>
- <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
- Médecin
- </label>
- <input
- type="text"
- value={eventDoctor}
- onChange={(e) => setEventDoctor(e.target.value)}
- placeholder="Nom du médecin"
- className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
- />
- </div>
-
- <div>
- <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
- Salle / Lieu
- </label>
- <input
- type="text"
- value={eventRoom}
- onChange={(e) => setEventRoom(e.target.value)}
- placeholder="Ex: Salle 104"
- className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
- />
- </div>
-
- <div>
- <label className="block mb-4 text-sm font-medium text-gray-700 dark:text-gray-400">
- Priorité / Type
- </label>
- <div className="flex flex-wrap items-center gap-4">
- {Object.entries(calendarsEvents).map(([key, value]) => (
- <label key={key} className="flex items-center text-sm text-gray-700 cursor-pointer dark:text-gray-400">
- <input
- type="radio"
- name="event-level"
- value={key}
- checked={eventLevel === key}
- onChange={() => setEventLevel(key)}
- className="sr-only"
- />
- <span className={`flex items-center justify-center w-5 h-5 mr-2 border border-gray-300 rounded-full dark:border-gray-800 ${eventLevel === key ? "ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-dark-900" : ""}`}>
- <span className={`h-2.5 w-2.5 rounded-full ${value === "danger" ? "bg-red-500" :
- value === "success" ? "bg-green-500" :
- value === "primary" ? "bg-blue-500" : "bg-yellow-500"
- }`}></span>
- </span>
- {key}
- </label>
- ))}
- </div>
- </div>
-
- <div>
- <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
- Date de début
- </label>
- <input
- type="date"
- value={eventStartDate}
- onChange={(e) => setEventStartDate(e.target.value)}
- className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 dark:border-gray-700 dark:text-white"
- />
- </div>
-
- <div>
- <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
- Date de fin
- </label>
- <input
- type="date"
- value={eventEndDate}
- onChange={(e) => setEventEndDate(e.target.value)}
- className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 dark:border-gray-700 dark:text-white"
- />
- </div>
- </div>
- </div>
- <div className="flex items-center gap-3 mt-8 modal-footer sm:justify-end">
- <button
- onClick={closeModal}
- type="button"
- className="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 sm:w-auto"
- >
- Annuler
- </button>
- <button
- onClick={handleAddOrUpdateEvent}
- type="button"
- className="flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto"
- >
- {selectedEvent ? "Enregistrer" : "Créer le RDV"}
- </button>
- </div>
- </div>
- </Modal>
- </div>
- </>
- );
-};
-
-const renderEventContent = (eventInfo: any) => {
- const calendarType = eventInfo.event.extendedProps.calendar;
- const colorMap: Record<string, string> = {
- Urgent: "bg-red-500/10 text-red-500 border-red-500",
- Routine: "bg-green-500/10 text-green-500 border-green-500",
- Suivi: "bg-blue-500/10 text-blue-500 border-blue-500",
- Spécialisé: "bg-yellow-500/10 text-yellow-500 border-yellow-500",
- };
- const colorClass = colorMap[calendarType] || "bg-brand-500/10 text-brand-500 border-brand-500";
-
- return (
- <div className={`flex flex-col w-full p-1.5 border-l-4 rounded-r-md ${colorClass} overflow-hidden`}>
- <span className="text-[10px] font-bold uppercase mb-0.5">{calendarType}</span>
- <div className="text-xs font-semibold truncate leading-tight">{eventInfo.event.title}</div>
- {eventInfo.event.extendedProps.patient && (
- <div className="text-[10px] truncate opacity-80 mt-0.5"> {eventInfo.event.extendedProps.patient}</div>
- )}
- </div>
- );
-};
-
-
-export default Calendar;

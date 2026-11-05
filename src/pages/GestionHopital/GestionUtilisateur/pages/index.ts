@@ -1,10 +1,1 @@
-export { MedecinDashboard } from './MedecinDashboard';
-export { InfirmierDashboard } from './InfirmierDashboard';
-export { ReceptionnisteDashboard } from './ReceptionnisteDashboard';
-export { PharmacienDashboard } from './PharmacienDashboard';
-export { ManagerDashboard } from './ManagerDashboard';
-export { TechnicienDashboard } from './TechnicienDashboard';
-export { FinanceDashboard } from './FinanceDashboard';
-export { AuditeurDashboard } from './AuditeurDashboard';
 export { AuditLogPage } from './AuditLogPage';
-export { PatientDashboard } from './PatientDashboard';

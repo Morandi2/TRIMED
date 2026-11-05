@@ -8,6 +8,7 @@ import { PatientViewModal } from './components/PatientViewModal';
 import { DeleteConfirmModal, NotificationToast, TableSkeleton } from '../../../components/shared';
 import { getApiErrorMessage, isCanceledError } from '../../../utils/apiErrorHandler';
 import { PatientPrintPage } from './components/PatientPrintPage';
+import { useRechercheUrl } from "../../../hooks/useRechercheUrl";
 import { 
   Users, 
   Plus, 
@@ -25,6 +26,7 @@ interface GestionPatientsProps {
 const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom }) => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  useRechercheUrl(setSearchTerm);
   const [currentPage, setCurrentPage] = useState(1);
   const [modalType, setModalType] = useState<"add" | "edit" | "delete" | "view" | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -165,30 +167,28 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
   return (
     <div className="min-h-screen pb-12 space-y-8">
       {/* Header Premium Glassmorphism */}
-      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+      <div className="relative p-6 sm:p-7 rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-trimed-brume overflow-hidden text-gray-900 dark:border-gray-800 dark:from-brand-950/40 dark:via-gray-900 dark:to-gray-900 dark:text-white">
         
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
+              <div className="p-2 bg-brand-500 rounded-xl">
                 <Users className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-3xl font-black uppercase tracking-tight">
+              <h1 className="font-marque text-xl sm:text-2xl">
                 Gestion des Patients
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-              Filiale: <span className="text-gray-700 dark:text-gray-200">{hopitalNom || "Portail Hospitalier"}</span>
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+              {hopitalNom || "Votre hôpital"}
             </p>
           </div>
 
           {useUser().permissions.canEditPatients && (
             <button
               onClick={handleAddPatient}
-              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-green-600/20"
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-brand-500/20"
             >
               <Plus className="h-5 w-5" />
               Ajouter Patient
@@ -200,23 +200,23 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
       <PatientStats patients={patients} />
 
       {/* Main Container */}
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden text-black dark:text-white">
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
               <input
                 type="text"
                 placeholder="Rechercher par nom, dossier ou téléphone..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-brand-500/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
               />
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-black/20 border border-gray-100 dark:border-gray-800 rounded-2xl">
                 <Users2 className="h-4 w-4 text-gray-400" />
-                <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                <span className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest">
                   {filteredPatients.length} DOSSIERS
                 </span>
               </div>
@@ -267,8 +267,8 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
                       onClick={() => setCurrentPage(pageNum)}
                       className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${
                         currentPage === pageNum 
-                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' 
-                          : 'bg-white dark:bg-white/5 text-gray-400 hover:text-indigo-600'
+                          ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30' 
+                          : 'bg-white dark:bg-white/5 text-gray-400 hover:text-brand-600'
                       }`}
                     >
                       {pageNum}
@@ -293,7 +293,7 @@ const GestionPatients: React.FC<GestionPatientsProps> = ({ tenantId, hopitalNom 
       {(modalType === "add" || modalType === "edit") && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
-          <div className="relative bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-5xl h-[90vh] overflow-hidden shadow-2xl border border-white/10">
+          <div className="relative bg-white dark:bg-gray-900 rounded-3xl w-full max-w-5xl h-[90vh] overflow-hidden shadow-2xl border border-white/10">
             <PatientProgressForm
               hopitalId={hopitalId}
               onSave={handleCreatePatient}

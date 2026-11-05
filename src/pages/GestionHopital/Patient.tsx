@@ -10,10 +10,10 @@ export default function Patient() {
   return (
     <div>
       <PageMeta
-        title="TRIMEDH"
+        title="Patients | TRIMED"
         description="Gestion Patient"
       />
-      <PageBreadcrumb pageTitle="Gestion Patient" />
+      <PageBreadcrumb pageTitle="Patients" />
 
       <div className="">
         <GestionPatients 

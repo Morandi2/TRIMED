@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { medicamentService } from '../services/MedicamentService';
 import {
   MedicamentFormData,
-  FORMES_PHARMACEUTIQUES,
-  UNITES_STOCK,
-  CLASSES_THERAPEUTIQUES,
-  CONDITIONS_CONSERVATION
+  FORMES_PHARMACEUTIQUES
 } from '../types/MedicamentTypes';
+import { limites, NOMBRES, verifierNombre } from '../../../../utils/contraintes';
 
 interface MedicamentProgressFormProps {
   tenantId: number;
@@ -129,20 +127,32 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
     }
 
     if (step === 2) {
-      if (formData.stock_minimum < 0) newErrors.stock_minimum = "Le stock minimum ne peut être négatif";
+      // Le stock maximum n'existe pas côté serveur : il n'est plus demandé (il bloquait aussi la modification).
+      const stock = verifierNombre(formData.stock_actuel as number | string, NOMBRES.stock);
+      if (stock) newErrors.stock_actuel = stock;
+      const minimum = verifierNombre(formData.stock_minimum as number | string, NOMBRES.stock);
       if (formData.stock_minimum === null || formData.stock_minimum === undefined || formData.stock_minimum.toString() === '') newErrors.stock_minimum = "Le stock minimum est obligatoire";
-      
-      if ((formData.stock_maximum ?? 0) < 1) newErrors.stock_maximum = "Le stock maximum doit être supérieur à 0";
-      if (!formData.stock_maximum) newErrors.stock_maximum = "Le stock maximum est obligatoire";
+      else if (minimum) newErrors.stock_minimum = minimum.replace('Le stock', 'Le stock minimum');
 
       isValid = Object.keys(newErrors).length === 0;
       if (updateState) {
         if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
         else setErrors(prev => {
           const e = { ...prev };
-          delete e.stock_minimum; delete e.stock_maximum;
+          delete e.stock_minimum; delete e.stock_actuel;
           return e;
         });
+      }
+      return isValid;
+    }
+
+    if (step === 3) {
+      const prix = verifierNombre(formData.prix_unitaire, NOMBRES.prix);
+      if (prix) newErrors.prix_unitaire = prix;
+      isValid = Object.keys(newErrors).length === 0;
+      if (updateState) {
+        if (!isValid) setErrors(prev => ({ ...prev, ...newErrors }));
+        else setErrors(prev => { const e = { ...prev }; delete e.prix_unitaire; return e; });
       }
       return isValid;
     }
@@ -192,13 +202,13 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
             key={step}
             onClick={() => setCurrentStep(step)}
             className={`flex flex-col items-center transition-all duration-200 ${step <= currentStep
-              ? 'text-blue-600 dark:text-blue-400'
+              ? 'text-brand-600 dark:text-brand-400'
               : 'text-gray-400 dark:text-gray-500'
               }`}
           >
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${step <= currentStep
-                ? 'bg-blue-600 border-blue-600 text-white'
+                ? 'bg-brand-600 border-brand-600 text-white'
                 : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
                 }`}
             >
@@ -215,14 +225,14 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
       </div>
       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
         <div
-          className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+          className="bg-brand-600 h-2 rounded-full transition-all duration-500"
           style={{ width: `${(currentStep / totalSteps) * 100}%` }}
         ></div>
       </div>
     </div>
   );
 
-  const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all duration-200";
+  const inputClass = "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all duration-200";
   const errorInputClass = "w-full px-4 py-3 border border-red-500 dark:border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-all duration-200";
   const errorTextClass = "text-red-500 dark:text-red-400 text-sm mt-1";
 
@@ -250,8 +260,8 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
         <div className="p-6">
           {currentStep === 1 && (
             <div className="space-y-6">
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-6">Informations Générales</h3>
+              <div className="bg-brand-50 dark:bg-brand-900/20 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-brand-800 dark:text-brand-300 mb-6">Informations Générales</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -380,11 +390,16 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                     </label>
                     <input
                       type="number"
+                      inputMode="numeric"
                       value={formData.stock_actuel}
-                      onChange={(e) => updateMedicamentField('stock_actuel', parseInt(e.target.value) || 0)}
-                      className={inputClass}
-                      min="0"
+                      onChange={(e) => updateMedicamentField('stock_actuel', e.target.value === '' ? '' : parseInt(e.target.value))}
+                      onBlur={() => handleFieldBlur('stock_actuel')}
+                      className={errors.stock_actuel && touched.stock_actuel ? errorInputClass : inputClass}
+                      {...limites(NOMBRES.stock)}
                     />
+                    {errors.stock_actuel && touched.stock_actuel && (
+                      <div className={errorTextClass}>{errors.stock_actuel}</div>
+                    )}
                   </div>
 
                   <div>
@@ -393,75 +408,22 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                     </label>
                     <input
                       type="number"
+                      inputMode="numeric"
                       value={formData.stock_minimum}
-                      onChange={(e) => updateMedicamentField('stock_minimum', parseInt(e.target.value))}
+                      onChange={(e) => updateMedicamentField('stock_minimum', e.target.value === '' ? '' : parseInt(e.target.value))}
                       onBlur={() => handleFieldBlur('stock_minimum')}
                       className={errors.stock_minimum && touched.stock_minimum ? errorInputClass : inputClass}
-                      min="0"
+                      {...limites(NOMBRES.stock)}
                     />
                     {errors.stock_minimum && touched.stock_minimum && (
                       <div className={errorTextClass}>{errors.stock_minimum}</div>
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Stock maximum <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.stock_maximum}
-                      onChange={(e) => updateMedicamentField('stock_maximum', parseInt(e.target.value))}
-                      onBlur={() => handleFieldBlur('stock_maximum')}
-                      className={errors.stock_maximum && touched.stock_maximum ? errorInputClass : inputClass}
-                      min="1"
-                    />
-                    {errors.stock_maximum && touched.stock_maximum && (
-                      <div className={errorTextClass}>{errors.stock_maximum}</div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Unité de stock
-                    </label>
-                    <select
-                      value={formData.unite_stock}
-                      onChange={(e) => updateMedicamentField('unite_stock', e.target.value)}
-                      className={inputClass}
-                    >
-                      {UNITES_STOCK.map(unite => (
-                        <option key={unite} value={unite}>{unite}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Conditionnement
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.conditionnement}
-                      onChange={(e) => updateMedicamentField('conditionnement', e.target.value)}
-                      placeholder="Ex: Boîte de 20 comprimés"
-                      className={inputClass}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Quantité par unité
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.quantite_par_unite}
-                      onChange={(e) => updateMedicamentField('quantite_par_unite', parseInt(e.target.value) || 1)}
-                      className={inputClass}
-                      min="1"
-                    />
-                  </div>
                 </div>
+                <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                  Sous le stock minimum, le médicament est signalé en stock faible. Les entrées et sorties de stock se font ensuite par la délivrance et les mouvements de stock.
+                </p>
               </div>
             </div>
           )}
@@ -474,42 +436,22 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Prix unitaire (€)
+                      Prix unitaire (HTG)
                     </label>
                     <input
                       type="number"
-                      step="0.01"
+                      inputMode="decimal"
                       value={formData.prix_unitaire}
                       onChange={(e) => updateMedicamentField('prix_unitaire', e.target.value)}
-                      className={inputClass}
-                      min="0"
+                      onBlur={() => handleFieldBlur('prix_unitaire')}
+                      className={errors.prix_unitaire && touched.prix_unitaire ? errorInputClass : inputClass}
+                      {...limites(NOMBRES.prix)}
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Date de péremption
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.date_peremption}
-                      onChange={(e) => updateMedicamentField('date_peremption', e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Date de fabrication
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.date_fabrication}
-                      onChange={(e) => updateMedicamentField('date_fabrication', e.target.value)}
-                      className={inputClass}
-                    />
+                    {errors.prix_unitaire && touched.prix_unitaire ? (
+                      <div className={errorTextClass}>{errors.prix_unitaire}</div>
+                    ) : (
+                      <p className="mt-1 text-xs text-gray-500">Prix facturé au patient pour une unité délivrée.</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -522,49 +464,6 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                 <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-6">Sécurité et Réglementation</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Classe thérapeutique
-                    </label>
-                    <select
-                      value={formData.classe_therapeutique}
-                      onChange={(e) => updateMedicamentField('classe_therapeutique', e.target.value)}
-                      className={inputClass}
-                    >
-                      {CLASSES_THERAPEUTIQUES.map(classe => (
-                        <option key={classe} value={classe}>{classe}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Conditions de conservation
-                    </label>
-                    <select
-                      value={formData.conditions_conservation}
-                      onChange={(e) => updateMedicamentField('conditions_conservation', e.target.value)}
-                      className={inputClass}
-                    >
-                      {CONDITIONS_CONSERVATION.map(condition => (
-                        <option key={condition} value={condition}>{condition}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Substance active
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.substance_active}
-                      onChange={(e) => updateMedicamentField('substance_active', e.target.value)}
-                      placeholder="Ex: Paracétamol"
-                      className={inputClass}
-                    />
-                  </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       DCI
@@ -585,7 +484,7 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                       id="besoinOrdonnance"
                       checked={formData.necessite_ordonnance}
                       onChange={(e) => updateMedicamentField('necessite_ordonnance', e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                     />
                     <label htmlFor="besoinOrdonnance" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Nécessite une ordonnance
@@ -598,7 +497,7 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                       id="estActif"
                       checked={formData.actif}
                       onChange={(e) => updateMedicamentField('actif', e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                     />
                     <label htmlFor="estActif" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Médicament actif
@@ -661,7 +560,7 @@ export const MedicamentProgressForm: React.FC<MedicamentProgressFormProps> = ({
                 onClick={nextStep}
                 disabled={!validateStep(currentStep, false)}
                 className={`px-6 py-3 rounded-lg font-medium transition-colors ${validateStep(currentStep, false)
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? 'bg-brand-600 text-white hover:bg-brand-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
                   }`}
               >

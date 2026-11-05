@@ -62,7 +62,9 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
   const [editingUtilisateur, setEditingUtilisateur] = useState<Utilisateur | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<number | undefined>();
+  // Tous les rôles servent à l’affichage ; seuls les rôles du personnel sont proposés à la création.
   const [roles, setRoles] = useState<UtilisateurRole[]>([]);
+  const rolesAttribuables = utilisateurService.obtenirRolesAttribuables();
   const [statuts, setStatuts] = useState<UtilisateurStatut[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -189,10 +191,11 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'Administrateur': return 'error';
+      case 'Administrateur de l’hôpital': return 'error';
+      case 'Propriétaire de l’hôpital': return 'error';
       case 'Médecin': return 'success';
       case 'Infirmier': return 'info';
-      case 'Réceptionniste': return 'warning';
+      case 'Secrétaire': return 'warning';
       default: return 'primary';
     }
   };
@@ -209,29 +212,27 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
   return (
     <div className="min-h-screen pb-12 space-y-8">
       {/* Header Premium Glassmorphism */}
-      <div className="relative p-8 rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+      <div className="relative p-6 sm:p-7 rounded-3xl border border-brand-100 bg-gradient-to-br from-brand-50 via-white to-trimed-brume overflow-hidden text-gray-900 dark:border-gray-800 dark:from-brand-950/40 dark:via-gray-900 dark:to-gray-900 dark:text-white">
         
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
+              <div className="p-2 bg-brand-500 rounded-xl">
                 <Shield className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-2xl font-black uppercase tracking-tight">
+              <h1 className="font-marque text-xl sm:text-2xl">
                 Gestion Utilisateurs
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
               Sécurité & Contrôle d'Accès
             </p>
           </div>
 
           <button 
             onClick={() => setShowModal(true)}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             <Plus className="h-5 w-5" />
             Ajouter Utilisateur
@@ -247,18 +248,18 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
           { label: 'Médecins', value: stats.medecin, icon: Stethoscope, color: 'purple', sub: 'soignants' },
           { label: 'Administrateurs', value: stats.admin, icon: Shield, color: 'rose', sub: 'sécurité' }
         ].map((stat, i) => (
-          <div key={i} className="group p-6 rounded-3xl bg-white/40 dark:bg-white/[0.03] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
+          <div key={i} className="group p-6 rounded-3xl bg-white dark:bg-white/[0.03] border border-white/20 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
              <div className="flex items-center justify-between relative z-10">
                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{stat.label}</p>
-                  <p className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter mt-1">{stat.value}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">{stat.label}</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tighter mt-1">{stat.value}</p>
                </div>
                <div className={`p-3 rounded-2xl bg-${stat.color}-50 dark:bg-${stat.color}-900/20 text-${stat.color}-600 dark:text-${stat.color}-400`}>
                  <stat.icon className="w-6 h-6" />
                </div>
              </div>
              <div className="mt-4 flex items-center gap-2 relative z-10">
-               <span className={`text-[10px] font-black text-${stat.color}-600 bg-${stat.color}-50 dark:bg-${stat.color}-900/20 px-2 py-0.5 rounded-lg border border-${stat.color}-100 dark:border-${stat.color}-900/30 uppercase tracking-widest`}>
+               <span className={`text-[10px] font-bold text-${stat.color}-600 bg-${stat.color}-50 dark:bg-${stat.color}-900/20 px-2 py-0.5 rounded-lg border border-${stat.color}-100 dark:border-${stat.color}-900/30 uppercase tracking-widest`}>
                  {stat.sub}
                </span>
              </div>
@@ -270,17 +271,17 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
       </div>
 
       {/* Table Section */}
-      <div className="rounded-[2.5rem] bg-white/40 dark:bg-white/[0.02] border border-white/20 dark:border-white/10 backdrop-blur-xl shadow-sm overflow-hidden text-black dark:text-white">
+      <div className="rounded-3xl bg-white dark:bg-white/[0.02] border border-white/20 dark:border-white/10 shadow-sm overflow-hidden text-black dark:text-white">
         <div className="p-6 border-b border-gray-100 dark:border-white/[0.05]">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
               <input
                 type="text"
                 placeholder="Rechercher par nom, email..."
                 value={filters.searchTerm}
                 onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
-                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-none bg-gray-100/30 dark:bg-white/5 focus:ring-2 focus:ring-brand-500/50 outline-none transition-all dark:text-white font-medium placeholder:text-gray-400"
               />
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -289,7 +290,7 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
                 <select
                   value={filters.role}
                   onChange={(e) => setFilters(prev => ({ ...prev, role: e.target.value }))}
-                  className="bg-transparent border-none text-xs font-black focus:ring-0 outline-none uppercase tracking-tight"
+                  className="bg-transparent border-none text-xs font-bold focus:ring-0 outline-none uppercase tracking-tight"
                 >
                   <option value="Tous">Tous les rôles</option>
                   {roles.map(r => <option key={r.role_id} value={r.role_id}>{r.nom}</option>)}
@@ -300,7 +301,7 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
                 <select
                   value={filters.statut}
                   onChange={(e) => setFilters(prev => ({ ...prev, statut: e.target.value }))}
-                  className="bg-transparent border-none text-xs font-black focus:ring-0 outline-none uppercase tracking-tight"
+                  className="bg-transparent border-none text-xs font-bold focus:ring-0 outline-none uppercase tracking-tight"
                 >
                   <option value="Tous">Tous les statuts</option>
                   {statuts.map(s => <option key={s.statut_id} value={s.statut_id}>{s.nom}</option>)}
@@ -319,22 +320,22 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
           <Table>
             <TableHeader className="bg-gray-50/50 dark:bg-white/[0.02]">
               <TableRow>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest">Utilisateur</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-left">Contact</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Rôle & Statut</TableCell>
-                <TableCell isHeader className="py-4 px-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-left text-right">Actions</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Utilisateur</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-left">Contact</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center">Rôle & Statut</TableCell>
+                <TableCell isHeader className="py-4 px-6 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-left text-right">Actions</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
               {currentUtilisateurs.map((user) => (
-                <TableRow key={user.utilisateur_id} className="group hover:bg-white/60 dark:hover:bg-white/[0.03] transition-all">
+                <TableRow key={user.utilisateur_id} className="group hover:bg-white dark:hover:bg-white/[0.03] transition-all">
                   <TableCell className="py-5 px-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 font-black shadow-sm border border-indigo-100 dark:border-indigo-900/30 transition-transform group-hover:scale-110">
+                      <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 font-bold shadow-sm border border-brand-100 dark:border-brand-900/30 transition-transform group-hover:scale-110">
                         {user.nom_complet.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-black uppercase tracking-tight">{user.nom_complet}</span>
+                        <span className="text-sm font-bold uppercase tracking-tight">{user.nom_complet}</span>
                         <span className="text-[10px] font-bold text-gray-400 italic">ID#{user.utilisateur_id}</span>
                       </div>
                     </div>
@@ -342,7 +343,7 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
                   <TableCell className="py-5 px-6">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-                        <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                        <Mail className="w-3.5 h-3.5 text-brand-400" />
                         {user.email}
                       </div>
                       <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 italic">
@@ -366,7 +367,7 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
                       <button onClick={() => handleView(user)} className="p-2.5 rounded-xl bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-all active:scale-95 shadow-sm">
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button onClick={() => handleEdit(user)} className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-sm">
+                      <button onClick={() => handleEdit(user)} className="p-2.5 rounded-xl bg-brand-50 text-brand-600 hover:bg-brand-600 hover:text-white transition-all active:scale-95 shadow-sm">
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button onClick={() => handleDelete(user.utilisateur_id)} className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all active:scale-95 shadow-sm">
@@ -381,10 +382,10 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
           
           {filteredUtilisateurs.length === 0 && !loading && (
             <div className="py-24 text-center">
-               <div className="mx-auto w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mb-6">
+               <div className="mx-auto w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-3xl flex items-center justify-center mb-6">
                  <User className="w-10 h-10 text-gray-300" />
                </div>
-               <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Aucun utilisateur</h3>
+               <h3 className="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">Aucun utilisateur</h3>
                <p className="text-gray-500 dark:text-gray-400 italic font-medium">L'annuaire des personnels est vide.</p>
             </div>
           )}
@@ -429,7 +430,8 @@ export const GestionUtilisateur: React.FC<GestionUtilisateurProps> = ({ tenantId
         serverErrors={serverErrors}
         generalError={generalError || undefined}
         utilisateur={editingUtilisateur}
-        roles={roles}
+        roles={rolesAttribuables}
+        tousLesRoles={roles}
         statuts={statuts}
       />
 

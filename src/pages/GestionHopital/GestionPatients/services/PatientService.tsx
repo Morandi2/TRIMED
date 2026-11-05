@@ -34,7 +34,7 @@ interface PatientsCache {
   fetchedAt: number;
 }
 
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes, aligné sur la mémoire partagée (api/cacheApi.ts)
 
 export class PatientService {
   private static instance: PatientService;
@@ -63,7 +63,7 @@ export class PatientService {
   private saveCacheToStorage() {
     try {
       if (this.patientsCache) {
-        localStorage.setItem('patients_cache', JSON.stringify(this.patientsCache));
+        /* Plus d’écriture sur le disque : données médicales sur un poste partagé (mémoire seulement). */
       }
     } catch (e) {
       console.error('Erreur ecriture localStorage patients', e);
@@ -218,7 +218,8 @@ export class PatientService {
         contacts: data.contacts || data.contacts_detail || [],
         assurances: data.assurances || data.assurances_detail || [],
         allergies: data.allergies || data.allergies_detail || [],
-        antecedents: data.antecedents || data.antecedents_detail || []
+        antecedents: data.antecedents || data.antecedents_detail || [],
+        suivis: data.suivis || []
       };
     }
     return null;

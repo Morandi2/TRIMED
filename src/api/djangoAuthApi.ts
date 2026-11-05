@@ -8,6 +8,8 @@ import {
   AuthUser
 } from './types/auth.types';
 import { validation } from '../utils/validation';
+import { classerErreurConnexion } from './erreursConnexion';
+import { effacerAnciensCachesDisque, viderCacheApi } from './cacheApi';
 
 /**
  * API pour l'authentification Django
@@ -34,6 +36,9 @@ export const djangoAuthApi = {
       const authUser = this.mapUserResponse(respData.user || respData, respData.tenant);
 
       // Stocker les tokens
+      // Nouveau compte : rien de la session précédente ne doit rester en mémoire.
+      viderCacheApi();
+      effacerAnciensCachesDisque();
       if (access) localStorage.setItem('access_token', access);
       if (refresh) localStorage.setItem('refresh_token', refresh);
 
@@ -55,30 +60,13 @@ export const djangoAuthApi = {
     } catch (error: any) {
       console.error('Erreur connexion Django:', error.response?.data || error.message);
 
-      let message = 'Échec de la connexion';
       const errorData = error.response?.data;
-
-      if (errorData) {
-        if (errorData.detail) message = errorData.detail;
-        else if (errorData.error) message = errorData.error;
-        else if (errorData.non_field_errors) message = errorData.non_field_errors[0];
-        else if (typeof errorData === 'object') {
-          const firstKey = Object.keys(errorData)[0];
-          if (Array.isArray(errorData[firstKey])) {
-            message = `${errorData[firstKey][0]}`; // Just output the message part
-          }
-        }
-      }
-
-      // Détection intelligente des comptes inactifs pour afficher le message personnalisé en Créole
-      const errorStr = JSON.stringify(errorData || '').toLowerCase();
-      if (errorStr.includes('inactif') || errorStr.includes('inactive') || errorStr.includes('non actif') || errorStr.includes('pas actif')) {
-        message = 'Ce compte n\'est pas encore actif. Veuillez patienter jusqu\'à ce qu\'un administrateur l\'active.';
-      }
+      const { code, message } = classerErreurConnexion(error);
 
       return {
         success: false,
         message,
+        code,
         error: errorData
       };
     }
@@ -314,7 +302,11 @@ export const djangoAuthApi = {
    */
   getProfile: async function (): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/comptes/utilisateurs/profile/');
+      // La route « profile » du serveur répond 500 : on lit la fiche du compte par son identifiant,
+      // pris dans le jeton d’accès (BACKEND_MODIFICATIONS.md, point 13).
+      let id: number | undefined;
+      try { const charge = (localStorage.getItem('access_token') || '').split('.')[1] || ''; id = Number(JSON.parse(atob(charge.replace(/-/g, '+').replace(/_/g, '/'))).user_id) || undefined; } catch { id = undefined; }
+      const response = await apiClient.get(id ? `/comptes/utilisateurs/${id}/` : '/comptes/utilisateurs/profile/');
       return { success: true, message: 'Profil récupéré avec succès', data: response.data };
     } catch (error: any) {
       return { success: false, message: 'Erreur lors de la récupération du profil', error: error.response?.data };
@@ -390,6 +382,8 @@ export const djangoAuthApi = {
       const refresh = localStorage.getItem('refresh_token');
       if (!refresh) throw new Error('No refresh token');
       const response = await apiClient.post('/comptes/token/refresh/', { refresh });
+      // Session changée entre-temps (déconnexion, autre compte) : on ignore ce jeton.
+      if (localStorage.getItem('refresh_token') !== refresh) return { success: false, message: 'Session changée' };
       localStorage.setItem('access_token', response.data.access);
       return { success: true, message: 'Token rafraîchi avec succès', data: response.data };
     } catch (error: any) {
@@ -409,6 +403,8 @@ export const djangoAuthApi = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');
+    viderCacheApi();
+    effacerAnciensCachesDisque();
     localStorage.removeItem('tenant_data');
   },
 
@@ -461,7 +457,8 @@ export const djangoAuthApi = {
       email: user?.email || '',
       role: user?.role || 'personnel',
       hopital_id: Number(hopital_id) || 0,
-      hopital_nom
+      hopital_nom,
+      is_staff: user?.is_staff === true
     };
   },
 
@@ -470,8 +467,8 @@ export const djangoAuthApi = {
    */
   getRedirectionPath: function (role: string): string {
     switch (role) {
-      case 'admin-systeme': return '/admin/dashboard';
-      case 'proprietaire-hopital': return '/Home';
+      case 'admin-systeme': return '/home';
+      case 'proprietaire-hopital': return '/home';
       case 'medecin': return '/home';
       case 'infirmier': return '/home';
       case 'secretaire': return '/home';

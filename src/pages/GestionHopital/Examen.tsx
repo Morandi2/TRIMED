@@ -8,7 +8,7 @@ export default function Examen() {
 
   return (
     <div>
-      <PageMeta title="TRIMEDH" description="Gestion des examens médicaux" />
+      <PageMeta title="Examens | TRIMED" description="Gestion des examens médicaux" />
       <PageBreadcrumb pageTitle="Examens" />
 
       <div className="">

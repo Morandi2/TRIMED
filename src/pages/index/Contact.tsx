@@ -1,174 +1,98 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
-import Navbar from './Navbar';
-import Footer from './Footer';
+import { Mail, MapPin, Phone, Send } from 'lucide-react';
+import EnTete from './portail/EnTete';
+import PiedDePage from './portail/PiedDePage';
+import { CONTACT } from './portail/contenu';
 
+// Le formulaire ouvre la messagerie du visiteur avec un message prérempli : aucune demande ne se perd
+// sur un serveur qui n’existe pas, et la page s’héberge n’importe où.
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    structure: '',
-    message: ''
-  });
-  const [success, setSuccess] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', structure: '', message: '' });
+  const [ouverte, setOuverte] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
-      alert("Veuillez remplir tous les champs obligatoires.");
-      return;
-    }
-    // Simulate success
-    setSuccess(true);
-    // Reset form
-    setFormData({ name: '', email: '', structure: '', message: '' });
+    const sujet = `Demande de démonstration TRIMED${formData.structure ? ` pour ${formData.structure}` : ''}`;
+    const corps = `${formData.message}\n\n${formData.name}\n${formData.email}${formData.structure ? `\n${formData.structure}` : ''}`;
+    window.location.href = `mailto:${CONTACT.email}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+    setOuverte(true);
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <Navbar />
-        <div className="pt-32 pb-20 px-4 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 border border-slate-200 text-center animate-in fade-in zoom-in duration-500">
-            <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8 text-emerald-600 shadow-inner">
-              <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Message envoyé !</h2>
-            <p className="text-slate-600 mb-10 leading-relaxed text-lg">
-              Merci de nous avoir contactés. Notre équipe reviendra vers vous à l'adresse <span className="font-bold text-slate-900">{formData.email}</span> dans les plus brefs délais (généralement sous 24h).
-            </p>
-            <button 
-              onClick={() => setSuccess(false)}
-              className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
-            >
-              Retour au formulaire
-            </button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  const champ = 'w-full rounded-2xl border border-trimed-indigo/15 bg-white/85 px-4 py-3 text-trimed-encre outline-none transition focus:border-trimed-indigo focus:ring-4 focus:ring-trimed-indigo/15';
+  const etiquette = 'mb-2 block text-sm font-medium text-trimed-encre';
 
   return (
-    <div className="bg-slate-50 min-h-screen">
-      <Navbar />
-      
-      <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="text-center mb-16" data-aos="fade-up">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
-            Contactez l'Équipe TRIMEDH
-          </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Une question ? Un projet de déploiement ? Notre équipe est là pour vous accompagner dans la modernisation de votre établissement.
-          </p>
-        </div>
+    <div className="ptl min-h-screen">
+      <EnTete accueil={false} />
+      <main className="ptl-contenu ptl-cadre pb-20 pt-32">
+        <header className="mx-auto mb-12 max-w-2xl text-center">
+          <p className="ptl-surtitre justify-center">Contact</p>
+          <h1 className="ptl-titre ptl-titre--l mt-4">Parlons de votre hôpital.</h1>
+          <p className="ptl-texte mx-auto mt-4">Une question, un projet de mise en service ? Écrivez-nous : nous vous présentons TRIMED avec les situations de votre établissement.</p>
+        </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Info Cards */}
-          <div className="lg:col-span-1 space-y-6" data-aos="fade-right">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex items-start gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 shrink-0">
-                <Mail className="w-6 h-6" />
-              </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <ul className="grid content-start gap-4">
+            <li className="ptl-verre flex items-start gap-4 p-6">
+              <span className="ptl-icone"><Mail className="h-5 w-5" aria-hidden="true" /></span>
               <div>
-                <h3 className="font-bold text-slate-900 mb-1">Email</h3>
-                <p className="text-slate-600 mb-2">Réponse sous 24h</p>
-                <a href="mailto:trimedht@gmail.com" className="text-blue-600 font-semibold hover:underline">trimedht@gmail.com</a>
+                <h2 className="font-medium text-trimed-encre">E-mail</h2>
+                <a href={`mailto:${CONTACT.email}`} className="text-trimed-indigo hover:underline">{CONTACT.email}</a>
               </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex items-start gap-4">
-              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
-                <Phone className="w-6 h-6" />
-              </div>
+            </li>
+            <li className="ptl-verre flex items-start gap-4 p-6">
+              <span className="ptl-icone"><Phone className="h-5 w-5" aria-hidden="true" /></span>
               <div>
-                <h3 className="font-bold text-slate-900 mb-1">Téléphone</h3>
-                <p className="text-slate-600 mb-2">Lun-Ven, 8h-18h</p>
-                <div className="space-y-1">
-                  <a href="tel:+50940302622" className="block text-slate-800 font-semibold hover:text-blue-600">+509 4030 2622</a>
-                  <a href="tel:+50943479901" className="block text-slate-800 font-semibold hover:text-blue-600">+509 4347 9901</a>
-                </div>
+                <h2 className="font-medium text-trimed-encre">Téléphone</h2>
+                {CONTACT.telephones.map((t) => (
+                  <a key={t} href={`tel:${t.replace(/\s/g, '')}`} className="block text-trimed-encre-douce hover:text-trimed-indigo">{t}</a>
+                ))}
               </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex items-start gap-4">
-              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
-                <MapPin className="w-6 h-6" />
-              </div>
+            </li>
+            <li className="ptl-verre flex items-start gap-4 p-6">
+              <span className="ptl-icone"><MapPin className="h-5 w-5" aria-hidden="true" /></span>
               <div>
-                <h3 className="font-bold text-slate-900 mb-1">Bureau</h3>
-                <p className="text-slate-600">Port-au-Prince, Haiti</p>
+                <h2 className="font-medium text-trimed-encre">Bureau</h2>
+                <p className="text-trimed-encre-douce">Port-au-Prince, Haïti</p>
               </div>
-            </div>
-          </div>
+            </li>
+          </ul>
 
-          {/* Contact Form */}
-          <div className="lg:col-span-2 bg-white rounded-3xl p-8 md:p-12 shadow-xl shadow-blue-900/5 border border-slate-100" data-aos="fade-left">
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">Prénom & Nom <span className="text-red-500">*</span></label>
-                  <input 
-                    type="text" 
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    placeholder="Ex: Jean Paul" 
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition-all outline-none"
-                  />
+          <div className="ptl-verre ptl-verre--fort p-7 sm:p-10 lg:col-span-2">
+            {ouverte ? (
+              <div className="py-6 text-center" role="status">
+                <h2 className="ptl-titre ptl-titre--m">Votre messagerie s’est ouverte.</h2>
+                <p className="ptl-texte mx-auto mt-3">Votre demande y est déjà rédigée : il ne reste qu’à l’envoyer. Si rien ne s’est ouvert, écrivez-nous directement à <a href={`mailto:${CONTACT.email}`} className="text-trimed-indigo underline">{CONTACT.email}</a>.</p>
+                <button type="button" onClick={() => setOuverte(false)} className="ptl-bouton-clair mt-8">Revenir au formulaire</button>
+              </div>
+            ) : (
+              <form className="grid gap-5" onSubmit={handleSubmit}>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label htmlFor="contact-nom" className={etiquette}>Prénom et nom <span className="text-red-600" aria-hidden="true">*</span></label>
+                    <input id="contact-nom" type="text" required autoComplete="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={champ} />
+                  </div>
+                  <div>
+                    <label htmlFor="contact-email" className={etiquette}>E-mail <span className="text-red-600" aria-hidden="true">*</span></label>
+                    <input id="contact-email" type="email" required autoComplete="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className={champ} />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">Email <span className="text-red-500">*</span></label>
-                  <input 
-                    type="email" 
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="jean@clinique.ht" 
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition-all outline-none"
-                  />
+                  <label htmlFor="contact-structure" className={etiquette}>Établissement</label>
+                  <input id="contact-structure" type="text" autoComplete="organization" value={formData.structure} onChange={(e) => setFormData({ ...formData, structure: e.target.value })} placeholder="Hôpital, clinique, centre de santé" className={champ} />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">Établissement (Hôpital / Clinique)</label>
-                <input 
-                  type="text" 
-                  value={formData.structure}
-                  onChange={(e) => setFormData({...formData, structure: e.target.value})}
-                  placeholder="Nom de votre structure" 
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition-all outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">Votre Message <span className="text-red-500">*</span></label>
-                <textarea 
-                  rows={6} 
-                  required
-                  value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  placeholder="Dites-nous comment nous pouvons vous aider..." 
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition-all outline-none"
-                ></textarea>
-              </div>
-
-              <button 
-                type="submit"
-                className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
-              >
-                Envoyer le Message
-                <Send className="w-5 h-5" />
-              </button>
-            </form>
+                <div>
+                  <label htmlFor="contact-message" className={etiquette}>Votre message <span className="text-red-600" aria-hidden="true">*</span></label>
+                  <textarea id="contact-message" rows={6} required value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} placeholder="Dites-nous comment nous pouvons vous aider." className={champ} />
+                </div>
+                <button type="submit" className="ptl-bouton w-full">Préparer le message <Send className="h-4 w-4" aria-hidden="true" /></button>
+                <p className="text-center text-xs text-trimed-encre-douce">Le bouton ouvre votre messagerie avec le message déjà rédigé.</p>
+              </form>
+            )}
           </div>
         </div>
-      </div>
-
-      <Footer />
+      </main>
+      <PiedDePage accueil={false} />
     </div>
   );
 };

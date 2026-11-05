@@ -116,7 +116,7 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
                 value={formData.patient_id || ''}
                 onChange={(e) => updateField('patient_id', e.target.value)}
                 placeholder="Ex: 1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.patient_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.patient_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 required
               />
@@ -132,7 +132,7 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
                 value={formData.medecin_id || ''}
                 onChange={(e) => updateField('medecin_id', e.target.value)}
                 placeholder="Ex: 1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.medecin_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.medecin_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 required
               />
@@ -147,7 +147,7 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
                 type="datetime-local"
                 value={formData.date_heure}
                 onChange={(e) => updateField('date_heure', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.date_heure ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.date_heure ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 required
               />
@@ -161,7 +161,7 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
               <select
                 value={formData.type_id || ''}
                 onChange={(e) => updateField('type_id', e.target.value ? parseInt(e.target.value) : null)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 bg-white text-black dark:bg-gray-700 dark:text-white"
               >
                 <option value="">Sélectionner un type</option>
                 {types.map(type => (
@@ -177,7 +177,7 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
               <select
                 value={formData.statut_id}
                 onChange={(e) => updateField('statut_id', parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 bg-white text-black dark:bg-gray-700 dark:text-white"
                 required
               >
                 {statuts.map(statut => (
@@ -195,7 +195,7 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
               value={formData.motif}
               onChange={(e) => updateField('motif', e.target.value)}
               rows={3}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.motif ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 bg-white text-black dark:bg-gray-700 dark:text-white ${errors.motif ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
               placeholder="Décrivez le motif du rendez-vous..."
               required
@@ -213,7 +213,7 @@ export const RendezVousModal: React.FC<RendezVousModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700"
             >
               {rendezVous ? 'Modifier' : 'Créer'}
             </button>

@@ -1,4 +1,4 @@
-# Spécifications de l'API pour le Backend (TRIMEDH)
+# Spécifications de l'API pour le Backend (TRIMED)
 
 Ce document détaille les attentes du Frontend (React) vis-à-vis du Backend.
 

@@ -1,36 +1,56 @@
-export type UserRole = 
-  | 'admin-systeme' 
-  | 'proprietaire-hopital' 
-  | 'medecin' 
+export type UserRole =
+  | 'admin-systeme'
+  | 'admin-hopital'
+  | 'proprietaire-hopital'
+  | 'medecin'
   | 'infirmier' 
   | 'secretaire' 
   | 'personnel' 
   | 'patient';
 
 /**
- * Normalise le rôle reçu du backend vers les types officiels du frontend
+ * Normalise le rôle reçu du backend vers les types officiels du frontend.
+ * Correspondance exacte uniquement : un rôle inconnu ne doit jamais ouvrir plus de droits.
+ * (Auparavant, tout rôle contenant « admin » devenait administrateur de la plateforme.)
  */
 export const normalizeRole = (role: string | null | undefined): UserRole => {
-  if (!role) return 'personnel'; 
-  
+  if (!role) return 'personnel';
+
   const r = role.toLowerCase().trim();
-  
-  // Mapping direct avec les slugs backend
-  if (r === 'admin-systeme' || r === 'superadmin' || r === 'administrateur-trimed') return 'admin-systeme';
-  if (r === 'proprietaire-hopital' || r === 'proprietaire') return 'proprietaire-hopital';
-  if (r === 'medecin' || r === 'docteur') return 'medecin';
+
+  if (r === 'admin-systeme') return 'admin-systeme';
+  if (r === 'proprietaire-hopital') return 'proprietaire-hopital';
+  if (r === 'medecin') return 'medecin';
   if (r === 'infirmier') return 'infirmier';
   if (r === 'secretaire') return 'secretaire';
   if (r === 'personnel') return 'personnel';
   if (r === 'patient') return 'patient';
-  
-  // Mapping des alias courants
-  if (r.includes('admin')) return 'admin-systeme';
-  if (r.includes('owner')) return 'proprietaire-hopital';
-  if (r.includes('doc')) return 'medecin';
-  if (r.includes('nurse')) return 'infirmier';
-  
-  return 'personnel'; // Fallback par défaut sécurisé
+
+  return 'personnel'; // Rôle inconnu : droits minimaux
+};
+
+/**
+ * Rôle de l’interface pour le compte connecté.
+ * Le portail Admin TRIMED est réservé à l’équipe TRIMED : rôle `admin-systeme` **et** case
+ * « statut équipe » (`is_staff`) cochée dans l’admin Django, que l’API ne permet pas de modifier.
+ * Un `admin-systeme` sans `is_staff` administre son hôpital (portail de l’hôpital).
+ */
+export const roleEffectif = (user: { role?: string | null; is_staff?: boolean } | null | undefined): UserRole => {
+  const role = normalizeRole(user?.role);
+  if (role === 'admin-systeme' && user?.is_staff !== true) return 'admin-hopital';
+  return role;
+};
+
+/** Libellés lisibles des rôles, pour l’interface. */
+export const LIBELLES_ROLES: Record<UserRole, string> = {
+  'admin-systeme': 'Administrateur TRIMED',
+  'admin-hopital': 'Administrateur de l’hôpital',
+  'proprietaire-hopital': 'Propriétaire de l’hôpital',
+  'medecin': 'Médecin',
+  'infirmier': 'Infirmier',
+  'secretaire': 'Secrétaire',
+  'personnel': 'Personnel',
+  'patient': 'Patient',
 };
 
 export interface UserPermissions {
@@ -45,7 +65,10 @@ export interface UserPermissions {
   canEditConsultations: boolean;
   canViewOrdonnances: boolean;
   canEditOrdonnances: boolean;
+  /** Admettre, faire sortir, changer de lit (secrétariat et administration). */
   canGererHospitalisation: boolean;
+  /** Voir les patients hospitalisés (équipe soignante, secrétariat, administration). */
+  canVoirHospitalisation: boolean;
   
   // Médicaments & Stock
   canViewMedicaments: boolean;
@@ -67,6 +90,22 @@ export interface UserPermissions {
   canManageSystem: boolean;
   canViewAuditLogs: boolean;
   canModifierTenant: boolean;
+  /** Paramètres et assistant de configuration de son propre hôpital (propriétaire). */
+  canConfigurerHopital: boolean;
+  /** Voir les lits et salles disponibles en temps réel. */
+  canSuivreDisponibilites: boolean;
+  /** Dire quand un lit ou une salle est libre, réservé, en nettoyage ou hors service (secrétariat). */
+  canGererDisponibilites: boolean;
+  /** Caisse : factures des patients, encaissements, sessions (secrétariat et administration). */
+  canTenirCaisse: boolean;
+  /** Tarifs, réglages de la caisse, assureurs et conventions (administration de l'hôpital). */
+  canConfigurerCaisse: boolean;
+  /** Couvertures des patients, accords préalables, justificatifs, bordereaux. */
+  canGererAssurances: boolean;
+  /** Délivrer les médicaments d'une ordonnance (pharmacie). */
+  canDelivrerMedicaments: boolean;
+  /** Téléconsultation : planifier (secrétariat), consulter à distance (médecin), rejoindre (patient). */
+  canTeleconsulter: boolean;
 }
 
 export const rolePermissions: Record<UserRole, UserPermissions> = {
@@ -79,7 +118,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canEditConsultations: true,
     canViewOrdonnances: true,
     canEditOrdonnances: true,
-    canGererHospitalisation: true,
+    canGererHospitalisation: false,
+    canVoirHospitalisation: false,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: true,
@@ -95,8 +135,16 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: true,
     canViewAuditLogs: true,
     canModifierTenant: true,
+    canConfigurerHopital: false,
+    canSuivreDisponibilites: false,
+    canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: false,
+    canTeleconsulter: false,
   },
-  'proprietaire-hopital': {
+  'admin-hopital': {
     canViewPatients: true,
     canEditPatients: true,
     canViewOwnFolderOnly: false,
@@ -106,6 +154,7 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewOrdonnances: true,
     canEditOrdonnances: true,
     canGererHospitalisation: true,
+    canVoirHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: true,
@@ -121,6 +170,49 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: true,
     canModifierTenant: false,
+    canConfigurerHopital: true,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: true,
+    canTenirCaisse: true,
+    canConfigurerCaisse: true,
+    canGererAssurances: true,
+    canDelivrerMedicaments: true,
+    canTeleconsulter: true,
+  },
+  'proprietaire-hopital': {
+    canViewPatients: true,
+    canEditPatients: true,
+    canViewOwnFolderOnly: false,
+    canViewMedecins: true,
+    canViewConsultations: true,
+    canEditConsultations: true,
+    canViewOrdonnances: true,
+    canEditOrdonnances: true,
+    canGererHospitalisation: true,
+    canVoirHospitalisation: true,
+    canViewMedicaments: true,
+    canGererMedicaments: true,
+    canModifierStock: true,
+    canViewRendezVous: true,
+    canEditRendezVous: true,
+    canGererSalles: true,
+    canViewCalendar: true,
+    canViewPaiements: true,
+    canGererFacturation: true,
+    canManageUsers: true,
+    canViewDashboard: true,
+    canViewReports: true,
+    canManageSystem: false,
+    canViewAuditLogs: true,
+    canModifierTenant: false,
+    canConfigurerHopital: true,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: true,
+    canTenirCaisse: true,
+    canConfigurerCaisse: true,
+    canGererAssurances: true,
+    canDelivrerMedicaments: true,
+    canTeleconsulter: true,
   },
   'medecin': {
     canViewPatients: true,
@@ -131,7 +223,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canEditConsultations: true,
     canViewOrdonnances: true,
     canEditOrdonnances: true,
-    canGererHospitalisation: true,
+    canGererHospitalisation: false,
+    canVoirHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: false, // Médecin ne peut pas modifier le stock
@@ -147,6 +240,14 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: false,
+    canTeleconsulter: true,
   },
   'infirmier': {
     canViewPatients: true,
@@ -157,7 +258,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canEditConsultations: true,
     canViewOrdonnances: true,
     canEditOrdonnances: false,
-    canGererHospitalisation: true,
+    canGererHospitalisation: false,
+    canVoirHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: true, // Infirmier peut modifier le stock
@@ -173,6 +275,14 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: true,
+    canTeleconsulter: false,
   },
   'secretaire': {
     canViewPatients: true,
@@ -183,7 +293,8 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canEditConsultations: false,
     canViewOrdonnances: false,
     canEditOrdonnances: false,
-    canGererHospitalisation: false,
+    canGererHospitalisation: true,
+    canVoirHospitalisation: true,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: false, // Secrétaire pas de stock
@@ -199,6 +310,14 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: true,
+    canTenirCaisse: true,
+    canConfigurerCaisse: false,
+    canGererAssurances: true,
+    canDelivrerMedicaments: false,
+    canTeleconsulter: true,
   },
   'personnel': {
     canViewPatients: true,
@@ -207,9 +326,10 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewMedecins: true,
     canViewConsultations: false,
     canEditConsultations: false,
-    canViewOrdonnances: false,
+    canViewOrdonnances: true, // lecture seule : la pharmacie délivre les médicaments prescrits
     canEditOrdonnances: false,
     canGererHospitalisation: false,
+    canVoirHospitalisation: false,
     canViewMedicaments: true,
     canGererMedicaments: true,
     canModifierStock: true, // Personnel peut modifier le stock
@@ -225,6 +345,14 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
+    canSuivreDisponibilites: true,
+    canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: true,
+    canTeleconsulter: false,
   },
   'patient': {
     canViewPatients: false,
@@ -236,14 +364,15 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canViewOrdonnances: false,
     canEditOrdonnances: false,
     canGererHospitalisation: false,
-    canViewMedicaments: true, // Peut voir médicaments hôpital
+    canVoirHospitalisation: false,
+    canViewMedicaments: false, // Le stock de l’hôpital ne concerne pas le patient
     canGererMedicaments: false,
     canModifierStock: false,
-    canViewRendezVous: true,
-    canEditRendezVous: true, // Ses propres RDV
+    canViewRendezVous: false, // Ses rendez-vous sont sur son tableau de bord
+    canEditRendezVous: false,
     canGererSalles: false,
     canViewCalendar: false,
-    canViewPaiements: true, // Peut voir ses factures
+    canViewPaiements: false,
     canGererFacturation: false,
     canManageUsers: false,
     canViewDashboard: true,
@@ -251,6 +380,14 @@ export const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageSystem: false,
     canViewAuditLogs: false,
     canModifierTenant: false,
+    canConfigurerHopital: false,
+    canSuivreDisponibilites: false,
+    canGererDisponibilites: false,
+    canTenirCaisse: false,
+    canConfigurerCaisse: false,
+    canGererAssurances: false,
+    canDelivrerMedicaments: false,
+    canTeleconsulter: true,
   },
 };
 

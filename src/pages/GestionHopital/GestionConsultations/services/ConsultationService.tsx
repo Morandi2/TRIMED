@@ -12,6 +12,10 @@ export interface Consultation {
   date_consultation: string;
   motif: string;
   diagnostic_principal?: string;
+  /** Diagnostic codé (CIM-10) : identifiant, code et libellé. */
+  diagnostic_cim10?: number | null;
+  diagnostic_cim10_code?: string | null;
+  diagnostic_cim10_libelle?: string | null;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -74,6 +78,9 @@ export class ConsultationService {
       date_consultation: c.date_consultation || '',
       motif: c.motif || '',
       diagnostic_principal: c.diagnostic_principal || '',
+      diagnostic_cim10: c.diagnostic_cim10 ?? null,
+      diagnostic_cim10_code: c.diagnostic_cim10_code ?? null,
+      diagnostic_cim10_libelle: c.diagnostic_cim10_libelle ?? null,
       notes: c.notes || '',
       created_at: c.created_at || c.cree_le || '',
       updated_at: c.updated_at || '',
@@ -182,6 +189,7 @@ export class ConsultationService {
       motif: c.motif,
     };
     if (c.diagnostic_principal) payload.diagnostic_principal = c.diagnostic_principal;
+    if (c.diagnostic_cim10) payload.diagnostic_cim10 = c.diagnostic_cim10;
     if (c.notes) payload.notes = c.notes;
     if (c.rendez_vous_id) payload.rendez_vous = c.rendez_vous_id;
 
@@ -215,6 +223,7 @@ export class ConsultationService {
       motif: c.motif,
     };
     if (c.diagnostic_principal !== undefined) payload.diagnostic_principal = c.diagnostic_principal;
+    if (c.diagnostic_cim10 !== undefined) payload.diagnostic_cim10 = c.diagnostic_cim10 || null;
     if (c.notes !== undefined) payload.notes = c.notes;
     if (c.rendez_vous_id) payload.rendez_vous = c.rendez_vous_id;
 

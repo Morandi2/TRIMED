@@ -1,4 +1,4 @@
-# 🐛 Rapport de Bugs Backend — TRIMEDH
+# 🐛 Rapport de Bugs Backend — TRIMED
 
 ---
 

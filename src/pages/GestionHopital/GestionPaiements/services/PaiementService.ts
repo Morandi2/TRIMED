@@ -13,7 +13,7 @@ interface PaiementsCache {
   fetchedAt: number;
 }
 
-const CACHE_TTL_MS = 30 * 60 * 1000;
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes, aligné sur la mémoire partagée (api/cacheApi.ts)
 
 class PaiementService {
   private paiementsCache: PaiementsCache | null = null;
@@ -39,7 +39,7 @@ class PaiementService {
   private saveCacheToStorage() {
     try {
       if (this.paiementsCache) {
-        localStorage.setItem('paiements_cache', JSON.stringify(this.paiementsCache));
+        /* Plus d’écriture sur le disque : données médicales sur un poste partagé (mémoire seulement). */
       }
     } catch (e) {}
   }
